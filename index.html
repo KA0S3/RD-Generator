@@ -1288,12 +1288,10 @@ const abilitiesLibrary = [
                 const s = char.value.skills[idx];
                 s.ticks = s.ticks < 3 ? s.ticks + 1 : 0;
             };
-
-            const calcDefenseBonus = () => {
-                const arm = armourRegistry.find(a => a.tier === char.value.equippedArmour);
-                return (arm ? arm.bonus : 0) + calcMod(effectiveDex.value);
-            };
-
+const calcDefenseBonus = () => {
+    const arm = armourRegistry.find(a => a.tier === char.value.equippedArmour);
+    return (arm ? arm.bonus : 0) + Math.floor(effectiveDex.value / 2) + calculatedProficiency.value;
+};
             const calcAttackBonus = (w) => {
                 if (!w) return 0;
                 const relevantStatValue = w.ability.toLowerCase() === 'str' ? char.value.stats.str : effectiveDex.value;

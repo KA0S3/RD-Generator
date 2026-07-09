@@ -1290,7 +1290,7 @@ const abilitiesLibrary = [
             };
 const calcDefenseBonus = () => {
     const arm = armourRegistry.find(a => a.tier === char.value.equippedArmour);
-    return (arm ? arm.bonus : 0) + Math.floor(effectiveDex.value / 2) + calculatedProficiency.value;
+    return (arm ? arm.bonus : 0) + Math.floor(effectiveDex.value / 2) + calculatedProficiency.value + calcMod(char.value.stats.wis);
 };
             const calcAttackBonus = (w) => {
                 if (!w) return 0;

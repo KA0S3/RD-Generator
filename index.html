@@ -16,8 +16,8 @@
             font-family: 'EB Garamond', serif;
             /* Rich Parchment Background */
             background-color: #eaddc5;
-            background-image: 
-                radial-gradient(circle at center, #fdf6e3 0%, #dcd3b6 70%, #c4b594 100%),
+            background-image: \r
+                radial-gradient(circle at center, #fdf6e3 0%, #dcd3b6 70%, #c4b594 100%),\r
                 url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
             color: #111827;
         }
@@ -167,6 +167,9 @@
                 <div class="flex justify-between items-center mb-3 border-b border-[#8b7355]/40 pb-1">
                     <h3 class="serif-title font-bold text-sm text-gray-900 uppercase tracking-widest">Attributes</h3>
                     <div class="flex gap-2 items-center">
+                        <span class="text-[10px] font-bold text-[#5c4a34] bg-[#8b7355]/10 px-2 py-0.5 rounded border border-[#8b7355]/30">
+                            Stats: {{ totalStats }} / 90
+                        </span>
                         <button v-if="currentMode === 'edit'" @click="randomizeStats" class="text-[10px] bg-indigo-900/10 text-indigo-900 px-2 py-0.5 rounded border border-indigo-900/20 hover:bg-indigo-900/20 transition-colors cursor-pointer no-print font-bold">
                             <i class="fa-solid fa-dice mr-1"></i> Roll Stats (5d4)
                         </button>
@@ -260,7 +263,7 @@
                 <div>
                     <label class="serif-title text-[10px] uppercase font-bold tracking-widest text-[#5c4a34]">Active Weapon</label>
                     <select v-model="char.equippedWeapon" class="w-full bg-white/40 border-b border-[#8b7355]/40 p-1 text-xs font-bold text-gray-800 mt-1 outline-none">
-                        <option v-for="w in weaponArsenal" :key="w.type" :value="w.type">{{ w.type }} ({{ w.examples.split(',')[0] }})</option>
+                        <option v-for="w in weaponArsenal" :key="w.type" :value="w.type">{{ w.type }}</option>
                     </select>
                 </div>
 
@@ -335,17 +338,17 @@
                     No divine abilities manifested yet.
                 </div>
                 <div v-else class="space-y-3 overflow-y-auto pr-1" style="max-height: 500px;">
-                    <div v-for="ab in char.learnedAbilities" :key="ab.name" class="p-2.5 bg-white/50 border-l-4 border-[#5c4a34] rounded shadow-sm">
+                    <div v-for="ab in char.learnedAbilities" :key="ab.name" @click="useAbilityInPlay(ab)" class="p-2.5 bg-white/50 border-l-4 border-[#5c4a34] rounded shadow-sm cursor-pointer hover:bg-white/70 transition-colors">
                         <div class="flex justify-between items-start mb-1 border-b border-[#8b7355]/20 pb-1">
                             <h4 class="font-black text-[11px] text-gray-900 uppercase">{{ ab.name }}</h4>
                             <div class="flex items-center gap-1.5">
                                 <span class="text-[8px] font-bold px-1 rounded bg-indigo-900/10 text-indigo-900 border border-indigo-900/20">Tier {{ ab.tier }}</span>
-                                <button v-if="currentMode === 'edit'" @click="refundAbility(ab)" class="text-red-800 hover:text-red-600 no-print" title="Refund AP"><i class="fa-solid fa-xmark"></i></button>
+                                <button v-if="currentMode === 'edit'" @click.stop="refundAbility(ab)" class="text-red-800 hover:text-red-600 no-print" title="Refund AP"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2 text-[9px] uppercase font-bold text-[#5c4a34] mb-1.5">
                             <span class="bg-[#8b7355]/10 px-1 rounded"><i class="fa-solid fa-clock mr-1"></i>{{ ab.action }}</span>
-                            <span class="bg-[#8b7355]/10 px-1 rounded"><i class="fa-solid fa-bolt mr-1"></i>{{ ab.cost }} AP</span>
+                            <span @click.stop="ab.hideLabel = !ab.hideLabel" class="bg-[#8b7355]/10 px-1 rounded cursor-pointer select-none" title="Click to hide label"><i class="fa-solid fa-bolt mr-1"></i>{{ ab.tier }}{{ ab.hideLabel ? '' : ' PotD' }}</span>
                         </div>
                         <p class="text-[10px] text-gray-800 leading-snug mb-1.5">{{ ab.rules }}</p>
                         <div class="text-[8px] text-gray-500 italic">Domains: {{ ab.domains }}</div>
@@ -373,7 +376,7 @@
                             <div>
                                 <div class="flex justify-between items-start gap-1 mb-1 border-b border-[#8b7355]/20 pb-1">
                                     <h4 class="font-black text-[11px] text-gray-900 uppercase">{{ ab.name }}</h4>
-                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-900 text-white shadow-sm">Cost: {{ ab.cost }} AP</span>
+                                    <span @click.stop="ab.hideLabel = !ab.hideLabel" class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-900 text-white shadow-sm cursor-pointer select-none" title="Click to hide label">Cost: {{ ab.tier }}{{ ab.hideLabel ? '' : ' AP' }}</span>
                                 </div>
                                 <div class="flex flex-wrap gap-2 text-[8px] uppercase font-bold text-[#5c4a34] mb-2 mt-1">
                                     <span><i class="fa-solid fa-clock mr-1"></i>{{ ab.action }}</span>
@@ -475,7 +478,7 @@
                         <h4 class="text-sm md:text-base uppercase font-black text-white mb-2">{{ ab.name }}</h4>
                         <div class="flex gap-3 text-[10px] md:text-xs text-teal-300 uppercase font-bold mb-2">
                             <span><i class="fa-solid fa-clock mr-1"></i>{{ ab.action }}</span>
-                            <span><i class="fa-solid fa-bolt mr-1"></i>{{ ab.cost }} AP</span>
+                            <span @click.stop="ab.hideLabel = !ab.hideLabel" class="cursor-pointer select-none" title="Click to hide label"><i class="fa-solid fa-bolt mr-1"></i>{{ ab.tier }}{{ ab.hideLabel ? '' : ' PotD' }}</span>
                         </div>
                         <p class="text-xs md:text-sm text-gray-300 leading-relaxed">{{ ab.rules }}</p>
                     </div>
@@ -492,7 +495,7 @@
 </div>
 
 <script>
-    const { createApp, ref, computed, watch, onMounted } = Vue;
+    const { createApp, ref, computed, onMounted } = Vue;
 
     createApp({
         setup() {
@@ -503,13 +506,13 @@
                 alignment: "", gender: "", age: "", image: "",
                 stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
                 totalAp: 3, baseAp: 3, skills: [],
-                equippedWeapon: "Longsword", equippedArmour: "Unarmoured",
+                equippedWeapon: "Sword", equippedArmour: "Unarmoured",
                 wounds: "Healthy", fatigue: 0, potd: Array(6).fill(true), learnedAbilities: []
             });
 
             const char = ref(getBlankChar());
             const roster = ref([]);
-            const currentMode = ref("edit"); // edit or play
+            const currentMode = ref("edit");
             
             const shopOpen = ref(true);
             const manageModalOpen = ref(false);
@@ -518,12 +521,9 @@
             const newSkillName = ref("");
             const newSkillStat = ref("str");
             
-            // AP Click Logic
             const apPromptActive = ref(false);
             const apConfirmationMessage = ref(false);
-            const apTimeout = ref(null);
 
-            // Repositories
 const pantheons = {
     "Greek": [
         { name: "Zeus", primary: "Sky", secondary: "Storms", tertiary: ["Nobility", "Order", "Justice"] },
@@ -1187,344 +1187,290 @@ const abilitiesLibrary = [
     { name: "Reaper’s Bounty", tier: 3, cost: 4, action: "Major Action", rules: "You draw the life energy out of a defeated enemy or withered plant, converting it into a potent essence that heals you or an ally for 2 Wounds and restores 1 PotD.", domains: "Harvest, Growth, Nature, Death" }
 ];
 
-            // Generative Names for Randomizer
-            const randomNames = ["Lyra", "Kaelen", "Theron", "Ariadne", "Soren", "Eldric", "Valeria", "Gaius", "Nyx", "Orion"];
+            // Computeds & Evaluators
+            const totalStats = computed(() => {
+                return Object.values(char.value.stats).reduce((a, b) => a + b, 0);
+            });
 
-            const availableGods = computed(() => pantheons[char.value.pantheon] || []);
-            const selectedGodData = computed(() => availableGods.value.find(g => g.name === char.value.parent));
-            const activeWeapon = computed(() => weaponArsenal.find(w => w.type === char.value.equippedWeapon) || weaponArsenal[1]);
-            const activeArmour = computed(() => armourRegistry.find(a => a.tier === char.value.equippedArmour) || armourRegistry[0]);
-            
-            const effectiveDex = computed(() => Math.max(0, char.value.stats.dex + activeArmour.value.penalty));
-            const calculatedProficiency = computed(() => Math.min(6, Math.max(1, Math.floor(char.value.totalAp / 3))));
+            const effectiveDex = computed(() => {
+                const armor = armourRegistry.find(a => a.tier === char.value.equippedArmour);
+                const penalty = armor ? armor.penalty : 0;
+                return Math.max(1, char.value.stats.dex + penalty);
+            });
+
+            const calculatedProficiency = computed(() => {
+                return 2 + Math.floor(Math.max(0, char.value.totalAp - 3) / 4);
+            });
+
+            const availableGods = computed(() => {
+                return pantheons[char.value.pantheon] || [];
+            });
+
+            const activeWeapon = computed(() => {
+                return weaponArsenal.find(w => w.type === char.value.equippedWeapon) || null;
+            });
 
             const filteredShopAbilities = computed(() => {
-                if (!selectedGodData.value) return [];
-                const godDomains = [selectedGodData.value.primary, selectedGodData.value.secondary, ...selectedGodData.value.tertiary].map(d => d.toLowerCase());
+                const parentGod = availableGods.value.find(g => g.name === char.value.parent);
+                if (!parentGod) return [];
+                const domains = [parentGod.primary, parentGod.secondary, ...(parentGod.tertiary || [])].map(d => d.toLowerCase());
                 return abilitiesLibrary.filter(ab => {
-                    const abDomains = ab.domains.split(",").map(d => d.trim().toLowerCase());
-                    return abDomains.some(d => godDomains.includes(d)) && char.value.baseAp >= ab.cost && !char.value.learnedAbilities.some(l => l.name === ab.name);
+                    const abDomains = ab.domains.split(',').map(d => d.trim().toLowerCase());
+                    return abDomains.some(d => domains.includes(d));
                 });
             });
 
-            // Methods
+            // Mechanics & Logic Modifications
             const calcMod = (score) => Math.floor((score - 10) / 2);
-            const formatModifier = (mod) => mod >= 0 ? `+${mod}` : `${mod}`;
-            const statFullName = (s) => ({ str: "Strength", dex: "Dexterity", con: "Constitution", int: "Intelligence", wis: "Wisdom", cha: "Charisma" }[s]);
-            
-            const getWoundClass = (state) => {
-                if(char.value.wounds !== state) return 'bg-white/50 text-gray-700 hover:bg-white';
-                switch(state) {
-                    case 'Healthy': return 'bg-green-600 text-white shadow-inner';
-                    case 'Bruised': return 'bg-yellow-400 text-black shadow-inner';
-                    case 'Bleeding': return 'bg-orange-500 text-black shadow-inner';
-                    case 'Broken': return 'bg-red-600 text-white shadow-inner';
-                    case 'Dead': return 'bg-gray-900 text-red-500 shadow-inner';
-                    default: return 'bg-gray-300';
-                }
-            };
+            const formatModifier = (mod) => mod >= 0 ? `+${mod}` : mod;
+            const statFullName = (stat) => ({ str: 'Strength', dex: 'Dexterity', con: 'Constitution', int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma' }[stat]);
 
-            const getFatigueClass = (level) => {
-                if(char.value.fatigue !== level) return 'bg-white/50 text-gray-700 hover:bg-white';
-                switch(level) {
-                    case 0: return 'bg-green-600 text-white shadow-inner';
-                    case 1: return 'bg-yellow-400 text-black shadow-inner';
-                    case 2: return 'bg-orange-400 text-black shadow-inner';
-                    case 3: return 'bg-red-500 text-white shadow-inner';
-                    case 4: return 'bg-red-800 text-white shadow-inner';
-                    case 5: return 'bg-black text-red-500 shadow-inner';
-                    default: return 'bg-gray-300';
+            const adjustStat = (stat, amount) => {
+                if (amount > 0) {
+                    if (totalStats.value >= 90) return;
+                    if (char.value.stats[stat] >= 20) return;
                 }
-            };
-
-            const adjustStat = (stat, val) => {
-                let target = char.value.stats[stat] + val;
-                if (target >= 1 && target <= 30) char.value.stats[stat] = target;
+                const nextVal = char.value.stats[stat] + amount;
+                if (nextVal >= 1 && nextVal <= 20) char.value.stats[stat] = nextVal;
             };
 
             const randomizeStats = () => {
-                Object.keys(char.value.stats).forEach(stat => {
-                    let sum = 0;
-                    for(let i=0; i<5; i++) sum += Math.floor(Math.random() * 4) + 1; // 5d4 distribution
-                    char.value.stats[stat] = sum;
+                const roll5d4 = () => Array.from({ length: 5 }, () => Math.floor(Math.random() * 4) + 1).reduce((a, b) => a + b, 0);
+                Object.keys(char.value.stats).forEach(s => {
+                    char.value.stats[s] = roll5d4();
                 });
             };
 
             const randomizeAll = () => {
-                char.value.name = randomNames[Math.floor(Math.random() * randomNames.length)];
-                
-                const pantheonNames = Object.keys(pantheons);
-                char.value.pantheon = pantheonNames[Math.floor(Math.random() * pantheonNames.length)];
-                
-                const gods = pantheons[char.value.pantheon];
-                char.value.parent = gods[Math.floor(Math.random() * gods.length)].name;
-
                 randomizeStats();
-
-                char.value.equippedWeapon = weaponArsenal[Math.floor(Math.random() * weaponArsenal.length)].type;
-                char.value.equippedArmour = armourRegistry[Math.floor(Math.random() * armourRegistry.length)].tier;
-                char.value.alignment = ["Lawful", "Neutral", "Chaotic"][Math.floor(Math.random() * 3)];
-                char.value.gender = ["Male", "Female", "Non-Binary"][Math.floor(Math.random() * 3)];
-                char.value.age = Math.floor(Math.random() * 200) + 18 + "";
-                
-                // Refund and clear abilities upon massive randomize
-                char.value.learnedAbilities.forEach(ab => char.value.baseAp += ab.cost);
-                char.value.learnedAbilities = [];
-            };
-
-            // God & Pantheon Warning Logic
-            const changePantheon = (event) => {
-                const newPantheon = event.target.value;
-                if (char.value.learnedAbilities.length > 0) {
-                    if (confirm("Changing your Pantheon will wipe and refund your Learned Abilities. Proceed?")) {
-                        char.value.learnedAbilities.forEach(ab => char.value.baseAp += ab.cost);
-                        char.value.learnedAbilities = [];
-                        char.value.pantheon = newPantheon;
-                        char.value.parent = ""; // Wipe parent since it's a new pantheon
+                const pKeys = Object.keys(pantheons);
+                if (pKeys.length) {
+                    char.value.pantheon = pKeys[Math.floor(Math.random() * pKeys.length)];
+                    const gods = pantheons[char.value.pantheon];
+                    if (gods && gods.length) {
+                        char.value.parent = gods[Math.floor(Math.random() * gods.length)].name;
                     }
-                } else {
-                    char.value.pantheon = newPantheon;
-                    char.value.parent = "";
                 }
+                const alignments = ["Lawful", "Neutral", "Chaotic"];
+                char.value.alignment = alignments[Math.floor(Math.random() * alignments.length)];
+                char.value.gender = Math.random() > 0.5 ? "Male" : "Female";
+                char.value.age = Math.floor(Math.random() * 100) + 18;
             };
 
-            const changeParent = (event) => {
-                const newParent = event.target.value;
-                if (char.value.learnedAbilities.length > 0) {
-                    if (confirm("Changing your Divine Parent will wipe and refund your Learned Abilities so you can pick from your new parent's pool. Proceed?")) {
-                        char.value.learnedAbilities.forEach(ab => char.value.baseAp += ab.cost);
-                        char.value.learnedAbilities = [];
-                        char.value.parent = newParent;
-                    }
-                } else {
-                    char.value.parent = newParent;
-                }
+            const changePantheon = (e) => {
+                char.value.pantheon = e.target.value;
+                char.value.parent = "";
             };
 
-            // Enter Play flow control
-            const enterPlayMode = () => {
-                if(!char.value.parent) {
-                    alert("Please select a Divine Parent before entering Play Mode.");
-                    return;
-                }
-                currentMode.value = "play";
+            const changeParent = (e) => {
+                char.value.parent = e.target.value;
             };
 
-            const calcAttackBonus = (weapon) => {
-                if(!weapon) return 0;
-                let mod = weapon.ability === "Str" ? calcMod(char.value.stats.str) : calcMod(effectiveDex.value);
-                if (weapon.ability !== "Str" && weapon.ability !== "Dex") mod = Math.max(calcMod(char.value.stats.str), calcMod(effectiveDex.value));
-                return mod + calculatedProficiency.value + weapon.armourBonus;
+            const setWoundState = (state) => { char.value.wounds = state; };
+            const getWoundClass = (state) => {
+                const colors = { Healthy: 'bg-green-700/20 text-green-900 border-green-700', Bruised: 'bg-yellow-600/20 text-yellow-900 border-yellow-600', Bleeding: 'bg-orange-600/20 text-orange-900 border-orange-600', Broken: 'bg-red-600/20 text-red-900 border-red-600', Dead: 'bg-black text-white border-black' };
+                return char.value.wounds === state ? `${colors[state]} ring-2 ring-offset-1 ring-black/40` : 'bg-white/40 text-gray-700 hover:bg-white/60';
+            };
+
+            const getFatigueClass = (level) => {
+                const colors = ['bg-green-700/20 text-green-900', 'bg-yellow-600/20 text-yellow-900', 'bg-orange-500/20 text-orange-900', 'bg-orange-700/20 text-orange-900', 'bg-red-700/20 text-red-900', 'bg-black text-white'];
+                return char.value.fatigue === level ? `${colors[level]} ring-2 ring-offset-1 ring-black/40 border-black` : 'bg-white/40 text-gray-700 hover:bg-white/60';
+            };
+
+            const addSkill = () => {
+                if (newSkillName.value.trim()) {
+                    char.value.skills.push({ name: newSkillName.value.trim(), stat: newSkillStat.value, ticks: 0 });
+                    newSkillName.value = "";
+                }
+            };
+            const removeSkill = (idx) => { char.value.skills.splice(idx, 1); };
+            const toggleSkillTick = (idx) => {
+                const s = char.value.skills[idx];
+                s.ticks = s.ticks < 3 ? s.ticks + 1 : 0;
             };
 
             const calcDefenseBonus = () => {
-                const wisMod = calcMod(char.value.stats.wis);
-                return wisMod + Math.floor(effectiveDex.value / 2) + calculatedProficiency.value + activeArmour.value.bonus;
+                const arm = armourRegistry.find(a => a.tier === char.value.equippedArmour);
+                return (arm ? arm.bonus : 0) + calcMod(effectiveDex.value);
             };
 
-            const setWoundState = (state) => char.value.wounds = state;
-            const togglePotd = (idx) => char.value.potd[idx] = !char.value.potd[idx];
-            const replenishPotd = () => char.value.potd.fill(true);
-
-            // Sequential PotD increment / decrement tools
-            const decreaseActivePotd = () => {
-                for (let i = char.value.potd.length - 1; i >= 0; i--) {
-                    if (char.value.potd[i]) {
-                        char.value.potd[i] = false;
-                        break;
-                    }
-                }
+            const calcAttackBonus = (w) => {
+                if (!w) return 0;
+                const relevantStatValue = w.ability.toLowerCase() === 'str' ? char.value.stats.str : effectiveDex.value;
+                return calcMod(relevantStatValue) + calculatedProficiency.value;
             };
 
-            const increaseActivePotd = () => {
-                for (let i = 0; i < char.value.potd.length; i++) {
-                    if (!char.value.potd[i]) {
-                        char.value.potd[i] = true;
-                        break;
-                    }
-                }
-            };
-
-            // Canvas Compression Image Management Engine
-            const handleImageUpload = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement("canvas");
-                        const size = 150; 
-                        canvas.width = size;
-                        canvas.height = size;
-                        const ctx = canvas.getContext("2d");
-                        
-                        let srcX = 0, srcY = 0, srcW = img.width, srcH = img.height;
-                        if (img.width > img.height) {
-                            srcW = img.height;
-                            srcX = (img.width - img.height) / 2;
-                        } else {
-                            srcH = img.width;
-                            srcY = (img.height - img.width) / 2;
-                        }
-                        
-                        ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, size, size);
-                        char.value.image = canvas.toDataURL("image/jpeg", 0.7);
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            };
-
-            const triggerUnleash = () => {
-                let activeCount = char.value.potd.filter(p => p).length;
-                if (activeCount >= 3) {
-                    let drained = 0;
-                    for (let i = 0; i < char.value.potd.length; i++) {
-                        if (char.value.potd[i]) { char.value.potd[i] = false; drained++; if (drained === 3) break; }
-                    }
-                    isUnleashed.value = true;
-                } else {
-                    alert("Not enough Power to Unleash. Requires 3 PotD slots.");
-                }
-            };
-
-            const adjustTotalAp = (val) => {
-                if (char.value.totalAp + val >= 3) {
-                    char.value.totalAp += val;
-                    char.value.baseAp += val;
+            const adjustTotalAp = (amount) => {
+                const nextVal = char.value.totalAp + amount;
+                if (nextVal >= 0) {
+                    char.value.totalAp = nextVal;
+                    char.value.baseAp += amount;
                 }
             };
 
             const handleApClick = () => {
                 if (!apPromptActive.value) {
                     apPromptActive.value = true;
-                    apTimeout.value = setTimeout(() => { apPromptActive.value = false; }, 3000);
                 } else {
-                    clearTimeout(apTimeout.value);
-                    char.value.baseAp += 1;
-                    char.value.totalAp += 1;
                     apPromptActive.value = false;
+                    char.value.totalAp += 1;
+                    char.value.baseAp += 1;
                     apConfirmationMessage.value = true;
                     setTimeout(() => { apConfirmationMessage.value = false; }, 2000);
                 }
             };
 
-            const executePurchase = (ability) => {
-                if (char.value.baseAp >= ability.cost) {
-                    char.value.baseAp -= ability.cost;
-                    char.value.learnedAbilities.push({ ...ability });
+            const decreaseActivePotd = () => {
+                const idx = char.value.potd.lastIndexOf(true);
+                if (idx !== -1) char.value.potd[idx] = false;
+            };
+            const increaseActivePotd = () => {
+                const idx = char.value.potd.indexOf(false);
+                if (idx !== -1) char.value.potd[idx] = true;
+            };
+            const togglePotd = (idx) => { char.value.potd[idx] = !char.value.potd[idx]; };
+            const replenishPotd = () => { char.value.potd = Array(6).fill(true); };
+
+            const useAbilityInPlay = (ab) => {
+                if (currentMode.value !== 'play') return;
+                let cost = ab.tier;
+                for (let i = 0; i < cost; i++) {
+                    const idx = char.value.potd.lastIndexOf(true);
+                    if (idx !== -1) {
+                        char.value.potd[idx] = false;
+                    }
                 }
             };
 
-            const refundAbility = (ability) => {
-                char.value.baseAp += ability.cost;
-                char.value.learnedAbilities = char.value.learnedAbilities.filter(a => a.name !== ability.name);
-            };
-
-            const addSkill = () => {
-                if (newSkillName.value.trim() !== "") {
-                    char.value.skills.push({ name: newSkillName.value.trim(), stat: newSkillStat.value, ticks: 0 });
-                    newSkillName.value = "";
+            const executePurchase = (ab) => {
+                if (char.value.learnedAbilities.some(a => a.name === ab.name)) return;
+                const cost = ab.tier; 
+                if (char.value.baseAp >= cost) {
+                    char.value.baseAp -= cost;
+                    char.value.learnedAbilities.push({ ...ab, hideLabel: false });
                 }
             };
-            const removeSkill = (idx) => char.value.skills.splice(idx, 1);
-            const toggleSkillTick = (idx) => { if(char.value.skills[idx].ticks < 3) char.value.skills[idx].ticks++; };
-            
-            const printSheet = () => { manageModalOpen.value = false; setTimeout(() => window.print(), 300); };
 
-            // --- Roster Management Engine ---
-            const saveToRoster = (characterData) => {
-                const index = roster.value.findIndex(c => c.id === characterData.id);
-                if (index > -1) roster.value[index] = JSON.parse(JSON.stringify(characterData));
-                else roster.value.push(JSON.parse(JSON.stringify(characterData)));
-                localStorage.setItem("myth_roster", JSON.stringify(roster.value));
+            const refundAbility = (ab) => {
+                const idx = char.value.learnedAbilities.findIndex(a => a.name === ab.name);
+                if (idx !== -1) {
+                    const cost = ab.tier;
+                    char.value.baseAp += cost;
+                    char.value.learnedAbilities.splice(idx, 1);
+                }
+            };
+
+            const triggerUnleash = () => { isUnleashed.value = true; };
+            const enterPlayMode = () => {
+                currentMode.value = 'play';
+                saveToRoster();
+            };
+
+            const handleImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => { char.value.image = event.target.result; };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // Roster Management
+            const saveToRoster = () => {
+                const idx = roster.value.findIndex(r => r.id === char.value.id);
+                if (idx !== -1) roster.value[idx] = JSON.parse(JSON.stringify(char.value));
+                else roster.value.push(JSON.parse(JSON.stringify(char.value)));
+                localStorage.setItem('myth_roster', JSON.stringify(roster.value));
+            };
+
+            const loadCharacter = (id) => {
+                const target = roster.value.find(r => r.id === id);
+                if (target) char.value = JSON.parse(JSON.stringify(target));
+            };
+
+            const deleteCharacter = (id) => {
+                roster.value = roster.value.filter(r => r.id !== id);
+                localStorage.setItem('myth_roster', JSON.stringify(roster.value));
+                if (char.value.id === id) char.value = getBlankChar();
             };
 
             const createNewCharacter = () => {
                 char.value = getBlankChar();
-                currentMode.value = "edit";
-                saveToRoster(char.value);
-                manageModalOpen.value = false;
+                currentMode.value = 'edit';
+                saveToRoster();
             };
 
-            const loadCharacter = (id) => {
-                const target = roster.value.find(c => c.id === id);
-                if(target) { char.value = JSON.parse(JSON.stringify(target)); manageModalOpen.value = false; }
-            };
-
-            // Fast Track Loaded Character into Edit Screen Mode
             const editCharacter = (id) => {
                 loadCharacter(id);
-                currentMode.value = "edit";
+                currentMode.value = 'edit';
                 manageModalOpen.value = false;
-            };
-
-            const deleteCharacter = (id) => {
-                if(confirm("Permanently delete this character?")) {
-                    roster.value = roster.value.filter(c => c.id !== id);
-                    localStorage.setItem("myth_roster", JSON.stringify(roster.value));
-                    if(char.value.id === id) createNewCharacter();
-                }
             };
 
             const exportCurrent = () => {
                 const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(char.value));
-                const dl = document.createElement('a');
-                dl.setAttribute("href", dataStr); dl.setAttribute("download", `${char.value.name || 'Hero'}_Chronicle.json`); dl.click();
+                const dlNode = document.createElement('a');
+                dlNode.setAttribute("href", dataStr);
+                dlNode.setAttribute("download", `${char.value.name || "hero"}.json`);
+                document.body.appendChild(dlNode);
+                dlNode.click();
+                dlNode.remove();
             };
 
             const exportAll = () => {
                 const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(roster.value));
-                const dl = document.createElement('a');
-                dl.setAttribute("href", dataStr); dl.setAttribute("download", `Myth_Roster_Backup.json`); dl.click();
+                const dlNode = document.createElement('a');
+                dlNode.setAttribute("href", dataStr);
+                dlNode.setAttribute("download", "myth_roster_backup.json");
+                document.body.appendChild(dlNode);
+                dlNode.click();
+                dlNode.remove();
             };
 
             const importData = (e) => {
-                Array.from(e.target.files).forEach(file => {
+                const files = e.target.files;
+                if (!files.length) return;
+                Array.from(files).forEach(f => {
                     const reader = new FileReader();
-                    reader.onload = (event) => {
+                    reader.onload = (evt) => {
                         try {
-                            const parsed = JSON.parse(event.target.result);
-                            if(Array.isArray(parsed)) parsed.forEach(p => saveToRoster(p));
-                            else if (parsed.id && parsed.stats) saveToRoster(parsed);
-                        } catch (err) { alert("Failed to parse file"); }
+                            const raw = JSON.parse(evt.target.result);
+                            if (Array.isArray(raw)) {
+                                roster.value = raw;
+                                if (raw.length) char.value = JSON.parse(JSON.stringify(raw[0]));
+                            } else if (raw && raw.id) {
+                                const idx = roster.value.findIndex(r => r.id === raw.id);
+                                if (idx !== -1) roster.value[idx] = raw;
+                                else roster.value.push(raw);
+                                char.value = JSON.parse(JSON.stringify(raw));
+                            }
+                            localStorage.setItem('myth_roster', JSON.stringify(roster.value));
+                        } catch (err) { alert("Invalid structure"); }
                     };
-                    reader.readAsText(file);
+                    reader.readAsText(f);
                 });
-                e.target.value = null;
             };
 
-            watch(char, (newVal) => {
-                saveToRoster(newVal);
-                localStorage.setItem("myth_active_id", newVal.id);
-            }, { deep: true });
-
-            watch(currentMode, (m) => localStorage.setItem("myth_mode", m));
+            const printSheet = () => { window.print(); };
 
             onMounted(() => {
-                const savedRoster = localStorage.getItem("myth_roster");
-                if (savedRoster) roster.value = JSON.parse(savedRoster);
-                
-                const activeId = localStorage.getItem("myth_active_id");
-                if (activeId && roster.value.some(c => c.id === activeId)) loadCharacter(activeId);
-                else if (roster.value.length > 0) loadCharacter(roster.value[0].id);
-                else saveToRoster(char.value);
-
-                const savedMode = localStorage.getItem("myth_mode");
-                if (savedMode) currentMode.value = savedMode;
+                const cached = localStorage.getItem('myth_roster');
+                if (cached) {
+                    roster.value = JSON.parse(cached);
+                    if (roster.value.length) char.value = JSON.parse(JSON.stringify(roster.value[0]));
+                }
             });
 
             return {
                 char, roster, currentMode, shopOpen, manageModalOpen, isUnleashed, newSkillName, newSkillStat,
-                pantheons, woundStates, fatigueStates, weaponArsenal, armourRegistry, availableGods, selectedGodData,
-                activeWeapon, activeArmour, effectiveDex, calculatedProficiency, filteredShopAbilities, 
-                apPromptActive, apConfirmationMessage, getWoundClass, getFatigueClass,
-                calcMod, formatModifier, statFullName, adjustStat, randomizeStats, randomizeAll, calcAttackBonus, calcDefenseBonus,
-                setWoundState, togglePotd, replenishPotd, decreaseActivePotd, increaseActivePotd, handleImageUpload, triggerUnleash, adjustTotalAp, handleApClick, executePurchase, refundAbility,
-                addSkill, removeSkill, toggleSkillTick, enterPlayMode, changePantheon, changeParent,
-                createNewCharacter, loadCharacter, editCharacter, deleteCharacter, exportCurrent, exportAll, importData, printSheet
+                apPromptActive, apConfirmationMessage, pantheons, woundStates, fatigueStates, weaponArsenal,
+                armourRegistry, totalStats, effectiveDex, calculatedProficiency, availableGods, activeWeapon,
+                filteredShopAbilities, calcMod, formatModifier, statFullName, adjustStat, randomizeStats,
+                randomizeAll, changePantheon, changeParent, setWoundState, getWoundClass, getFatigueClass,
+                addSkill, removeSkill, toggleSkillTick, calcDefenseBonus, calcAttackBonus, adjustTotalAp,
+                handleApClick, decreaseActivePotd, increaseActivePotd, togglePotd, replenishPotd,
+                executePurchase, refundAbility, triggerUnleash, enterPlayMode, handleImageUpload,
+                createNewCharacter, editCharacter, loadCharacter, deleteCharacter, printSheet,
+                importData, exportCurrent, exportAll, useAbilityInPlay
             };
         }
     }).mount('#app');

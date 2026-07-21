@@ -455,9 +455,9 @@ const weaponArsenal = [
   { name: "Sling", type: "Sling", range: "Distant", ability: "Dex", bonus: "+1 Partial, +1 Medium", traits: [], effects: ["Stagger"] },
   { name: "Blowgun", type: "Blowgun", range: "Distant", ability: "Dex", bonus: "+0", traits: ["Concealable", "Two-handed"], effects: ["Poison"] },
   { name: "Shortbow", type: "Shortbow", range: "Distant", ability: "Dex", bonus: "+1 Light", traits: ["Two-handed"], effects: ["Bleed"] },
-  { name: "Light Crossbow", type: "Crossbow", range: "Distant", ability: "Dex", bonus: "+1 Medium", traits: ["Reload", "Two-handed"], effects: ["Pierce", "Pin"] },
-  { name: "Hand Crossbow", type: "Crossbow", range: "Near", ability: "Dex", bonus: "+1 Light", traits: ["Reload", "Concealable"], effects: ["Bleed"] },
-  { name: "Stirrup Crossbow", type: "Crossbow", range: "Distant", ability: "Dex", bonus: "+1 Medium, Plate", traits: ["Reload", "Two-handed"], effects: ["Pierce", "Pin"] },
+  { name: "Light Crossbow", type: "Light Crossbow", range: "Distant", ability: "Dex", bonus: "+1 Medium", traits: ["Reload", "Two-handed"], effects: ["Pierce", "Pin"] },
+  { name: "Hand Crossbow", type: "Hand Crossbow", range: "Near", ability: "Dex", bonus: "+1 Light", traits: ["Reload", "Concealable"], effects: ["Bleed"] },
+  { name: "Stirrup Crossbow", type: "Stirrup Crossbow", range: "Distant", ability: "Dex", bonus: "+1 Medium, Plate", traits: ["Reload", "Two-handed"], effects: ["Pierce", "Pin"] },
   { name: "Composite Bow", type: "Composite Bow", range: "Extreme", ability: "Str", bonus: "+1 Medium, +2 Plate", traits: ["Two-handed"], effects: ["Pierce"] },
   { name: "Longbow", type: "Longbow", range: "Extreme", ability: "Str", bonus: "+1 Plate, Heavy", traits: ["Two-handed"], effects: ["Pierce", "Pin"] }
 ];

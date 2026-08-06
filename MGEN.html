@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demigods Mythic Monster Maker</title>
+    <script src="data.js"></script>
+    <!-- html2pdf for easy PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --bg-page: #09090b;
+            --bg-panel: #18181b;
+            --bg-input: #27272a;
+            --bg-input-focus: #3f3f46;
+            
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            
+            --primary-purple: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --highlight-gold: #fbbf24;
+            
+            --border-color: #3f3f46;
+            --danger: #ef4444;
+
+            --radius: 6px;
+            --spacing: 20px;
+            
+            --statblock-bg: #121212;
+            --statblock-text: #f4f4f5;
+            --statblock-accent: #8b5cf6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            position: relative;
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 var(--spacing);
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .system-flip-container {
+            perspective: 1000px;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            transform-origin: center center;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            min-height: 0;
+        }
+        .system-flip-container.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .hidden-title {
+            position: absolute;
+            left: var(--spacing);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 120px;
+            height: 40px;
+            opacity: 0;
+            pointer-events: auto;
+            z-index: 20;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            height: 100%;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-purple);
+            border-bottom-color: var(--primary-purple);
+        }
+
+        .header-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .utility-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px var(--spacing);
+            background: linear-gradient(180deg, rgba(24,24,27,0.98), rgba(14,14,16,0.98));
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .view-mode-group {
+            display: inline-flex;
+            gap: 6px;
+            padding: 4px;
+            background: rgba(0,0,0,0.24);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+        }
+
+        .view-mode-btn {
+            border: 0;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 7px 11px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .view-mode-btn.active {
+            background: var(--primary-purple);
+            color: white;
+        }
+
+        button.action-btn, .btn {
+            background-color: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        button.action-btn:hover, .btn:hover {
+            background-color: var(--primary-purple);
+            border-color: var(--primary-hover);
+        }
+
+        button.action-btn.gold, .btn.gold {
+            color: var(--bg-page);
+            background-color: var(--highlight-gold);
+            border-color: var(--highlight-gold);
+        }
+        button.action-btn.gold:hover, .btn.gold:hover {
+            background-color: #f59e0b;
+        }
+        
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        .btn-danger:hover {
+            background-color: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .btn-block { width: 100%; margin-bottom: 15px; }
+
+        main {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            padding: var(--spacing);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            align-items: stretch;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .column {
+            padding: 20px;
+            min-width: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        #col-1 { min-width: 200px; }
+        #col-2 { min-width: 200px; }
+        #col-3 { min-width: 300px; }
+
+        .col-1 { flex: 1 1 30%; }
+        .col-2 { flex: 1 1 35%; }
+        .col-3 { flex: 1 1 35%; background-color: rgba(0,0,0,0.2); }
+
+        .resizer {
+            width: 6px;
+            background-color: var(--border-color);
+            cursor: col-resize;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+        }
+        .resizer:hover, .resizer.dragging {
+            background-color: var(--primary-purple);
+            box-shadow: 0 0 8px var(--primary-purple);
+        }
+
+        h2, h3 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            margin-top: 15px;
+            color: var(--primary-purple);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        h2:first-child, h3:first-child { margin-top: 0; }
+
+        label { 
+            display: block; 
+            font-size: 0.85rem; 
+            margin-bottom: 5px; 
+            color: var(--text-muted); 
+            font-weight: 600;
+        }
+
+        input[type="text"], 
+        input[type="number"], 
+        select, 
+        textarea {
+            width: 100%;
+            background-color: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 9px;
+            margin-bottom: 12px;
+            border-radius: var(--radius);
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            background-color: var(--bg-input-focus);
+        }
+        
+        textarea { resize: vertical; min-height: 60px; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        
+        .radio-group, .checkbox-group {
+            background: var(--bg-input);
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 15px;
+        }
+        .radio-group label, .checkbox-group label {
+            display: flex;
+            align-items: center;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            cursor: pointer;
+            text-transform: none;
+            font-weight: normal;
+        }
+        .radio-group label:last-child, .checkbox-group label:last-child { margin-bottom: 0; }
+        .radio-group input, .checkbox-group input { width: auto; margin-right: 10px; }
+
+        .movement-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .movement-item {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-input);
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+        }
+        .movement-item input[type="checkbox"] { margin-right: 6px; }
+        .movement-item input[type="number"] { margin-bottom: 0; padding: 4px; width: 60px; }
+        .movement-item span { font-size: 0.8rem; flex: 1; color: var(--text-muted); }
+
+        .action-row {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--primary-purple);
+            border-radius: var(--radius);
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .action-row-header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .action-row-header input { margin-bottom: 0; flex: 2; }
+        .action-row-header select { margin-bottom: 0; flex: 1; }
+        .action-row textarea { margin-bottom: 8px; }
+        .action-row-footer { display: flex; justify-content: space-between; align-items: center; }
+
+        #statblock-preview {
+            background-color: var(--statblock-bg);
+            border: 2px solid var(--primary-purple);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+            padding: 20px;
+            border-radius: var(--radius);
+            color: var(--statblock-text);
+        }
+
+        .statblock-header h1 {
+            color: var(--highlight-gold);
+            font-size: 1.8rem;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+        .statblock-header .desc {
+            font-style: italic;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .tapered-rule {
+            display: block;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, transparent, var(--primary-purple), transparent);
+            margin: 15px 0;
+        }
+        
+        .statblock-section-title {
+            color: var(--primary-purple);
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border-color);
+            margin: 15px 0 10px 0;
+            padding-bottom: 4px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .statblock-preview p {
+            margin: 6px 0;
+            line-height: 1.4;
+            font-size: 0.9rem;
+        }
+        
+        .stat-scores {
+            display: flex;
+            justify-content: space-between;
+            text-align: center;
+            margin: 15px 0;
+            background: rgba(139, 92, 246, 0.05);
+            padding: 10px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+        }
+        .stat-scores div { flex: 1; }
+        .stat-scores h4 { font-size: 0.9rem; margin-bottom: 2px; color: var(--highlight-gold); }
+        .stat-scores p { color: var(--text-main); font-weight: bold; }
+        .stat-scores small { color: var(--text-muted); display: block; }
+
+        .purple-text { color: var(--primary-purple); font-weight: bold; }
+
+        .wound-tracker {
+            display: flex;
+            gap: 6px;
+            margin: 10px 0;
+            background: var(--bg-input);
+            padding: 10px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+        }
+        .wound-box {
+            flex: 1;
+            text-align: center;
+            padding: 6px 2px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            background: var(--bg-panel);
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .wound-box:hover { border-color: var(--primary-purple); color: var(--text-main); }
+        .wound-box.active {
+            background: var(--primary-purple);
+            color: #fff;
+            border-color: var(--primary-hover);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+        }
+
+        .rules-layout {
+            display: flex;
+            gap: var(--spacing);
+            height: 100%;
+            min-height: 0;
+            max-width: none;
+            margin: 0;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        
+        .rules-sidebar {
+            width: 250px;
+            border-right: 1px solid var(--border-color);
+            padding: 15px 0;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .rule-tab {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 12px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .rule-tab:hover {
+            background-color: var(--bg-input);
+            color: var(--text-main);
+        }
+
+        .rule-tab.active {
+            color: var(--primary-purple);
+            background-color: rgba(139, 92, 246, 0.1);
+            border-left-color: var(--primary-purple);
+        }
+
+        .rules-content-area {
+            flex: 1;
+            padding: 30px;
+            min-width: 0;
+            overflow-y: auto;
+        }
+        
+        .rule-pane { display: none; }
+        .rule-pane.active { display: block; animation: fadeIn 0.3s ease; }
+        .rule-pane h2 { color: var(--highlight-gold); margin-bottom: 15px; }
+        .rule-pane p, .rule-pane li { line-height: 1.6; margin-bottom: 15px; color: var(--text-muted); font-size: 0.95rem; }
+        .rules-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin: 15px 0;
+        }
+        .rule-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 12px;
+        }
+        .rule-card h3 {
+            margin-top: 0;
+            font-size: 0.95rem;
+        }
+        
+        .rules-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+        .rules-table th, .rules-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+        }
+        .rules-table th { background: var(--bg-input); color: var(--primary-purple); }
+        .rules-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+        .bestiary-container {
+            height: 100%;
+            min-height: 0;
+            max-width: none;
+            margin: 0;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        
+        .filter-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            background: var(--bg-panel);
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .filter-bar label { margin-bottom: 4px; }
+        .filter-bar input, .filter-bar select { margin-bottom: 0; }
+        .carry-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .view-mode-label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-muted); }
+        input.gradient-range { width: 100%; appearance: none; height: 12px; border-radius: 999px; background: linear-gradient(90deg, #22c55e 0%, #fbbf24 50%, #ef4444 100%); outline: none; }
+        input.gradient-range::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--primary-purple); border: 2px solid #fff; box-shadow: 0 0 6px rgba(0,0,0,0.3); cursor: pointer; margin-top: -3px; }
+        input.gradient-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--primary-purple); border: 2px solid #fff; box-shadow: 0 0 6px rgba(0,0,0,0.3); cursor: pointer; }
+        .filter-range-value { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 0 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: var(--radius); color: var(--text-main); font-weight: 700; }
+        .hidden { display: none !important; }
+
+        .bestiary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .bestiary-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-purple);
+            border-radius: var(--radius);
+            padding: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .bestiary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+        }
+        .bestiary-card h3 { margin: 0 0 5px 0; color: var(--text-main); border: none; padding: 0; text-transform: none; }
+        .bestiary-card .meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
+        .bestiary-card-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+        .file-input-wrapper { display: inline-block; position: relative; }
+        .file-input-wrapper input[type="file"] { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        .hidden { display: none !important; }
+		
+        .spinner { 
+            border: 4px solid var(--bg-input); 
+            border-top: 4px solid var(--highlight-gold); 
+            border-radius: 50%; 
+            width: 30px; 
+            height: 30px; 
+            animation: spin 1s linear infinite; 
+            margin: 0 auto; 
+            display: none; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Confirm Save Modal */
+        #confirm-save-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.8); z-index: 3000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .confirm-save-box {
+            background: var(--bg-panel); border: 1px solid var(--highlight-gold);
+            padding: 20px; border-radius: var(--radius); width: 90%; max-width: 400px;
+            text-align: center;
+        }
+        .confirm-save-actions {
+            display: flex; gap: 10px; justify-content: center; margin-top: 20px;
+        }
+
+        @media (max-width: 900px) {
+            body { overflow: auto; height: auto; min-height: 100vh; }
+            .system-flip-container { height: auto; min-height: 100vh; }
+            header { height: auto; min-height: 54px; padding: 10px var(--spacing); }
+            .utility-bar { align-items: stretch; flex-direction: column; }
+            .header-actions { justify-content: flex-start; }
+            main { overflow: visible; padding: 10px; }
+            .tab-content.active { height: auto; }
+            .app-container { flex-direction: column; height: auto; overflow: visible; }
+            .column { width: 100% !important; flex: none !important; max-height: none; overflow: visible; }
+            .resizer { display: none !important; }
+            .rules-layout { flex-direction: column; height: auto; overflow: visible; }
+            .rules-sidebar { width: 100%; border-right: 0; border-bottom: 1px solid var(--border-color); display: flex; overflow-x: auto; overflow-y: hidden; padding: 8px; }
+            .rule-tab { white-space: nowrap; border-left: 0; border-bottom: 3px solid transparent; }
+            .rule-tab.active { border-left-color: transparent; border-bottom-color: var(--primary-purple); }
+            .rules-content-area { overflow: visible; padding: 18px; }
+            .bestiary-container { height: auto; overflow: visible; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="system-flip-container" id="flip-container">
+        <header>
+            <span id="app-title" class="hidden-title" ondblclick="toggleSystemView()" aria-hidden="true"></span>
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('creator', this)">⚡ Monster Creator</button>
+                <button class="tab-btn" onclick="switchTab('rules', this)">📖 System Rules</button>
+                <button class="tab-btn" onclick="switchTab('bestiary', this)">📜 Local Bestiary</button>
+            </div>
+        </header>
+
+        <div class="utility-bar">
+            <div class="view-mode-group" id="view-mode-group" aria-label="Monster creator view mode">
+                <button class="view-mode-btn active" type="button" data-view-mode="balanced" onclick="applyViewMode('balanced')">Balanced</button>
+                <button class="view-mode-btn" type="button" data-view-mode="editor" onclick="applyViewMode('editor')">Editor</button>
+                <button class="view-mode-btn" type="button" data-view-mode="play" onclick="applyViewMode('play')">Play</button>
+            </div>
+            <div class="header-actions">
+                <button class="action-btn" style="border-color: var(--primary-purple); color: var(--primary-purple);" onclick="openAIBoxTrigger()">✨ AI Gen</button>
+                <button class="action-btn" onclick="saveCurrentMonster()">Save to Bestiary</button>
+                <button class="action-btn" onclick="exportCurrentMonsterJSON()">Export JSON</button>
+                <button class="action-btn gold" onclick="exportPDF()">Download PDF</button>
+            </div>
+        </div>
+
+        <main>
+        <!-- 1. CREATOR TAB -->
+        <div id="creator" class="tab-content active">
+            <div class="app-container" id="app-container">
+                
+                <!-- COLUMN 1: Base Stats & Scale -->
+                <div class="column col-1" id="col-1">
+                    <button class="btn btn-danger btn-block" onclick="randomizeAll()">🎲 Randomize Monster</button>
+                    
+                    <h3>Core Identity</h3>
+                    <label>Monster Name</label>
+                    <input type="text" id="m-name" value="Void Weaver" oninput="updatePreview()">
+                    
+                    <label>Brief Description</label>
+                    <textarea id="m-desc" oninput="updatePreview()">A monstrosity that slips between the gaps of reality.</textarea>
+
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label>Alignment</label>
+                            <select id="m-align" onchange="updatePreview()">
+                                <option value="Lawful Good">Lawful Good</option>
+                                <option value="Neutral Good">Neutral Good</option>
+                                <option value="Chaotic Good">Chaotic Good</option>
+                                <option value="Lawful Neutral">Lawful Neutral</option>
+                                <option value="True Neutral">True Neutral</option>
+                                <option value="Chaotic Neutral">Chaotic Neutral</option>
+                                <option value="Lawful Evil">Lawful Evil</option>
+                                <option value="Neutral Evil" selected>Neutral Evil</option>
+                                <option value="Chaotic Evil">Chaotic Evil</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Size / Scale</label>
+                            <select id="m-scale" onchange="updatePreview()">
+                                <option value="Scale 0 (Tiny)">Scale 0 (Tiny)</option>
+                                <option value="Scale 1 (Mortal)" selected>Scale 1 (Mortal)</option>
+                                <option value="Scale 2 (Large)">Scale 2 (Large)</option>
+                                <option value="Scale 3 (Giant)">Scale 3 (Giant)</option>
+                                <option value="Scale 4 (Titanic)">Scale 4 (Titanic)</option>
+                                <option value="Scale 5 (Divine)">Scale 5 (Divine)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label>Threat Level: <span id="threat-val-display" style="color:var(--highlight-gold)">50</span>% (Proficiency: <span id="prof-val" style="color:var(--highlight-gold)">+4</span>)</label>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                        <input type="range" id="m-threat-range" min="1" max="100" value="50" style="flex: 1;" oninput="syncThreatFromRange()">
+                        <input type="number" id="m-threat-num" min="1" max="100" value="50" style="width: 70px; margin-bottom: 0;" oninput="syncThreatFromNum()">
+                    </div>
+
+                    <label>Natural Armour (Adds to Defence Bonus)</label>
+                    <input type="number" id="m-nat-armour" value="2" oninput="updatePreview()">
+
+                    <label>Movement & Speeds</label>
+                    <div class="movement-grid">
+                        <div class="movement-item">
+                            <input type="checkbox" id="mv-walk-check" checked onchange="updatePreview()">
+                            <span>Walk</span>
+                            <input type="number" id="mv-walk-spd" value="15" oninput="updatePreview()">
+                        </div>
+                        <div class="movement-item">
+                            <input type="checkbox" id="mv-fly-check" onchange="updatePreview()">
+                            <span>Fly</span>
+                            <input type="number" id="mv-fly-spd" value="20" oninput="updatePreview()">
+                        </div>
+                        <div class="movement-item">
+                            <input type="checkbox" id="mv-swim-check" onchange="updatePreview()">
+                            <span>Swim</span>
+                            <input type="number" id="mv-swim-spd" value="10" oninput="updatePreview()">
+                        </div>
+                        <div class="movement-item">
+                            <input type="checkbox" id="mv-climb-check" checked onchange="updatePreview()">
+                            <span>Climb</span>
+                            <input type="number" id="mv-climb-spd" value="15" oninput="updatePreview()">
+                        </div>
+                        <div class="movement-item">
+                            <input type="checkbox" id="mv-burrow-check" onchange="updatePreview()">
+                            <span>Burrow</span>
+                            <input type="number" id="mv-burrow-spd" value="5" oninput="updatePreview()">
+                        </div>
+                        <div class="movement-item">
+                            <input type="checkbox" id="mv-hover-check" onchange="updatePreview()">
+                            <span>Hover</span>
+                            <input type="number" id="mv-hover-spd" value="15" oninput="updatePreview()">
+                        </div>
+                    </div>
+                    <input type="text" id="mv-custom" placeholder="e.g. Teleportation 10m" oninput="updatePreview()">
+
+                    <h3>Attributes</h3>
+                    <div class="stats-grid">
+                        <div><label>STR</label><input type="number" id="m-str" value="14" oninput="updatePreview()"></div>
+                        <div><label>DEX</label><input type="number" id="m-dex" value="18" oninput="updatePreview()"></div>
+                        <div><label>CON</label><input type="number" id="m-con" value="14" oninput="updatePreview()"></div>
+                        <div><label>INT</label><input type="number" id="m-int" value="10" oninput="updatePreview()"></div>
+                        <div><label>WIS</label><input type="number" id="m-wis" value="12" oninput="updatePreview()"></div>
+                        <div><label>CHA</label><input type="number" id="m-cha" value="8" oninput="updatePreview()"></div>
+                    </div>
+
+                    <h3>Damage Rule (Mutually Exclusive)</h3>
+                    <div class="radio-group">
+                        <label><input type="radio" name="res-rule" value="normal" checked onchange="updatePreview()"> Normal Beast (Standard Rules)</label>
+                        <label><input type="radio" name="res-rule" value="mortal_immunity" onchange="updatePreview()"> Mortal Immunity (Immune to non-divine)</label>
+                        <label><input type="radio" name="res-rule" value="epic_invulnerability" onchange="updatePreview()"> Epic Invulnerability (Only weakness damages)</label>
+                    </div>
+				</div>
+
+                <!-- Resizer 1 -->
+                <div class="resizer" id="resizer-1"></div>
+
+                <!-- COLUMN 2: Puzzles & Dynamic Actions -->
+                <div class="column col-2" id="col-2">
+                    <h3>The Puzzle Mechanics</h3>
+                    <label>Fatal Weakness</label>
+                    <textarea id="m-weakness" placeholder="Describe how the vulnerability is bypassed..." oninput="updatePreview()">Must be pinned to the ground with iron before it can be truly slain.</textarea>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 10px;">
+                        <h3 style="margin: 0; border: none; padding: 0;">Combat Actions</h3>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openAbilityLibraryModal()">📚 Load Saved Ability</button>
+                            <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="addActionRow()">➕ Add Action</button>
+                        </div>
+                    </div>
+                    <small style="color:var(--text-muted); font-size: 0.75rem; display: block; margin-bottom: 10px;">Use <code>{ATK}</code> or <code>{DEF}</code> in description to auto-inject calculated stats.</small>
+                    
+                    <div id="actions-container">
+                        <!-- Dynamic action rows injected here -->
+                    </div>
+                </div>
+
+                <!-- Resizer 2 -->
+                <div class="resizer" id="resizer-2"></div>
+
+                <!-- COLUMN 3: Live Preview & Management -->
+                <div class="column col-3" id="col-3">
+                    <div id="statblock-preview">
+                        <div class="statblock-header">
+                            <h1 id="out-name">Void Weaver</h1>
+                            <p class="desc" id="out-desc">A monstrosity that slips between the gaps of reality.</p>
+                        </div>
+                        
+                        <div style="font-size: 0.9rem; margin-bottom: 10px; color: var(--text-muted);">
+                            <strong style="color:var(--text-main)" id="out-meta">Scale 1 (Mortal) | Neutral Evil</strong>
+                        </div>
+                        
+                        <div class="tapered-rule"></div>
+                        
+                        <p><strong>Defence Bonus:</strong> <span id="out-db" class="purple-text">16</span></p>
+                        <p><strong>Speed:</strong> <span id="out-speed">Walk 15m, Climb 15m</span></p>
+
+                        <div class="wound-tracker" id="out-wounds">
+                            <div class="wound-box active" onclick="setWound(0)">Healthy</div>
+                            <div class="wound-box" onclick="setWound(1)">Bruised</div>
+                            <div class="wound-box" onclick="setWound(2)">Bleeding</div>
+                            <div class="wound-box" onclick="setWound(3)">Broken</div>
+                            <div class="wound-box" style="color:var(--danger);" onclick="setWound(4)">Dead</div>
+                        </div>
+
+                        <div class="tapered-rule"></div>
+                        
+                        <div class="stat-scores">
+                            <div><h4>STR</h4><p id="out-str">14</p><small id="out-str-mod">(+2)</small></div>
+                            <div><h4>DEX</h4><p id="out-dex">18</p><small id="out-dex-mod">(+4)</small></div>
+                            <div><h4>CON</h4><p id="out-con">14</p><small id="out-con-mod">(+2)</small></div>
+                            <div><h4>INT</h4><p id="out-int">10</p><small id="out-int-mod">(+0)</small></div>
+                            <div><h4>WIS</h4><p id="out-wis">12</p><small id="out-wis-mod">(+1)</small></div>
+                            <div><h4>CHA</h4><p id="out-cha">8</p><small id="out-cha-mod">(-1)</small></div>
+                        </div>
+                        
+                        <div class="tapered-rule"></div>
+                        
+                        <div class="statblock-section-title">Traits & Vulnerabilities</div>
+                        <div id="out-traits"></div>
+                        
+                        <p style="margin-top: 10px;"><strong>Fatal Weakness:</strong> <span id="out-weakness"></span></p>
+
+                        <div class="statblock-section-title">Combat Actions (<span id="out-atk-bonus" class="purple-text"></span> to Attack)</div>
+                        <div id="out-actions">
+                            <!-- Actions injected here -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 2. RULES TAB -->
+        <div id="rules" class="tab-content">
+            <div class="rules-layout">
+                <aside class="rules-sidebar" id="rules-sidebar">
+                    <!-- Populated from data.js rulesContent -->
+                </aside>
+                <article class="rules-content-area" id="rules-content-area">
+                    <!-- Populated from data.js rulesContent -->
+                </article>
+            </div>
+        </div>
+
+        <!-- 3. BESTIARY TAB -->
+        <div id="bestiary" class="tab-content">
+            <div class="bestiary-container">
+                <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px; align-items:center; margin-bottom:18px;">
+                    <div>
+                        <h2 style="margin-bottom:4px;">Local Bestiary Vault</h2>
+                        <p style="color: var(--text-muted); margin:0;">Manage, filter, and load mythic creatures stored in your browser.</p>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                        <button class="btn" onclick="exportAllBestiaryJSON()">Export All (JSON)</button>
+                        <label class="btn" style="position:relative; overflow:hidden;">
+                            Import All (JSON)
+                            <input type="file" id="bestiary-import-file" accept="application/json" onchange="importBestiaryJSON(event)" style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
+                        </label>
+                        <button class="btn gold" onclick="exportAllBestiaryPDF()">Export All (PDF Bundle)</button>
+                    </div>
+                </div>
+                
+                <div class="filter-bar">
+                    <div style="grid-column: span 2; min-width: 220px;">
+                        <label>Live Search</label>
+                        <input type="text" id="filter-search" placeholder="Search names or descriptions..." oninput="renderBestiary()">
+                    </div>
+                    <div>
+                        <label>Threat Range</label>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <input type="range" id="filter-threat-min" min="1" max="100" value="1" class="gradient-range" oninput="renderBestiary(); syncThreatLabel()">
+                            <input type="range" id="filter-threat-max" min="1" max="100" value="100" class="gradient-range" oninput="renderBestiary(); syncThreatLabel()">
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:0.85rem; color:var(--text-muted);">
+                            <span>Min <span id="filter-threat-min-display">1</span>%</span>
+                            <span>Max <span id="filter-threat-max-display">100</span>%</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Scale Tier</label>
+                        <select id="filter-scale" onchange="renderBestiary()">
+                            <option value="any">Any</option>
+                            <option value="Scale 0">Scale 0 (Tiny)</option>
+                            <option value="Scale 1">Scale 1 (Mortal)</option>
+                            <option value="Scale 2">Scale 2 (Large)</option>
+                            <option value="Scale 3">Scale 3 (Giant)</option>
+                            <option value="Scale 4">Scale 4 (Titanic)</option>
+                            <option value="Scale 5">Scale 5 (Divine)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Alignment</label>
+                        <select id="filter-alignment" onchange="renderBestiary()">
+                            <option value="any">Any</option>
+                            <option value="Good">Good</option>
+                            <option value="Neutral">Neutral</option>
+                            <option value="Evil">Evil</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bestiary-grid" id="bestiary-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+    </div>
+    
+    <!-- Confirm Save Modal -->
+    <div id="confirm-save-modal" class="hidden">
+        <div class="confirm-save-box">
+            <h3 style="margin-top:0; color:var(--highlight-gold);">Save Current Monster?</h3>
+            <p style="font-size: 0.9rem; color:var(--text-muted); margin-bottom: 20px;">Would you like to save your current work to the Bestiary before generating a new one?</p>
+            <div class="confirm-save-actions">
+                <button class="btn gold" onclick="proceedToAI(true)">Yes, Save it</button>
+                <button class="btn btn-danger" onclick="proceedToAI(false)">No, Discard</button>
+                <button class="btn" style="background:transparent;" onclick="closeConfirmSave()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Generation Modal -->
+    <div id="ai-modal" class="hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:2000; display:flex; align-items:center; justify-content:center;">
+        <div style="background:var(--bg-panel); border:1px solid var(--primary-purple); padding:25px; border-radius:var(--radius); width:90%; max-width:500px; box-shadow: 0 0 20px rgba(139,92,246,0.3);">
+            <h2 style="margin-top:0; color:var(--highlight-gold);">✨ AI Monster Forge</h2>
+            
+            <label>Gemini API Key (Saves locally so you only type it once)</label>
+            <input type="password" id="ai-api-key" placeholder="AIzaSy...">
+            
+            <label>Generation Mode</label>
+            <select id="ai-preset">
+                <option value="myth">🏛️ Mythological Creature (Research myths & scale to rules)</option>
+                <option value="custom">🧠 Custom Concept (Follow description exactly)</option>
+            </select>
+            
+            <label>Monster Name or Description</label>
+            <textarea id="ai-prompt" placeholder="e.g., 'Minotaur' OR 'A six-legged molten wolf that spits acid...'"></textarea>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <button id="ai-generate-btn" class="btn gold btn-block" style="padding: 12px; font-size: 1.1rem;" onclick="generateAIMonster()">Summon Monster</button>
+                <div id="ai-spinner" class="spinner"></div>
+                <p id="ai-status" style="color:var(--highlight-gold); margin-top: 10px; font-size: 0.9rem;"></p>
+            </div>
+            
+            <button class="btn btn-block" style="margin-top: 10px;" onclick="closeAIBox()">Cancel</button>
+        </div>
+    </div>
+    
+    <!-- Ability Library Modal -->
+    <div id="ability-modal" class="hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center;">
+        <div style="background:var(--bg-panel); border:1px solid var(--primary-purple); padding:20px; border-radius:var(--radius); width:90%; max-width:500px; max-height:80vh; overflow-y:auto;">
+            <h3 style="margin-top:0">Saved Ability Library</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Select a previously saved ability to insert into this creature:</p>
+            <div id="ability-library-list" style="margin-bottom:15px;"></div>
+            <button class="btn btn-block" onclick="closeAbilityLibraryModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // State Globals
+        let actionsList = []; 
+        let activeWoundIndex = 0;
+        let lastSavedMonsterSnapshot = '';
+        const defaultActions = [
+            { id: 1, name: 'Void Claws', tag: 'Major', desc: 'Melee Attack Roll vs DB (+{ATK}). On a margin of 5+, applies Bleed.' },
+            { id: 2, name: 'Phase Step', tag: 'Minor', desc: 'Teleports up to 15m to an unoccupied space in dim light.' }
+        ];
+
+        // --- Session Restoration (On Load) ---
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            if(btnElement) btnElement.classList.add('active');
+            else {
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    if (btn.getAttribute('onclick').includes(tabId)) btn.classList.add('active');
+                });
+            }
+            
+            localStorage.setItem('mm_active_tab', tabId); // Save state
+            if(tabId === 'bestiary') renderBestiary();
+        }
+
+        function switchRule(ruleId, btnElement) {
+            document.querySelectorAll('.rule-pane').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.rule-tab').forEach(el => el.classList.remove('active'));
+            const pane = document.getElementById(ruleId);
+            if (pane) pane.classList.add('active');
+            if (btnElement) btnElement.classList.add('active');
+        }
+
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
+        }
+
+        function renderRulesReference() {
+            const sidebar = document.getElementById('rules-sidebar');
+            const content = document.getElementById('rules-content-area');
+            if (!sidebar || !content) return;
+
+            const monsterRules = {
+                id: 'monster-creation',
+                label: 'Monster Creation',
+                sections: [
+                    {
+                        title: 'Monster Creation & Special Mechanics',
+                        body: [
+                            'The Monster Generator uses the same core rules as the Character Manager, with creature-specific defenses layered on top.',
+                            'Normal Beast: Standard damage rules apply.',
+                            'Mortal Immunity: Immune to all damage originating from non-divine or non-mythic sources.',
+                            'Epic Invulnerability: Totally immune to all damage except when exploiting its designated Fatal Weakness.'
+                        ]
+                    },
+                    {
+                        title: 'Threat & Proficiency',
+                        body: [
+                            'Monster proficiency is derived directly from Threat Level. Threat runs from 1% to 100%.',
+                            'Threat 1-10 maps to early proficiency, 11-85 scales through the main progression, and 86-100 represents epic or divine threats.',
+                            'Use the displayed proficiency beside the Threat slider as the source of truth when checking attack and defence math.'
+                        ]
+                    }
+                ]
+            };
+            const tabs = [...(typeof rulesContent !== 'undefined' ? rulesContent : []), monsterRules];
+
+            sidebar.innerHTML = tabs.map((tab, idx) =>
+                `<button class="rule-tab ${idx === 0 ? 'active' : ''}" onclick="switchRule('rule-${escapeHTML(tab.id)}', this)">${escapeHTML(tab.label)}</button>`
+            ).join('');
+
+            content.innerHTML = tabs.map((tab, idx) => {
+                const sections = (tab.sections || []).map(section => {
+                    const body = (section.body || []).map(text => `<p>${escapeHTML(text)}</p>`).join('');
+                    const bullets = section.bullets ? `<ul>${section.bullets.map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ul>` : '';
+                    const cards = section.cards ? `<div class="rules-card-grid">${section.cards.map(card => {
+                        const cardItems = card.items ? `<ul>${card.items.map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ul>` : '';
+                        const cardText = card.text ? `<p>${escapeHTML(card.text)}</p>` : '';
+                        return `<div class="rule-card"><h3>${escapeHTML(card.title)}</h3>${cardText}${cardItems}</div>`;
+                    }).join('')}</div>` : '';
+                    const table = section.table ? `<table class="rules-table"><thead><tr>${section.table.headers.map(header => `<th>${escapeHTML(header)}</th>`).join('')}</tr></thead><tbody>${section.table.rows.map(row => `<tr>${row.map(cell => `<td>${escapeHTML(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '';
+                    const note = section.note ? `<p><strong>Note:</strong> ${escapeHTML(section.note)}</p>` : '';
+                    return `<section>${section.title ? `<h2>${escapeHTML(section.title)}</h2>` : ''}${body}${bullets}${cards}${table}${note}</section>`;
+                }).join('');
+                return `<div id="rule-${escapeHTML(tab.id)}" class="rule-pane ${idx === 0 ? 'active' : ''}">${sections}</div>`;
+            }).join('');
+        }
+
+        // --- Resizer Setup ---
+        function setupResizers() {
+            const container = document.getElementById('app-container');
+            const col1 = document.getElementById('col-1');
+            const col2 = document.getElementById('col-2');
+            const col3 = document.getElementById('col-3');
+            const resizer1 = document.getElementById('resizer-1');
+            const resizer2 = document.getElementById('resizer-2');
+            const min1 = 200, min2 = 200, min3 = 300;
+            let isDragging1 = false, isDragging2 = false;
+
+            function setWidths(p1, p2, p3) {
+                col1.style.display = p1 === 0 ? 'none' : 'block';
+                col2.style.display = p2 === 0 ? 'none' : 'block';
+                col3.style.display = p3 === 0 ? 'none' : 'block';
+                col1.style.flex = p1 === 0 ? '0 0 0' : `0 0 ${p1}%`;
+                col2.style.flex = p2 === 0 ? '0 0 0' : `0 0 ${p2}%`;
+                col3.style.flex = p3 === 0 ? '0 0 0' : `0 0 ${p3}%`;
+                resizer1.style.display = p1 === 0 || p2 === 0 ? 'none' : 'block';
+                resizer2.style.display = p2 === 0 || p3 === 0 ? 'none' : 'block';
+            }
+
+            function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+            function updateColumnSizesFromPositions(w1, w2, w3) {
+                const total = w1 + w2 + w3;
+                const p1 = total ? (w1 / total) * 100 : 0;
+                const p2 = total ? (w2 / total) * 100 : 0;
+                const p3 = total ? (w3 / total) * 100 : 0;
+                setWidths(p1, p2, p3);
+            }
+
+            function calculateResizer1(e) {
+                const rect = container.getBoundingClientRect();
+                const totalWidth = rect.width - 12; // subtract resizers
+                let w1 = clamp(e.clientX - rect.left, min1, totalWidth - min2 - min3);
+                const current2 = col2.getBoundingClientRect().width;
+                const current3 = col3.getBoundingClientRect().width;
+                const remaining = totalWidth - w1;
+                const ratio = current2 + current3 > 0 ? (current2 / (current2 + current3)) : 0.5;
+                let w2 = remaining * ratio;
+                let w3 = remaining - w2;
+                if (w2 < min2) { w2 = min2; w3 = remaining - min2; }
+                if (w3 < min3) { w3 = min3; w2 = remaining - min3; }
+                if (w2 < min2 || w3 < min3) return;
+                updateColumnSizesFromPositions(w1, w2, w3);
+            }
+
+            function calculateResizer2(e) {
+                const rect = container.getBoundingClientRect();
+                const totalWidth = rect.width - 12;
+                const fixed1 = col1.getBoundingClientRect().width;
+                let w3 = clamp(rect.right - e.clientX, min3, totalWidth - fixed1 - min2);
+                let w2 = totalWidth - fixed1 - w3;
+                if (w2 < min2) { w2 = min2; w3 = totalWidth - fixed1 - min2; }
+                if (w3 < min3) { w3 = min3; w2 = totalWidth - fixed1 - min3; }
+                if (w2 < min2 || w3 < min3) return;
+                updateColumnSizesFromPositions(fixed1, w2, w3);
+            }
+
+            resizer1.addEventListener('mousedown', () => { isDragging1 = true; resizer1.classList.add('dragging'); });
+            resizer2.addEventListener('mousedown', () => { isDragging2 = true; resizer2.classList.add('dragging'); });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging1 && !isDragging2) return;
+                if (localStorage.getItem('mm_view_mode') !== 'balanced') return;
+                if (isDragging1) calculateResizer1(e);
+                if (isDragging2) calculateResizer2(e);
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging1 = false; isDragging2 = false;
+                resizer1.classList.remove('dragging'); resizer2.classList.remove('dragging');
+            });
+
+            window.addEventListener('resize', () => {
+                if (localStorage.getItem('mm_view_mode') !== 'balanced') return;
+                const current1 = col1.getBoundingClientRect().width;
+                const current2 = col2.getBoundingClientRect().width;
+                const current3 = col3.getBoundingClientRect().width;
+                updateColumnSizesFromPositions(current1, current2, current3);
+            });
+        }
+        setupResizers();
+
+        function applyViewMode(mode) {
+            const currentMode = mode === 'creation' || mode === 'statblock' ? 'balanced' : mode;
+            localStorage.setItem('mm_view_mode', currentMode);
+            document.querySelectorAll('.view-mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.viewMode === currentMode);
+            });
+            if (currentMode === 'balanced') {
+                document.getElementById('col-1').style.display = 'block';
+                document.getElementById('col-2').style.display = 'block';
+                document.getElementById('col-3').style.display = 'block';
+                document.getElementById('resizer-1').style.display = 'block';
+                document.getElementById('resizer-2').style.display = 'block';
+                document.getElementById('col-1').style.flex = '0 0 30%';
+                document.getElementById('col-2').style.flex = '0 0 35%';
+                document.getElementById('col-3').style.flex = '0 0 35%';
+            } else if (currentMode === 'editor') {
+                document.getElementById('col-1').style.display = 'block';
+                document.getElementById('col-2').style.display = 'block';
+                document.getElementById('col-3').style.display = 'none';
+                document.getElementById('resizer-1').style.display = 'none';
+                document.getElementById('resizer-2').style.display = 'none';
+                document.getElementById('col-1').style.flex = '0 0 36%';
+                document.getElementById('col-2').style.flex = '0 0 64%';
+                document.getElementById('col-3').style.flex = '0 0 0';
+            } else if (currentMode === 'play') {
+                document.getElementById('col-1').style.display = 'none';
+                document.getElementById('col-2').style.display = 'none';
+                document.getElementById('col-3').style.display = 'block';
+                document.getElementById('resizer-1').style.display = 'none';
+                document.getElementById('resizer-2').style.display = 'none';
+                document.getElementById('col-1').style.flex = '0 0 0';
+                document.getElementById('col-2').style.flex = '0 0 0';
+                document.getElementById('col-3').style.flex = '0 0 100%';
+            }
+        }
+
+        function toggleSystemView() {
+            const flipContainer = document.getElementById('flip-container');
+            if (!flipContainer) return;
+            localStorage.setItem('mm_wip_monster', JSON.stringify(getCurrentData()));
+            flipContainer.classList.add('flipped');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 520);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderRulesReference();
+            let wip = localStorage.getItem('mm_wip_monster');
+            if (wip) {
+                try { populateForm(JSON.parse(wip)); } catch(e) { console.error("Could not load WIP:", e); }
+            } else { actionsList = [...defaultActions]; }
+            updatePreview();
+            lastSavedMonsterSnapshot = getCurrentSnapshot();
+            let activeTab = localStorage.getItem('mm_active_tab') || 'creator';
+            switchTab(activeTab, null);
+            const savedView = localStorage.getItem('mm_view_mode') || 'balanced';
+            applyViewMode(savedView);
+        });
+
+        // --- Math Logic ---
+        function syncThreatFromRange() {
+            const val = document.getElementById('m-threat-range').value;
+            document.getElementById('m-threat-num').value = val;
+            document.getElementById('threat-val-display').innerText = val;
+            updatePreview();
+        }
+
+        function syncThreatFromNum() {
+            let val = parseInt(document.getElementById('m-threat-num').value) || 1;
+            if (val < 1) val = 1;
+            if (val > 100) val = 100;
+            document.getElementById('m-threat-range').value = val;
+            document.getElementById('threat-val-display').innerText = val;
+            updatePreview();
+        }
+
+        function calculateProficiency(threat) {
+            if (threat <= 10) return 1 + Math.round(threat / 10);
+            if (threat <= 85) {
+                let progress = (threat - 10) / 75;
+                return 2 + Math.round(7 * Math.pow(progress, 1.5));
+            }
+            let progress = (threat - 85) / 15;
+            return 9 + Math.round(3 * Math.pow(progress, 1.2));
+        }
+
+        function getMod(score) {
+            return Math.floor((score - 10) / 2);
+        }
+
+        function getModStr(score) {
+            let mod = getMod(score);
+            return mod >= 0 ? `+${mod}` : `${mod}`;
+        }
+
+        // --- Active Actions ---
+        function renderActions() {
+            const container = document.getElementById('actions-container');
+            container.innerHTML = '';
+            actionsList.forEach((act, idx) => {
+                const row = document.createElement('div');
+                row.className = 'action-row';
+                row.innerHTML = `
+                    <div class="action-row-header">
+                        <input type="text" placeholder="Action Name" value="${act.name}" oninput="updateAction(${idx}, 'name', this.value)">
+                        <select onchange="updateAction(${idx}, 'tag', this.value)">
+                            <option value="Minor" ${act.tag==='Minor'?'selected':''}>Minor Action</option>
+                            <option value="Major" ${act.tag==='Major'?'selected':''}>Major Action</option>
+                            <option value="Reaction" ${act.tag==='Reaction'?'selected':''}>Reaction</option>
+                            <option value="Legendary" ${act.tag==='Legendary'?'selected':''}>Legendary</option>
+                        </select>
+                    </div>
+                    <textarea placeholder="Effect description..." oninput="updateAction(${idx}, 'desc', this.value)">${act.desc}</textarea>
+                    <div class="action-row-footer">
+                        <button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="removeAction(${idx})">🗑 Delete</button>
+                        <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="saveAbilityToLibrary(${idx})">💾 Save Ability to Library</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+            updatePreview();
+        }
+
+        function addActionData(name, tag, desc) {
+            actionsList.push({ id: Date.now() + Math.random(), name, tag, desc });
+            renderActions();
+        }
+
+        function addActionRow() { addActionData('', 'Major', ''); }
+        function removeAction(idx) { actionsList.splice(idx, 1); renderActions(); }
+        function updateAction(idx, field, val) { actionsList[idx][field] = val; updatePreview(); }
+
+        // --- Ability Library ---
+        function getLibrary() { return JSON.parse(localStorage.getItem('mm_abilities') || '[]'); }
+        function saveAbilityToLibrary(idx) {
+            const act = actionsList[idx];
+            if(!act.name) return alert("Give the ability a name first.");
+            let lib = getLibrary();
+            let existingIdx = lib.findIndex(a => a.name.toLowerCase() === act.name.toLowerCase());
+            if(existingIdx >= 0) lib[existingIdx] = act;
+            else lib.push(act);
+            localStorage.setItem('mm_abilities', JSON.stringify(lib));
+            alert(`Saved "${act.name}" to your library.`);
+        }
+        function openAbilityLibraryModal() {
+            document.getElementById('ability-modal').classList.remove('hidden');
+            const listContainer = document.getElementById('ability-library-list');
+            let lib = getLibrary();
+            if(lib.length === 0) { listContainer.innerHTML = "<p>No saved abilities yet.</p>"; return; }
+            
+            listContainer.innerHTML = lib.map((a, i) => `
+                <div style="background:var(--bg-input); padding:10px; border:1px solid var(--border-color); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div><strong style="color:var(--text-main)">${a.name}</strong> <span style="font-size:0.75rem; color:var(--primary-purple)">[${a.tag}]</span></div>
+                    <button class="btn" style="padding:4px 8px; font-size:0.75rem;" onclick="loadAbilityFromLibrary(${i})">Load</button>
+                </div>
+            `).join('');
+        }
+        function closeAbilityLibraryModal() { document.getElementById('ability-modal').classList.add('hidden'); }
+        function loadAbilityFromLibrary(idx) {
+            let lib = getLibrary();
+            addActionData(lib[idx].name, lib[idx].tag, lib[idx].desc);
+            closeAbilityLibraryModal();
+        }
+
+        // --- Preview Logic ---
+        function parseVariables(text, atk, def) {
+            return text.replace(/{ATK}/g, `+${atk}`).replace(/{DEF}/g, `${def}`);
+        }
+
+        function setWound(idx) {
+            activeWoundIndex = idx;
+            document.querySelectorAll('.wound-box').forEach((el, i) => {
+                el.classList.toggle('active', i === idx);
+            });
+        }
+
+        function updatePreview() {
+            const threat = parseInt(document.getElementById('m-threat-num').value) || 50;
+            const prof = calculateProficiency(threat);
+            document.getElementById('prof-val').innerText = `+${prof}`;
+
+            document.getElementById('out-name').innerText = document.getElementById('m-name').value || "Unnamed";
+            document.getElementById('out-desc').innerText = document.getElementById('m-desc').value;
+            const scale = document.getElementById('m-scale').value;
+            const align = document.getElementById('m-align').value;
+            document.getElementById('out-meta').innerText = `${scale} | ${align}`;
+            
+            let mvArr = [];
+            ['walk', 'fly', 'swim', 'climb', 'burrow', 'hover'].forEach(type => {
+                if(document.getElementById(`mv-${type}-check`).checked) {
+                    mvArr.push(`${type.charAt(0).toUpperCase() + type.slice(1)} ${document.getElementById(`mv-${type}-spd`).value}m`);
+                }
+            });
+            const customMv = document.getElementById('mv-custom').value;
+            if(customMv) mvArr.push(customMv);
+            document.getElementById('out-speed').innerText = mvArr.length ? mvArr.join(', ') : '0m';
+
+            let scores = {};
+            ['str','dex','con','int','wis','cha'].forEach(stat => {
+                let val = parseInt(document.getElementById(`m-${stat}`).value) || 10;
+                scores[stat] = val;
+                document.getElementById(`out-${stat}`).innerText = val;
+                document.getElementById(`out-${stat}-mod`).innerText = `(${getModStr(val)})`;
+            });
+
+            const natArmor = parseInt(document.getElementById('m-nat-armour').value) || 0;
+            const atkBonus = Math.max(getMod(scores.str), getMod(scores.dex)) + prof;
+            const dbBonus = getMod(scores.int) + Math.floor(scores.dex / 2) + prof + natArmor;
+            
+            document.getElementById('out-atk-bonus').innerText = `+${atkBonus}`;
+            document.getElementById('out-db').innerText = dbBonus;
+
+            let traitsHTML = "";
+            const resRule = document.querySelector('input[name="res-rule"]:checked').value;
+            if (resRule === 'mortal_immunity') traitsHTML += "<p><strong>Mortal Immunity:</strong> Immune to damage from non-divine or non-mythic sources.</p>";
+            if (resRule === 'epic_invulnerability') traitsHTML += "<p><strong>Epic Invulnerability:</strong> Immune to all damage except from its Fatal Weakness.</p>";
+            document.getElementById('out-traits').innerHTML = traitsHTML;
+            document.getElementById('out-weakness').innerText = document.getElementById('m-weakness').value || "None";
+
+            let actionsHTML = "";
+            actionsList.forEach(act => {
+                actionsHTML += `<p><strong>${act.name}</strong> <em style="color:var(--text-muted); font-size:0.8rem;">[${act.tag}]</em><br> ${parseVariables(act.desc, atkBonus, dbBonus)}</p>`;
+            });
+            document.getElementById('out-actions').innerHTML = actionsHTML;
+            
+            // Core Session Persistence Magic
+            localStorage.setItem('mm_wip_monster', JSON.stringify(getCurrentData()));
+        }
+
+        // --- Data Management ---
+        function getCurrentData() {
+            return {
+                id: Date.now().toString(),
+                name: document.getElementById('m-name').value,
+                desc: document.getElementById('m-desc').value,
+                scale: document.getElementById('m-scale').value,
+                align: document.getElementById('m-align').value,
+                threat: document.getElementById('m-threat-num').value,
+                natArmor: document.getElementById('m-nat-armour').value,
+                movements: {
+                    walk: { c: document.getElementById('mv-walk-check').checked, s: document.getElementById('mv-walk-spd').value },
+                    fly: { c: document.getElementById('mv-fly-check').checked, s: document.getElementById('mv-fly-spd').value },
+                    swim: { c: document.getElementById('mv-swim-check').checked, s: document.getElementById('mv-swim-spd').value },
+                    climb: { c: document.getElementById('mv-climb-check').checked, s: document.getElementById('mv-climb-spd').value },
+                    burrow: { c: document.getElementById('mv-burrow-check').checked, s: document.getElementById('mv-burrow-spd').value },
+                    hover: { c: document.getElementById('mv-hover-check').checked, s: document.getElementById('mv-hover-spd').value },
+                    custom: document.getElementById('mv-custom').value
+                },
+                stats: {
+                    str: document.getElementById('m-str').value,
+                    dex: document.getElementById('m-dex').value,
+                    con: document.getElementById('m-con').value,
+                    int: document.getElementById('m-int').value,
+                    wis: document.getElementById('m-wis').value,
+                    cha: document.getElementById('m-cha').value
+                },
+                resRule: document.querySelector('input[name="res-rule"]:checked').value,
+                weakness: document.getElementById('m-weakness').value,
+                actions: actionsList
+            };
+        }
+
+        function getCurrentSnapshot() {
+            const data = getCurrentData();
+            delete data.id;
+            return JSON.stringify(data);
+        }
+
+        function hasUnsavedMonsterChanges() {
+            return lastSavedMonsterSnapshot && getCurrentSnapshot() !== lastSavedMonsterSnapshot;
+        }
+        
+        function populateForm(data) {
+            if (!data) return;
+            document.getElementById('m-name').value = data.name || '';
+            document.getElementById('m-desc').value = data.desc || '';
+            
+            let scaleSelect = document.getElementById('m-scale');
+            if(Array.from(scaleSelect.options).some(o => o.value === data.scale)) scaleSelect.value = data.scale;
+            
+            let alignSelect = document.getElementById('m-align');
+            if(Array.from(alignSelect.options).some(o => o.value === data.align)) alignSelect.value = data.align || 'Neutral Evil';
+            
+            document.getElementById('m-threat-num').value = data.threat || '50';
+            document.getElementById('m-threat-range').value = data.threat || '50';
+            document.getElementById('m-nat-armour').value = data.natArmor || '0';
+
+            if (data.movements) {
+                ['walk','fly','swim','climb','burrow','hover'].forEach(t => {
+                    if (data.movements[t]) {
+                        document.getElementById(`mv-${t}-check`).checked = !!data.movements[t].c;
+                        document.getElementById(`mv-${t}-spd`).value = data.movements[t].s || '0';
+                    }
+                });
+                document.getElementById('mv-custom').value = data.movements.custom || '';
+            }
+
+            if (data.stats) {
+                ['str','dex','con','int','wis','cha'].forEach(s => {
+                    document.getElementById(`m-${s}`).value = data.stats[s] || '10';
+                });
+            }
+
+            if(data.resRule) {
+                const rb = document.querySelector(`input[name="res-rule"][value="${data.resRule}"]`);
+                if(rb) rb.checked = true;
+            }
+            
+            document.getElementById('m-weakness').value = data.weakness || '';
+            
+            actionsList = data.actions || [];
+            renderActions();
+        }
+
+        function saveCurrentMonster(options = {}) {
+            let data = getCurrentData();
+            let bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+            let existingIdx = bestiary.findIndex(m => (m.name || '').toLowerCase() === (data.name || '').toLowerCase());
+            if(existingIdx >= 0) {
+                data.id = bestiary[existingIdx].id; 
+                bestiary[existingIdx] = data;
+            } else { bestiary.push(data); }
+            localStorage.setItem('mm_bestiary', JSON.stringify(bestiary));
+            lastSavedMonsterSnapshot = getCurrentSnapshot();
+            if (!options.silent) alert("Saved to Bestiary!");
+            renderBestiary();
+        }
+
+        function loadMonster(id) {
+            if (hasUnsavedMonsterChanges()) {
+                if (confirm("Save the current monster before loading another creature?")) {
+                    saveCurrentMonster({ silent: true });
+                } else if (!confirm("Load without saving current changes?")) {
+                    return;
+                }
+            }
+            let bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+            let data = bestiary.find(m => m.id === id);
+            if (!data) return;
+            populateForm(data);
+            updatePreview();
+            lastSavedMonsterSnapshot = getCurrentSnapshot();
+            switchTab('creator');
+        }
+
+        function deleteMonster(id) {
+            if(!confirm("Delete this monster?")) return;
+            let bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+            bestiary = bestiary.filter(m => m.id !== id);
+            localStorage.setItem('mm_bestiary', JSON.stringify(bestiary));
+            renderBestiary();
+        }
+
+        function syncThreatLabel() {
+            const minRange = parseInt(document.getElementById('filter-threat-min').value) || 1;
+            const maxRange = parseInt(document.getElementById('filter-threat-max').value) || 100;
+            const minDisplay = document.getElementById('filter-threat-min-display');
+            const maxDisplay = document.getElementById('filter-threat-max-display');
+            if (maxRange < minRange) {
+                document.getElementById('filter-threat-max').value = minRange;
+            }
+            minDisplay.innerText = Math.min(minRange, maxRange);
+            maxDisplay.innerText = Math.max(minRange, maxRange);
+        }
+
+        function renderBestiary() {
+            let bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+            const search = document.getElementById('filter-search').value.toLowerCase();
+            const minT = parseInt(document.getElementById('filter-threat-min').value) || 1;
+            const maxT = parseInt(document.getElementById('filter-threat-max').value) || 100;
+            const scaleFilter = document.getElementById('filter-scale').value;
+            const alignmentFilter = document.getElementById('filter-alignment').value;
+
+            bestiary = bestiary.filter(m => {
+                const threat = parseInt(m.threat) || 0;
+                const nameMatch = (m.name || '').toLowerCase().includes(search);
+                const descMatch = (m.desc || '').toLowerCase().includes(search);
+                const matchText = nameMatch || descMatch;
+                const matchThreat = threat >= Math.min(minT, maxT) && threat <= Math.max(minT, maxT);
+                const matchScale = scaleFilter === 'any' || (m.scale || '').startsWith(scaleFilter);
+                const matchAlignment = alignmentFilter === 'any' || (m.align || '').toLowerCase().includes(alignmentFilter.toLowerCase());
+                return matchText && matchThreat && matchScale && matchAlignment;
+            });
+
+            const list = document.getElementById('bestiary-list');
+            list.innerHTML = '';
+            
+            if(bestiary.length === 0) { list.innerHTML = '<p>No monsters found.</p>'; return; }
+
+            bestiary.forEach(m => {
+                let div = document.createElement('div');
+                div.className = 'bestiary-card';
+                div.innerHTML = `
+                    <h3>${m.name}</h3>
+                    <p class="meta">Threat: ${m.threat}% | ${(m.scale || 'Scale 1 (Mortal)').split(' ')[0]} | ${m.align || 'Unaligned'}</p>
+                    <div class="bestiary-card-actions">
+                        <button class="btn" onclick="loadMonster('${m.id}')">Load</button>
+                        <button class="btn btn-danger" onclick="deleteMonster('${m.id}')">Delete</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function exportAllBestiaryJSON() {
+            const bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bestiary, null, 2));
+            const downloadNode = document.createElement('a');
+            downloadNode.setAttribute("href", dataStr);
+            downloadNode.setAttribute("download", "demigods_bestiary_backup.json");
+            document.body.appendChild(downloadNode);
+            downloadNode.click();
+            downloadNode.remove();
+        }
+
+        function importBestiaryJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) throw new Error('Expected array');
+                    let existing = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+                    const merged = [...existing];
+                    imported.forEach(item => {
+                        if (!item.id) item.id = Date.now().toString() + Math.random();
+                        const idx = merged.findIndex(m => m.name.toLowerCase() === (item.name || '').toLowerCase());
+                        if (idx >= 0) merged[idx] = item;
+                        else merged.push(item);
+                    });
+                    localStorage.setItem('mm_bestiary', JSON.stringify(merged));
+                    renderBestiary();
+                    alert('Bestiary imported successfully.');
+                } catch (err) {
+                    alert('Invalid JSON file. Please import a valid bestiary backup.');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        async function exportAllBestiaryPDF() {
+            const bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+            if (!bestiary.length) return alert('No creatures available for PDF export.');
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.left = '-9999px';
+            container.style.top = '-9999px';
+            document.body.appendChild(container);
+
+            bestiary.forEach(monster => {
+                const block = document.createElement('div');
+                block.style.padding = '20px';
+                block.style.width = '800px';
+                block.style.background = '#121212';
+                block.style.color = '#f4f4f5';
+                block.style.pageBreakAfter = 'always';
+                block.innerHTML = `
+                    <div style="font-family: sans-serif; margin-bottom: 16px;">
+                        <h1 style="margin:0 0 8px 0; color:#fbbf24;">${monster.name}</h1>
+                        <p style="margin:0 0 4px 0; color:#a1a1aa;">${monster.scale} | ${monster.align} | Threat ${monster.threat}%</p>
+                        <p style="margin:8px 0 0 0;">${monster.desc || 'No description provided.'}</p>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <strong>Fatal Weakness:</strong> ${monster.weakness || 'None'}
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <strong>Stats:</strong> STR ${monster.stats?.str || '10'}, DEX ${monster.stats?.dex || '10'}, CON ${monster.stats?.con || '10'}, INT ${monster.stats?.int || '10'}, WIS ${monster.stats?.wis || '10'}, CHA ${monster.stats?.cha || '10'}
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <strong>Actions:</strong>
+                        ${(monster.actions || []).map(action => `<div style="margin-top:8px;"><strong>${action.name}</strong> [${action.tag}]<br>${action.desc}</div>`).join('')}
+                    </div>
+                `;
+                container.appendChild(block);
+            });
+
+            await html2pdf().set({
+                margin: 0.5,
+                filename: 'demigods_bestiary_bundle.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#121212' },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            }).from(container).save();
+
+            document.body.removeChild(container);
+        }
+
+        // --- Export & Randomization ---
+        function exportPDF() {
+            const element = document.getElementById('statblock-preview');
+            const name = document.getElementById('m-name').value.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            html2pdf().set({
+                margin: 0.5,
+                filename: `${name}_statblock.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#121212' },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            }).from(element).save();
+        }
+
+        function exportCurrentMonsterJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getCurrentData(), null, 2));
+            const downloadNode = document.createElement('a');
+            downloadNode.setAttribute("href", dataStr);
+            downloadNode.setAttribute("download", document.getElementById('m-name').value.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".json");
+            document.body.appendChild(downloadNode);
+            downloadNode.click();
+            downloadNode.remove();
+        }
+
+        function randomizeAll() {
+            document.getElementById('m-threat-range').value = Math.floor(Math.random() * 100) + 1;
+            syncThreatFromRange();
+            ['str','dex','con','int','wis','cha'].forEach(s => {
+                document.getElementById(`m-${s}`).value = Math.floor(Math.random() * 16) + 8;
+            });
+            document.getElementById('m-nat-armour').value = Math.floor(Math.random() * 5);
+            
+            const aligns = ["Lawful Good", "Neutral Good", "Chaotic Good", "Lawful Neutral", "True Neutral", "Chaotic Neutral", "Lawful Evil", "Neutral Evil", "Chaotic Evil"];
+            document.getElementById('m-align').value = aligns[Math.floor(Math.random() * aligns.length)];
+            
+            updatePreview();
+        }
+
+        // --- AI Generation Logic ---
+        function openAIBoxTrigger() {
+            const currentName = document.getElementById('m-name').value.trim();
+            // Ask to save only if there is actually data typed in
+            if (currentName !== '' && currentName !== 'Unnamed') {
+                document.getElementById('confirm-save-modal').classList.remove('hidden');
+            } else {
+                proceedToAI(false);
+            }
+        }
+        
+        function closeConfirmSave() {
+            document.getElementById('confirm-save-modal').classList.add('hidden');
+        }
+        
+        function proceedToAI(saveFirst) {
+            if(saveFirst) {
+                saveCurrentMonster();
+            }
+            closeConfirmSave();
+            
+            // Clear sheet completely
+            document.getElementById('m-name').value = '';
+            document.getElementById('m-desc').value = '';
+            document.getElementById('m-threat-num').value = '50';
+            syncThreatFromNum();
+            document.getElementById('m-nat-armour').value = '0';
+            ['str','dex','con','int','wis','cha'].forEach(s => document.getElementById(`m-${s}`).value = '10');
+            document.getElementById('m-weakness').value = '';
+            document.getElementById('mv-custom').value = '';
+            ['walk','fly','swim','climb','burrow','hover'].forEach(t => document.getElementById(`mv-${t}-check`).checked = false);
+            document.getElementById('mv-walk-check').checked = true; // Default walking speed
+            document.getElementById('mv-walk-spd').value = '15';
+            actionsList = [];
+            renderActions();
+            updatePreview();
+            
+            // Open Modal
+            document.getElementById('ai-modal').classList.remove('hidden');
+            const savedKey = localStorage.getItem('demigods_api_key');
+            if(savedKey) document.getElementById('ai-api-key').value = savedKey;
+        }
+
+        function closeAIBox() {
+            document.getElementById('ai-modal').classList.add('hidden');
+        }
+
+        async function generateAIMonster() {
+            const apiKey = document.getElementById('ai-api-key').value.trim();
+            const mode = document.getElementById('ai-preset').value;
+            const desc = document.getElementById('ai-prompt').value.trim();
+            
+            if(!apiKey) return alert("Please enter your Gemini API Key.");
+            if(!desc) return alert("Please enter a monster description or mythological name.");
+            
+            localStorage.setItem('demigods_api_key', apiKey);
+            
+            document.getElementById('ai-generate-btn').style.display = 'none';
+            document.getElementById('ai-spinner').style.display = 'block';
+            document.getElementById('ai-status').innerText = 'Consulting the oracles...';
+            
+            const promptContext = mode === 'myth' 
+                ? `Research the mythological creature named or described as "${desc}". Ensure the abilities strictly fit the real-world myths, but scale its numerical power to be a balanced TTRPG threat.` 
+                : `Create a completely brand new, custom monster based on this description: "${desc}".`;
+
+            const fullPrompt = `You are an expert TTRPG monster designer for the 'Demigods' system.
+            
+            SYSTEM RULES:
+            - Scale goes from "Scale 0 (Tiny)" to "Scale 5 (Divine)".
+            - Threat goes from 1 to 100.
+            - Stats (str, dex, con, int, wis, cha) usually range from 8 to 24.
+            - Action tags must be: "Minor", "Major", "Reaction", or "Legendary".
+            - Use "{ATK}" and "{DEF}" exact placeholders in action descriptions for dynamic frontend math injection.
+            
+            TASK:
+            ${promptContext}
+            
+            OUTPUT FORMAT:
+            Return ONLY raw, valid JSON. No markdown wrappers. Use this exact structure:
+            {
+              "name": "String",
+              "desc": "String",
+              "scale": "String like 'Scale 2 (Large)'",
+              "align": "String",
+              "threat": "String (number 1-100)",
+              "natArmor": "String",
+              "movements": {
+                "walk": {"c": boolean, "s": "String number"},
+                "fly": {"c": boolean, "s": "String number"},
+                "swim": {"c": boolean, "s": "String number"},
+                "climb": {"c": boolean, "s": "String number"},
+                "burrow": {"c": boolean, "s": "String number"},
+                "hover": {"c": boolean, "s": "String number"},
+                "custom": "String"
+              },
+              "stats": { "str": "String", "dex": "String", "con": "String", "int": "String", "wis": "String", "cha": "String" },
+              "resRule": "normal",
+              "weakness": "String describing a fatal weakness puzzle",
+              "actions": [
+                { "name": "String", "tag": "String", "desc": "String with {ATK} or {DEF}" }
+              ]
+            }`;
+
+            try {
+                // Updated Endpoint to the current default robust model: gemini-3.6-flash
+                const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" + apiKey, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: fullPrompt }] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    if (response.status === 429) {
+                        throw new Error("High Usage / Quota Exceeded. You have hit the API rate limit. Please wait a moment for your quota to clear or check your Google Cloud Billing.");
+                    }
+                    throw new Error(data.error?.message || "Unknown API Error");
+                }
+                
+                const monsterData = JSON.parse(data.candidates[0].content.parts[0].text);
+                
+                document.getElementById('m-name').value = monsterData.name || 'Unknown Entity';
+                document.getElementById('m-desc').value = monsterData.desc || '';
+                
+                const scaleSelect = document.getElementById('m-scale');
+                if(Array.from(scaleSelect.options).some(o => o.value === monsterData.scale)) scaleSelect.value = monsterData.scale;
+                
+                const alignSelect = document.getElementById('m-align');
+                if(Array.from(alignSelect.options).some(o => o.value === monsterData.align)) alignSelect.value = monsterData.align;
+                
+                document.getElementById('m-threat-num').value = monsterData.threat || '50';
+                syncThreatFromNum();
+                document.getElementById('m-nat-armour').value = monsterData.natArmor || '0';
+                
+                ['walk','fly','swim','climb','burrow','hover'].forEach(t => {
+                    if(monsterData.movements && monsterData.movements[t]) {
+                        document.getElementById(`mv-${t}-check`).checked = monsterData.movements[t].c;
+                        document.getElementById(`mv-${t}-spd`).value = monsterData.movements[t].s;
+                    }
+                });
+                if(monsterData.movements) document.getElementById('mv-custom').value = monsterData.movements.custom || '';
+                
+                ['str','dex','con','int','wis','cha'].forEach(s => {
+                    if(monsterData.stats && monsterData.stats[s]) document.getElementById(`m-${s}`).value = monsterData.stats[s];
+                });
+                
+                if(monsterData.resRule) {
+                    const rb = document.querySelector(`input[name="res-rule"][value="${monsterData.resRule}"]`);
+                    if(rb) rb.checked = true;
+                }
+                
+                document.getElementById('m-weakness').value = monsterData.weakness || '';
+                
+                actionsList = monsterData.actions || [];
+                actionsList.forEach(a => { if(!a.id) a.id = Date.now() + Math.random(); });
+                
+                renderActions();
+                updatePreview();
+                closeAIBox();
+                
+            } catch (err) {
+                alert("Generation Failed. " + err.message);
+            } finally {
+                document.getElementById('ai-generate-btn').style.display = 'inline-flex';
+                document.getElementById('ai-spinner').style.display = 'none';
+                document.getElementById('ai-status').innerText = '';
+            }
+        }
+    </script>
+</body>
+</html>

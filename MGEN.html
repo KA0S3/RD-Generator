@@ -625,7 +625,16 @@
         .confirm-save-actions {
             display: flex; gap: 10px; justify-content: center; margin-top: 20px;
         }
-
+		.column::-webkit-scrollbar,
+        .rules-sidebar::-webkit-scrollbar,
+        .rules-content-area::-webkit-scrollbar,
+        .bestiary-container::-webkit-scrollbar {
+            display: none;
+        }
+        .column, .rules-sidebar, .rules-content-area, .bestiary-container {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
         @media (max-width: 900px) {
             body { overflow: auto; height: auto; min-height: 100vh; }
             .system-flip-container { height: auto; min-height: 100vh; }
@@ -878,13 +887,12 @@
                         <p style="color: var(--text-muted); margin:0;">Manage, filter, and load mythic creatures stored in your browser.</p>
                     </div>
                     <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                        <button class="btn" onclick="exportAllBestiaryJSON()">Export All (JSON)</button>
+<button class="btn" onclick="exportAllBestiaryJSON()">Export All (JSON)</button>
                         <label class="btn" style="position:relative; overflow:hidden;">
-                            Import All (JSON)
-                            <input type="file" id="bestiary-import-file" accept="application/json" onchange="importBestiaryJSON(event)" style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
+                            Import (JSON)
+                            <input type="file" id="monster-import-file" accept="application/json" onchange="importMonsterJSON(event)" style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
                         </label>
-                        <button class="btn gold" onclick="exportAllBestiaryPDF()">Export All (PDF Bundle)</button>
-                    </div>
+                        <button class="btn gold" onclick="exportAllBestiaryPDF()">Export All (PDF Bundle)</button>                    </div>
                 </div>
                 
                 <div class="filter-bar">
@@ -1563,13 +1571,28 @@
                     <p class="meta">Threat: ${m.threat}% | ${(m.scale || 'Scale 1 (Mortal)').split(' ')[0]} | ${m.align || 'Unaligned'}</p>
                     <div class="bestiary-card-actions">
                         <button class="btn" onclick="loadMonster('${m.id}')">Load</button>
+                        <button class="btn" onclick="exportSingleFromBestiary('${m.id}')">Export</button>
                         <button class="btn btn-danger" onclick="deleteMonster('${m.id}')">Delete</button>
                     </div>
                 `;
                 list.appendChild(div);
             });
         }
-
+		
+		function exportSingleFromBestiary(id) {
+            const bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+            const monster = bestiary.find(m => m.id === id);
+            if (!monster) return;
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(monster, null, 2));
+            const downloadNode = document.createElement('a');
+            downloadNode.setAttribute("href", dataStr);
+            downloadNode.setAttribute("download", monster.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".json");
+            document.body.appendChild(downloadNode);
+            downloadNode.click();
+            downloadNode.remove();
+        }
+		
         function exportAllBestiaryJSON() {
             const bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bestiary, null, 2));
@@ -1581,33 +1604,74 @@
             downloadNode.remove();
         }
 
-        function importBestiaryJSON(event) {
+function importMonsterJSON(event) {
             const file = event.target.files[0];
             if (!file) return;
+            
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
-                    const imported = JSON.parse(e.target.result);
-                    if (!Array.isArray(imported)) throw new Error('Expected array');
+                    const importedData = JSON.parse(e.target.result);
                     let existing = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
-                    const merged = [...existing];
-                    imported.forEach(item => {
+                    
+                    let addedCount = 0;
+                    let skippedCount = 0;
+                    let overwrittenCount = 0;
+
+                    // Helper function to process each monster
+                    const processMonster = (item) => {
+                        if (!item.name) return false; // Invalid data
                         if (!item.id) item.id = Date.now().toString() + Math.random();
-                        const idx = merged.findIndex(m => m.name.toLowerCase() === (item.name || '').toLowerCase());
-                        if (idx >= 0) merged[idx] = item;
-                        else merged.push(item);
-                    });
-                    localStorage.setItem('mm_bestiary', JSON.stringify(merged));
+                        
+                        const idx = existing.findIndex(m => (m.name || '').toLowerCase() === (item.name || '').toLowerCase());
+                        
+                        if (idx >= 0) {
+                            let action = prompt(`Duplicate found: "${item.name}".\nType 'O' to Overwrite, 'S' to Skip, or 'R' to Rename and add as a copy.`, 'O');
+                            if (action === null) {
+                                skippedCount++;
+                                return true;
+                            }
+                            action = action.trim().toUpperCase();
+                            if (action === 'O') {
+                                existing[idx] = item;
+                                overwrittenCount++;
+                            } else if (action === 'R') {
+                                item.name = item.name + " (Imported Copy)";
+                                item.id = Date.now().toString() + Math.random();
+                                existing.push(item);
+                                addedCount++;
+                            } else {
+                                skippedCount++;
+                            }
+                        } else {
+                            existing.push(item);
+                            addedCount++;
+                        }
+                        return true;
+                    };
+
+                    // Check if it's a bulk array or a single object
+                    if (Array.isArray(importedData)) {
+                        importedData.forEach(item => processMonster(item));
+                        alert(`Batch Import Complete!\nAdded: ${addedCount}\nOverwritten: ${overwrittenCount}\nSkipped: ${skippedCount}`);
+                    } else {
+                        const valid = processMonster(importedData);
+                        if (!valid) throw new Error('Invalid monster data: Missing monster name.');
+                        if (addedCount > 0 || overwrittenCount > 0) {
+                            alert(`Successfully imported: ${importedData.name}`);
+                        }
+                    }
+
+                    localStorage.setItem('mm_bestiary', JSON.stringify(existing));
                     renderBestiary();
-                    alert('Bestiary imported successfully.');
+                    
                 } catch (err) {
-                    alert('Invalid JSON file. Please import a valid bestiary backup.');
+                    alert(`Import failed: ${err.message || 'Invalid JSON file.'}`);
                 }
             };
             reader.readAsText(file);
-            event.target.value = '';
+            event.target.value = ''; // Reset input so you can upload the same file again if needed
         }
-
         async function exportAllBestiaryPDF() {
             const bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
             if (!bestiary.length) return alert('No creatures available for PDF export.');

@@ -249,6 +249,8 @@
             width: 6px;
             background-color: var(--border-color);
             cursor: col-resize;
+            touch-action: none;
+            user-select: none;
             transition: background 0.2s;
             flex-shrink: 0;
             position: relative;
@@ -589,6 +591,33 @@
         .bestiary-card h3 { margin: 0 0 5px 0; color: var(--text-main); border: none; padding: 0; text-transform: none; }
         .bestiary-card .meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
         .bestiary-card-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .bestiary-card { position: relative; }
+        .bestiary-hover-sheet {
+            position: fixed;
+            left: 3vw;
+            right: 3vw;
+            top: 5vh;
+            z-index: 50;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 24px;
+            background: #121212;
+            border: 1px solid var(--primary-purple);
+            box-shadow: 0 24px 70px rgba(0,0,0,0.85);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-4px);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+        .bestiary-card:hover .bestiary-hover-sheet { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .bestiary-hover-sheet h4 { color: var(--highlight-gold); margin: 0 0 6px; }
+        .bestiary-hover-sheet p { margin: 4px 0; font-size: 0.78rem; }
+        .bestiary-hover-sheet .sheet-actions { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-color); }
+        .combat-steppers { display: flex; gap: 8px; margin: 6px 0 10px; }
+        .combat-stepper { display: inline-flex; align-items: center; gap: 4px; padding: 3px 5px; border: 1px solid rgba(251,191,36,0.35); background: rgba(120,53,15,0.18); border-radius: var(--radius); color: var(--highlight-gold); font-size: 0.72rem; }
+        .combat-stepper button { width: 22px; height: 22px; padding: 0; border: 1px solid rgba(251,191,36,0.35); background: rgba(0,0,0,0.3); color: var(--highlight-gold); border-radius: 3px; cursor: pointer; }
+        .combat-stepper strong { min-width: 30px; text-align: center; }
+        .invulnerability-banner { display: none; margin: 8px 0; padding: 8px 10px; border: 1px solid var(--highlight-gold); color: var(--highlight-gold); background: rgba(120,53,15,0.35); border-radius: var(--radius); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem; }
 
         .file-input-wrapper { display: inline-block; position: relative; }
         .file-input-wrapper input[type="file"] { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
@@ -725,6 +754,32 @@
                         </div>
                     </div>
 
+                    <label>Origin / Region</label>
+                    <select id="m-origin" onchange="updatePreview()">
+                        <option value="Misc">Misc</option>
+                        <option value="Greek">Greek</option>
+                        <option value="Norse">Norse</option>
+                        <option value="Egyptian">Egyptian</option>
+                        <option value="Aboriginal">Aboriginal</option>
+                        <option value="Native American">Native American</option>
+                        <option value="Polynesian">Polynesian</option>
+                        <option value="African">African</option>
+                        <option value="Slavic">Slavic</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="Japanese">Japanese</option>
+                        <option value="Mongolian">Mongolian</option>
+                        <option value="Mesopotamian">Mesopotamian</option>
+                        <option value="Diwata">Diwata</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Inuit">Inuit</option>
+                        <option value="Inca">Inca</option>
+                        <option value="Mayan">Mayan</option>
+                        <option value="Finnish">Finnish</option>
+                        <option value="Celtic">Celtic</option>
+                        <option value="Aztec">Aztec</option>
+                        <option value="Persian">Persian</option>
+                    </select>
+
                     <label>Threat Level: <span id="threat-val-display" style="color:var(--highlight-gold)">50</span>% (Proficiency: <span id="prof-val" style="color:var(--highlight-gold)">+4</span>)</label>
                     <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
                         <input type="range" id="m-threat-range" min="1" max="100" value="50" style="flex: 1;" oninput="syncThreatFromRange()">
@@ -808,6 +863,9 @@
                     <div id="actions-container">
                         <!-- Dynamic action rows injected here -->
                     </div>
+
+                    <h3>Sheet Notes</h3>
+                    <textarea id="m-notes" placeholder="Private GM notes, encounter reminders, or balance observations..." oninput="updatePreview()"></textarea>
                 </div>
 
                 <!-- Resizer 2 -->
@@ -822,18 +880,25 @@
                         </div>
                         
                         <div style="font-size: 0.9rem; margin-bottom: 10px; color: var(--text-muted);">
-                            <strong style="color:var(--text-main)" id="out-meta">Scale 1 (Mortal) | Neutral Evil</strong>
+                            <strong style="color:var(--text-main)" id="out-meta">Scale 1 (Mortal) | Neutral Evil | Misc</strong>
                         </div>
                         
                         <div class="tapered-rule"></div>
                         
+                        <div id="out-invulnerability" class="invulnerability-banner" aria-live="polite"></div>
                         <p><strong>Defence Bonus:</strong> <span id="out-db" class="purple-text">16</span></p>
+                        <div class="combat-steppers" aria-label="Emergency combat adjustments">
+                            <div class="combat-stepper">DEF <button type="button" onclick="adjustCombatOverride('defence', -1)">-</button><strong id="m-def-override-display">Auto</strong><button type="button" onclick="adjustCombatOverride('defence', 1)">+</button></div>
+                            <div class="combat-stepper">ATK <button type="button" onclick="adjustCombatOverride('attack', -1)">-</button><strong id="m-atk-override-display">Auto</strong><button type="button" onclick="adjustCombatOverride('attack', 1)">+</button></div>
+                            <input type="hidden" id="m-def-override">
+                            <input type="hidden" id="m-atk-override">
+                        </div>
                         <p><strong>Speed:</strong> <span id="out-speed">Walk 15m, Climb 15m</span></p>
 
                         <div class="wound-tracker" id="out-wounds">
                             <div class="wound-box active" onclick="setWound(0)">Healthy</div>
                             <div class="wound-box" onclick="setWound(1)">Bruised</div>
-                            <div class="wound-box" onclick="setWound(2)">Bleeding</div>
+                            <div class="wound-box" onclick="setWound(2)">Bloodied</div>
                             <div class="wound-box" onclick="setWound(3)">Broken</div>
                             <div class="wound-box" style="color:var(--danger);" onclick="setWound(4)">Dead</div>
                         </div>
@@ -887,12 +952,16 @@
                         <p style="color: var(--text-muted); margin:0;">Manage, filter, and load mythic creatures stored in your browser.</p>
                     </div>
                     <div style="display:flex; flex-wrap:wrap; gap:10px;">
-<button class="btn" onclick="exportAllBestiaryJSON()">Export All (JSON)</button>
+                        <button class="btn" onclick="exportAllBestiaryJSON()">Export All (JSON)</button>
+                        <button class="btn" onclick="exportSelectedBestiaryJSON()">Export Selected JSON</button>
+                        <button class="btn btn-danger" onclick="deleteSelectedBestiary()">Delete Selected</button>
                         <label class="btn" style="position:relative; overflow:hidden;">
                             Import (JSON)
                             <input type="file" id="monster-import-file" accept="application/json" onchange="importMonsterJSON(event)" style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
                         </label>
-                        <button class="btn gold" onclick="exportAllBestiaryPDF()">Export All (PDF Bundle)</button>                    </div>
+                        <button class="btn gold" onclick="exportAllBestiaryPDF()">Export All (PDF Bundle)</button>
+                        <button class="btn gold" onclick="exportSelectedBestiaryPDF()">Export Selected PDF</button>
+                    </div>
                 </div>
                 
                 <div class="filter-bar">
@@ -932,6 +1001,35 @@
                             <option value="Evil">Evil</option>
                         </select>
                     </div>
+                    <div>
+                        <label>Origin / Region</label>
+                        <select id="filter-origin" onchange="renderBestiary()">
+                            <option value="any">Any</option>
+                            <option value="Misc">Misc</option>
+                            <option value="Greek">Greek</option>
+                            <option value="Norse">Norse</option>
+                            <option value="Egyptian">Egyptian</option>
+                            <option value="Aboriginal">Aboriginal</option>
+                            <option value="Native American">Native American</option>
+                            <option value="Polynesian">Polynesian</option>
+                            <option value="African">African</option>
+                            <option value="Slavic">Slavic</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Mongolian">Mongolian</option>
+                            <option value="Mesopotamian">Mesopotamian</option>
+                            <option value="Diwata">Diwata</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Inuit">Inuit</option>
+                            <option value="Inca">Inca</option>
+                            <option value="Mayan">Mayan</option>
+                            <option value="Finnish">Finnish</option>
+                            <option value="Celtic">Celtic</option>
+                            <option value="Aztec">Aztec</option>
+                            <option value="Persian">Persian</option>
+                        </select>
+                    </div>
+                    <button id="folder-mode-toggle" class="btn" type="button" onclick="toggleBestiaryFolderMode()">Regions: On</button>
                 </div>
 
                 <div class="bestiary-grid" id="bestiary-list">
@@ -998,6 +1096,8 @@
         let actionsList = []; 
         let activeWoundIndex = 0;
         let lastSavedMonsterSnapshot = '';
+        let selectedBestiaryIds = new Set();
+        let bestiaryFolderMode = true;
         const defaultActions = [
             { id: 1, name: 'Void Claws', tag: 'Major', desc: 'Melee Attack Roll vs DB (+{ATK}). On a margin of 5+, applies Bleed.' },
             { id: 2, name: 'Phase Step', tag: 'Minor', desc: 'Teleports up to 15m to an unoccupied space in dim light.' }
@@ -1062,6 +1162,15 @@
                             'Monster proficiency is derived directly from Threat Level. Threat runs from 1% to 100%.',
                             'Threat 1-10 maps to early proficiency, 11-85 scales through the main progression, and 86-100 represents epic or divine threats.',
                             'Use the displayed proficiency beside the Threat slider as the source of truth when checking attack and defence math.'
+                        ]
+                    },
+                    {
+                        title: 'Attack & Defence Bonuses',
+                        body: [
+                            'Proficiency: Threat 1-10 = 1 + round(Threat / 10). Threat 11-85 = 2 + round(7 x ((Threat - 10) / 75)^1.5). Threat 86-100 = 9 + round(3 x ((Threat - 85) / 15)^1.2).',
+                            'Attack bonus: take the higher of the STR modifier or DEX modifier, then add proficiency. Attack bonus = max(STR modifier, DEX modifier) + proficiency.',
+                            'Defence Bonus (DB): add the INT modifier, half the DEX score rounded down, proficiency, and Natural Armour. DB = INT modifier + floor(DEX / 2) + proficiency + Natural Armour. Natural Armour is capped at round(2 + Threat/18 + Scale/2), maximum 12, to keep ordinary creatures playable.',
+                            'Ability descriptions can use {ATK} and {DEF}; the preview replaces them with the calculated attack bonus and Defence Bonus.'
                         ]
                     }
                 ]
@@ -1148,17 +1257,17 @@
                 updateColumnSizesFromPositions(fixed1, w2, w3);
             }
 
-            resizer1.addEventListener('mousedown', () => { isDragging1 = true; resizer1.classList.add('dragging'); });
-            resizer2.addEventListener('mousedown', () => { isDragging2 = true; resizer2.classList.add('dragging'); });
+            resizer1.addEventListener('pointerdown', event => { isDragging1 = true; resizer1.setPointerCapture?.(event.pointerId); resizer1.classList.add('dragging'); });
+            resizer2.addEventListener('pointerdown', event => { isDragging2 = true; resizer2.setPointerCapture?.(event.pointerId); resizer2.classList.add('dragging'); });
 
-            document.addEventListener('mousemove', (e) => {
+            document.addEventListener('pointermove', (e) => {
                 if (!isDragging1 && !isDragging2) return;
                 if (localStorage.getItem('mm_view_mode') !== 'balanced') return;
                 if (isDragging1) calculateResizer1(e);
                 if (isDragging2) calculateResizer2(e);
             });
 
-            document.addEventListener('mouseup', () => {
+            document.addEventListener('pointerup', () => {
                 isDragging1 = false; isDragging2 = false;
                 resizer1.classList.remove('dragging'); resizer2.classList.remove('dragging');
             });
@@ -1260,6 +1369,15 @@
             return 9 + Math.round(3 * Math.pow(progress, 1.2));
         }
 
+        function naturalArmorCap(threat, scale) {
+            const scaleNumber = parseInt(String(scale).match(/Scale (\d+)/)?.[1] || '1', 10);
+            return Math.max(0, Math.min(12, Math.round(2 + (threat / 18) + (scaleNumber * 0.5))));
+        }
+
+        function boundedNaturalArmor(threat, scale, value) {
+            return Math.min(Math.max(0, parseInt(value) || 0), naturalArmorCap(threat, scale));
+        }
+
         function getMod(score) {
             return Math.floor((score - 10) / 2);
         }
@@ -1267,6 +1385,22 @@
         function getModStr(score) {
             let mod = getMod(score);
             return mod >= 0 ? `+${mod}` : `${mod}`;
+        }
+
+        function syncCombatOverrideDisplay() {
+            ['attack', 'defence'].forEach(type => {
+                const field = document.getElementById(`m-${type === 'attack' ? 'atk' : 'def'}-override`);
+                const display = document.getElementById(`m-${type === 'attack' ? 'atk' : 'def'}-override-display`);
+                if (field && display) display.innerText = field.value === '' ? 'Auto' : field.value;
+            });
+        }
+
+        function adjustCombatOverride(type, amount) {
+            const field = document.getElementById(`m-${type === 'attack' ? 'atk' : 'def'}-override`);
+            const current = field.value === '' ? null : parseInt(field.value);
+            field.value = current === null ? amount : current + amount;
+            syncCombatOverrideDisplay();
+            updatePreview();
         }
 
         // --- Active Actions ---
@@ -1359,7 +1493,7 @@
             document.getElementById('out-desc').innerText = document.getElementById('m-desc').value;
             const scale = document.getElementById('m-scale').value;
             const align = document.getElementById('m-align').value;
-            document.getElementById('out-meta').innerText = `${scale} | ${align}`;
+            document.getElementById('out-meta').innerText = `${scale} | ${align} | ${document.getElementById('m-origin').value || 'Misc'}`;
             
             let mvArr = [];
             ['walk', 'fly', 'swim', 'climb', 'burrow', 'hover'].forEach(type => {
@@ -1379,9 +1513,13 @@
                 document.getElementById(`out-${stat}-mod`).innerText = `(${getModStr(val)})`;
             });
 
-            const natArmor = parseInt(document.getElementById('m-nat-armour').value) || 0;
-            const atkBonus = Math.max(getMod(scores.str), getMod(scores.dex)) + prof;
-            const dbBonus = getMod(scores.int) + Math.floor(scores.dex / 2) + prof + natArmor;
+            const natArmor = boundedNaturalArmor(threat, scale, document.getElementById('m-nat-armour').value);
+            const calculatedAttack = Math.max(getMod(scores.str), getMod(scores.dex)) + prof;
+            const calculatedDefence = getMod(scores.int) + Math.floor(scores.dex / 2) + prof + natArmor;
+            const attackOverride = document.getElementById('m-atk-override').value;
+            const defenceOverride = document.getElementById('m-def-override').value;
+            const atkBonus = attackOverride === '' ? calculatedAttack : parseInt(attackOverride);
+            const dbBonus = defenceOverride === '' ? calculatedDefence : parseInt(defenceOverride);
             
             document.getElementById('out-atk-bonus').innerText = `+${atkBonus}`;
             document.getElementById('out-db').innerText = dbBonus;
@@ -1391,6 +1529,13 @@
             if (resRule === 'mortal_immunity') traitsHTML += "<p><strong>Mortal Immunity:</strong> Immune to damage from non-divine or non-mythic sources.</p>";
             if (resRule === 'epic_invulnerability') traitsHTML += "<p><strong>Epic Invulnerability:</strong> Immune to all damage except from its Fatal Weakness.</p>";
             document.getElementById('out-traits').innerHTML = traitsHTML;
+            const invulnerability = document.getElementById('out-invulnerability');
+            const invulnerabilityLabels = { mortal_immunity: 'Mortal Immunity: Non-divine damage does not apply', epic_invulnerability: 'Epic Invulnerability: Fatal Weakness required' };
+            invulnerability.innerText = invulnerabilityLabels[resRule] || 'Standard Vulnerability';
+            invulnerability.style.display = 'block';
+            invulnerability.style.borderColor = resRule === 'normal' ? 'var(--border-color)' : 'var(--highlight-gold)';
+            invulnerability.style.color = resRule === 'normal' ? 'var(--text-muted)' : 'var(--highlight-gold)';
+            invulnerability.style.background = resRule === 'normal' ? 'rgba(255,255,255,0.04)' : 'rgba(120,53,15,0.35)';
             document.getElementById('out-weakness').innerText = document.getElementById('m-weakness').value || "None";
 
             let actionsHTML = "";
@@ -1411,8 +1556,9 @@
                 desc: document.getElementById('m-desc').value,
                 scale: document.getElementById('m-scale').value,
                 align: document.getElementById('m-align').value,
+                origin: document.getElementById('m-origin').value || 'Misc',
                 threat: document.getElementById('m-threat-num').value,
-                natArmor: document.getElementById('m-nat-armour').value,
+                natArmor: boundedNaturalArmor(parseInt(document.getElementById('m-threat-num').value) || 50, document.getElementById('m-scale').value, document.getElementById('m-nat-armour').value),
                 movements: {
                     walk: { c: document.getElementById('mv-walk-check').checked, s: document.getElementById('mv-walk-spd').value },
                     fly: { c: document.getElementById('mv-fly-check').checked, s: document.getElementById('mv-fly-spd').value },
@@ -1432,6 +1578,9 @@
                 },
                 resRule: document.querySelector('input[name="res-rule"]:checked').value,
                 weakness: document.getElementById('m-weakness').value,
+                notes: document.getElementById('m-notes').value,
+                attackOverride: document.getElementById('m-atk-override').value,
+                defenceOverride: document.getElementById('m-def-override').value,
                 actions: actionsList
             };
         }
@@ -1456,10 +1605,14 @@
             
             let alignSelect = document.getElementById('m-align');
             if(Array.from(alignSelect.options).some(o => o.value === data.align)) alignSelect.value = data.align || 'Neutral Evil';
+
+            let originSelect = document.getElementById('m-origin');
+            if(Array.from(originSelect.options).some(o => o.value === data.origin)) originSelect.value = data.origin;
+            else originSelect.value = 'Misc';
             
             document.getElementById('m-threat-num').value = data.threat || '50';
             document.getElementById('m-threat-range').value = data.threat || '50';
-            document.getElementById('m-nat-armour').value = data.natArmor || '0';
+            document.getElementById('m-nat-armour').value = boundedNaturalArmor(parseInt(data.threat) || 50, data.scale || 'Scale 1 (Mortal)', data.natArmor);
 
             if (data.movements) {
                 ['walk','fly','swim','climb','burrow','hover'].forEach(t => {
@@ -1483,6 +1636,10 @@
             }
             
             document.getElementById('m-weakness').value = data.weakness || '';
+            document.getElementById('m-notes').value = data.notes || '';
+            document.getElementById('m-atk-override').value = data.attackOverride || '';
+            document.getElementById('m-def-override').value = data.defenceOverride || '';
+            syncCombatOverrideDisplay();
             
             actionsList = data.actions || [];
             renderActions();
@@ -1490,6 +1647,7 @@
 
         function saveCurrentMonster(options = {}) {
             let data = getCurrentData();
+            if (!options.silent && data.notes && !confirm('Save this creature with its sheet notes included?')) return;
             let bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
             let existingIdx = bestiary.findIndex(m => (m.name || '').toLowerCase() === (data.name || '').toLowerCase());
             if(existingIdx >= 0) {
@@ -1539,13 +1697,66 @@
             maxDisplay.innerText = Math.max(minRange, maxRange);
         }
 
+        function normalizeMonsterRecord(monster) {
+            const normalized = { ...monster };
+            if (!normalized.id) normalized.id = Date.now().toString() + Math.random();
+            if (!normalized.origin) normalized.origin = 'Misc';
+            if (!normalized.notes) normalized.notes = '';
+            if (!Array.isArray(normalized.actions)) normalized.actions = [];
+            return normalized;
+        }
+
+        function getStoredBestiary() {
+            const bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]').map(normalizeMonsterRecord);
+            localStorage.setItem('mm_bestiary', JSON.stringify(bestiary));
+            return bestiary;
+        }
+
+        function toggleBestiarySelection(id, checked) {
+            if (checked) selectedBestiaryIds.add(id);
+            else selectedBestiaryIds.delete(id);
+        }
+
+        function deleteSelectedBestiary() {
+            if (!selectedBestiaryIds.size) return alert('Select at least one creature first.');
+            if (!confirm(`Delete ${selectedBestiaryIds.size} selected creature${selectedBestiaryIds.size === 1 ? '' : 's'}?`)) return;
+            const remaining = getStoredBestiary().filter(monster => !selectedBestiaryIds.has(monster.id));
+            localStorage.setItem('mm_bestiary', JSON.stringify(remaining));
+            selectedBestiaryIds.clear();
+            renderBestiary();
+        }
+
+        function toggleBestiaryFolderMode() {
+            bestiaryFolderMode = !bestiaryFolderMode;
+            document.getElementById('folder-mode-toggle').innerText = `Regions: ${bestiaryFolderMode ? 'On' : 'Off'}`;
+            renderBestiary();
+        }
+
+        function openBestiaryRegion(origin) {
+            bestiaryFolderMode = false;
+            document.getElementById('folder-mode-toggle').innerText = 'Regions: Off';
+            document.getElementById('filter-origin').value = origin;
+            renderBestiary();
+        }
+
+        function monsterPlaySheetHTML(monster) {
+            const threat = parseInt(monster.threat) || 50;
+            const prof = calculateProficiency(threat);
+            const stats = monster.stats || {};
+            const atk = Math.max(getMod(parseInt(stats.str) || 10), getMod(parseInt(stats.dex) || 10)) + prof;
+            const db = getMod(parseInt(stats.int) || 10) + Math.floor((parseInt(stats.dex) || 10) / 2) + prof + boundedNaturalArmor(threat, monster.scale, monster.natArmor);
+            const actions = (monster.actions || []).map(action => `<p><strong>${escapeHTML(action.name)}</strong> <em>[${escapeHTML(action.tag)}]</em><br>${escapeHTML(parseVariables(action.desc || '', atk, db))}</p>`).join('');
+            return `<h4>${escapeHTML(monster.name || 'Unnamed')}</h4><p>${escapeHTML(monster.desc || '')}</p><p><strong>Origin:</strong> ${escapeHTML(monster.origin || 'Misc')} | <strong>Threat:</strong> ${threat}% | <strong>Prof:</strong> +${prof}</p><p><strong>Defence:</strong> ${db} | <strong>Attack:</strong> +${atk} | <strong>Scale:</strong> ${escapeHTML(monster.scale || '')}</p><p><strong>Stats:</strong> STR ${escapeHTML(stats.str || '10')} DEX ${escapeHTML(stats.dex || '10')} CON ${escapeHTML(stats.con || '10')} INT ${escapeHTML(stats.int || '10')} WIS ${escapeHTML(stats.wis || '10')} CHA ${escapeHTML(stats.cha || '10')}</p><p><strong>Fatal Weakness:</strong> ${escapeHTML(monster.weakness || 'None')}</p><div>${actions}</div>${monster.notes ? `<p class="sheet-actions"><strong>Notes:</strong> ${escapeHTML(monster.notes)}</p>` : ''}`;
+        }
+
         function renderBestiary() {
-            let bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+            let bestiary = getStoredBestiary();
             const search = document.getElementById('filter-search').value.toLowerCase();
             const minT = parseInt(document.getElementById('filter-threat-min').value) || 1;
             const maxT = parseInt(document.getElementById('filter-threat-max').value) || 100;
             const scaleFilter = document.getElementById('filter-scale').value;
             const alignmentFilter = document.getElementById('filter-alignment').value;
+            const originFilter = document.getElementById('filter-origin').value;
 
             bestiary = bestiary.filter(m => {
                 const threat = parseInt(m.threat) || 0;
@@ -1555,7 +1766,8 @@
                 const matchThreat = threat >= Math.min(minT, maxT) && threat <= Math.max(minT, maxT);
                 const matchScale = scaleFilter === 'any' || (m.scale || '').startsWith(scaleFilter);
                 const matchAlignment = alignmentFilter === 'any' || (m.align || '').toLowerCase().includes(alignmentFilter.toLowerCase());
-                return matchText && matchThreat && matchScale && matchAlignment;
+                const matchOrigin = originFilter === 'any' || (m.origin || 'Misc') === originFilter;
+                return matchText && matchThreat && matchScale && matchAlignment && matchOrigin;
             });
 
             const list = document.getElementById('bestiary-list');
@@ -1563,17 +1775,33 @@
             
             if(bestiary.length === 0) { list.innerHTML = '<p>No monsters found.</p>'; return; }
 
+            if (bestiaryFolderMode && originFilter === 'any' && !search) {
+                const groups = {};
+                bestiary.forEach(monster => { const origin = monster.origin || 'Misc'; (groups[origin] ||= []).push(monster); });
+                Object.keys(groups).sort().forEach(origin => {
+                    const folder = document.createElement('button');
+                    folder.className = 'bestiary-card';
+                    folder.type = 'button';
+                    folder.innerHTML = `<h3>📁 ${escapeHTML(origin)}</h3><p class="meta">${groups[origin].length} creature${groups[origin].length === 1 ? '' : 's'}</p><span class="btn">Open Region</span>`;
+                    folder.onclick = () => openBestiaryRegion(origin);
+                    list.appendChild(folder);
+                });
+                return;
+            }
+
             bestiary.forEach(m => {
                 let div = document.createElement('div');
                 div.className = 'bestiary-card';
                 div.innerHTML = `
-                    <h3>${m.name}</h3>
-                    <p class="meta">Threat: ${m.threat}% | ${(m.scale || 'Scale 1 (Mortal)').split(' ')[0]} | ${m.align || 'Unaligned'}</p>
+                    <label style="position:absolute; top:12px; right:12px; z-index:2;" title="Select for export"><input type="checkbox" ${selectedBestiaryIds.has(m.id) ? 'checked' : ''} onchange="toggleBestiarySelection('${m.id}', this.checked)"></label>
+                    <h3>${escapeHTML(m.name)}</h3>
+                    <p class="meta">${escapeHTML(m.origin || 'Misc')} | Threat: ${escapeHTML(m.threat)}% | ${(m.scale || 'Scale 1 (Mortal)').split(' ')[0]} | ${escapeHTML(m.align || 'Unaligned')}</p>
                     <div class="bestiary-card-actions">
                         <button class="btn" onclick="loadMonster('${m.id}')">Load</button>
                         <button class="btn" onclick="exportSingleFromBestiary('${m.id}')">Export</button>
                         <button class="btn btn-danger" onclick="deleteMonster('${m.id}')">Delete</button>
                     </div>
+                    <div class="bestiary-hover-sheet">${monsterPlaySheetHTML(m)}</div>
                 `;
                 list.appendChild(div);
             });
@@ -1594,11 +1822,23 @@
         }
 		
         function exportAllBestiaryJSON() {
-            const bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+            const bestiary = getStoredBestiary();
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bestiary, null, 2));
             const downloadNode = document.createElement('a');
             downloadNode.setAttribute("href", dataStr);
             downloadNode.setAttribute("download", "demigods_bestiary_backup.json");
+            document.body.appendChild(downloadNode);
+            downloadNode.click();
+            downloadNode.remove();
+        }
+
+        function exportSelectedBestiaryJSON() {
+            const selected = getStoredBestiary().filter(monster => selectedBestiaryIds.has(monster.id));
+            if (!selected.length) return alert('Select at least one creature first.');
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(selected, null, 2));
+            const downloadNode = document.createElement('a');
+            downloadNode.href = dataStr;
+            downloadNode.download = 'demigods_selected_bestiary.json';
             document.body.appendChild(downloadNode);
             downloadNode.click();
             downloadNode.remove();
@@ -1662,7 +1902,7 @@ function importMonsterJSON(event) {
                         }
                     }
 
-                    localStorage.setItem('mm_bestiary', JSON.stringify(existing));
+                    localStorage.setItem('mm_bestiary', JSON.stringify(existing.map(normalizeMonsterRecord)));
                     renderBestiary();
                     
                 } catch (err) {
@@ -1672,8 +1912,8 @@ function importMonsterJSON(event) {
             reader.readAsText(file);
             event.target.value = ''; // Reset input so you can upload the same file again if needed
         }
-        async function exportAllBestiaryPDF() {
-            const bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
+        async function exportAllBestiaryPDF(monsters = null) {
+            const bestiary = monsters || getStoredBestiary();
             if (!bestiary.length) return alert('No creatures available for PDF export.');
             const container = document.createElement('div');
             container.style.position = 'fixed';
@@ -1691,7 +1931,7 @@ function importMonsterJSON(event) {
                 block.innerHTML = `
                     <div style="font-family: sans-serif; margin-bottom: 16px;">
                         <h1 style="margin:0 0 8px 0; color:#fbbf24;">${monster.name}</h1>
-                        <p style="margin:0 0 4px 0; color:#a1a1aa;">${monster.scale} | ${monster.align} | Threat ${monster.threat}%</p>
+                        <p style="margin:0 0 4px 0; color:#a1a1aa;">${monster.origin || 'Misc'} | ${monster.scale} | ${monster.align} | Threat ${monster.threat}%</p>
                         <p style="margin:8px 0 0 0;">${monster.desc || 'No description provided.'}</p>
                     </div>
                     <div style="margin-top: 12px;">
@@ -1704,6 +1944,7 @@ function importMonsterJSON(event) {
                         <strong>Actions:</strong>
                         ${(monster.actions || []).map(action => `<div style="margin-top:8px;"><strong>${action.name}</strong> [${action.tag}]<br>${action.desc}</div>`).join('')}
                     </div>
+                    ${monster.notes ? `<div style="margin-top: 12px;"><strong>Notes:</strong> ${monster.notes}</div>` : ''}
                 `;
                 container.appendChild(block);
             });
@@ -1717,6 +1958,12 @@ function importMonsterJSON(event) {
             }).from(container).save();
 
             document.body.removeChild(container);
+        }
+
+        function exportSelectedBestiaryPDF() {
+            const selected = getStoredBestiary().filter(monster => selectedBestiaryIds.has(monster.id));
+            if (!selected.length) return alert('Select at least one creature first.');
+            exportAllBestiaryPDF(selected);
         }
 
         // --- Export & Randomization ---
@@ -1743,12 +1990,15 @@ function importMonsterJSON(event) {
         }
 
         function randomizeAll() {
-            document.getElementById('m-threat-range').value = Math.floor(Math.random() * 100) + 1;
+            const threat = Math.floor(Math.random() * 71) + 20;
+            document.getElementById('m-threat-range').value = threat;
             syncThreatFromRange();
+            const scale = document.getElementById('m-scale').value;
             ['str','dex','con','int','wis','cha'].forEach(s => {
-                document.getElementById(`m-${s}`).value = Math.floor(Math.random() * 16) + 8;
+                const maximum = threat >= 86 ? 24 : 20;
+                document.getElementById(`m-${s}`).value = Math.floor(Math.random() * (maximum - 10)) + 11;
             });
-            document.getElementById('m-nat-armour').value = Math.floor(Math.random() * 5);
+            document.getElementById('m-nat-armour').value = Math.floor(Math.random() * (naturalArmorCap(threat, scale) + 1));
             
             const aligns = ["Lawful Good", "Neutral Good", "Chaotic Good", "Lawful Neutral", "True Neutral", "Chaotic Neutral", "Lawful Evil", "Neutral Evil", "Chaotic Evil"];
             document.getElementById('m-align').value = aligns[Math.floor(Math.random() * aligns.length)];
@@ -1780,11 +2030,16 @@ function importMonsterJSON(event) {
             // Clear sheet completely
             document.getElementById('m-name').value = '';
             document.getElementById('m-desc').value = '';
+            document.getElementById('m-origin').value = 'Misc';
             document.getElementById('m-threat-num').value = '50';
             syncThreatFromNum();
             document.getElementById('m-nat-armour').value = '0';
             ['str','dex','con','int','wis','cha'].forEach(s => document.getElementById(`m-${s}`).value = '10');
             document.getElementById('m-weakness').value = '';
+            document.getElementById('m-notes').value = '';
+            document.getElementById('m-atk-override').value = '';
+            document.getElementById('m-def-override').value = '';
+            syncCombatOverrideDisplay();
             document.getElementById('mv-custom').value = '';
             ['walk','fly','swim','climb','burrow','hover'].forEach(t => document.getElementById(`mv-${t}-check`).checked = false);
             document.getElementById('mv-walk-check').checked = true; // Default walking speed
@@ -1818,7 +2073,7 @@ function importMonsterJSON(event) {
             document.getElementById('ai-status').innerText = 'Consulting the oracles...';
             
             const promptContext = mode === 'myth' 
-                ? `Research the mythological creature named or described as "${desc}". Ensure the abilities strictly fit the real-world myths, but scale its numerical power to be a balanced TTRPG threat.` 
+                ? `Use the real mythology of "${desc}" as the primary source. Include only powers, actions, traits, weaknesses, or stories genuinely associated with that creature or figure. Do not add generic fantasy abilities merely to fill space. If mythology is uncertain, keep the entry restrained and mark uncertainty in notes.` 
                 : `Create a completely brand new, custom monster based on this description: "${desc}".`;
 
             const fullPrompt = `You are an expert TTRPG monster designer for the 'Demigods' system.
@@ -1826,9 +2081,15 @@ function importMonsterJSON(event) {
             SYSTEM RULES:
             - Scale goes from "Scale 0 (Tiny)" to "Scale 5 (Divine)".
             - Threat goes from 1 to 100.
-            - Stats (str, dex, con, int, wis, cha) usually range from 8 to 24.
+            - Use the accepted bestiary as the balance baseline: ordinary monsters usually have stats 8-20 and natural armour 0-6. Do not use 22-24 stats or natural armour above 8 below Threat 86 unless the creature is explicitly an exceptional high-tier threat.
+            - Threat is a non-linear difficulty guide, not permission to max every stat. A Threat 40-60 monster should usually have attack bonuses around +4 to +9 and Defence around 12-22 after the displayed formulas.
+            - Natural armour guideline: keep it at or below the frontend cap of round(2 + Threat/18 + Scale/2), maximum 12. High natural armour must be justified by the creature concept.
             - Action tags must be: "Minor", "Major", "Reaction", or "Legendary".
             - Use "{ATK}" and "{DEF}" exact placeholders in action descriptions for dynamic frontend math injection.
+            - Add an origin using the closest matching region from the available pantheons, or Misc if none fits.
+            - Return 1-6 actions unless the concept genuinely needs fewer. Do not fill every action category. A creature may have one action, several Minor actions, only Legendary actions, or no Reaction. Prefer a small, distinctive kit over a complete generic kit.
+            - Prefer unusual, specific abilities over common filler. Every action must be meaningfully different and tied to the creature's myth or concept.
+            - Follow the user's description and constraints before adding any general system assumptions.
             
             TASK:
             ${promptContext}
@@ -1840,6 +2101,7 @@ function importMonsterJSON(event) {
               "desc": "String",
               "scale": "String like 'Scale 2 (Large)'",
               "align": "String",
+              "origin": "One available pantheon/region or Misc",
               "threat": "String (number 1-100)",
               "natArmor": "String",
               "movements": {
@@ -1854,6 +2116,7 @@ function importMonsterJSON(event) {
               "stats": { "str": "String", "dex": "String", "con": "String", "int": "String", "wis": "String", "cha": "String" },
               "resRule": "normal",
               "weakness": "String describing a fatal weakness puzzle",
+              "notes": "String",
               "actions": [
                 { "name": "String", "tag": "String", "desc": "String with {ATK} or {DEF}" }
               ]
@@ -1883,6 +2146,10 @@ function importMonsterJSON(event) {
                 
                 document.getElementById('m-name').value = monsterData.name || 'Unknown Entity';
                 document.getElementById('m-desc').value = monsterData.desc || '';
+
+                const originSelect = document.getElementById('m-origin');
+                originSelect.value = Array.from(originSelect.options).some(o => o.value === monsterData.origin) ? monsterData.origin : 'Misc';
+                document.getElementById('m-notes').value = monsterData.notes || '';
                 
                 const scaleSelect = document.getElementById('m-scale');
                 if(Array.from(scaleSelect.options).some(o => o.value === monsterData.scale)) scaleSelect.value = monsterData.scale;
@@ -1892,7 +2159,7 @@ function importMonsterJSON(event) {
                 
                 document.getElementById('m-threat-num').value = monsterData.threat || '50';
                 syncThreatFromNum();
-                document.getElementById('m-nat-armour').value = monsterData.natArmor || '0';
+                document.getElementById('m-nat-armour').value = boundedNaturalArmor(parseInt(monsterData.threat) || 50, monsterData.scale || 'Scale 1 (Mortal)', monsterData.natArmor);
                 
                 ['walk','fly','swim','climb','burrow','hover'].forEach(t => {
                     if(monsterData.movements && monsterData.movements[t]) {

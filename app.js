@@ -39,13 +39,16 @@ const expandedAbilityId = ref(null);
             age: "",
             equippedArmour: "Unarmoured",
             equippedWeapons: ["", ""],
+            carriedWeapons: [],
             stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
             skills: [],
+            proficiencies: [],
             potd: [true, true, true, true, true, true],
             wounds: "Healthy",
             fatigue: 0,
             learnedAbilities: [],
             items: [],
+            quests: [],
             backstory: "",
             relations: [],
             startingAp: 3,
@@ -63,15 +66,25 @@ const expandedAbilityId = ref(null);
         const manageModalOpen = ref(false);
         const isUnleashed = ref(false);
         const shopOpen = ref(false);
+        const codexOpen = ref(false);
         const apPromptActive = ref(false);
         const apConfirmationMessage = ref(false);
         
         const chosenFilterTier = ref("All");
         const storeFilterTier = ref("All");
+        const codexNameSearch = ref("");
+        const codexDescriptionSearch = ref("");
+        const codexDomainFilter = ref("All");
+        const codexTierFilter = ref("All");
+        const codexCostFilter = ref("All");
+        const codexActionFilter = ref("All");
         
         const newSkillName = ref("");
         const newSkillStat = ref("str");
         const newItemName = ref("");
+        const newQuestName = ref("");
+        const newQuestProficiencyName = ref("");
+        const newQuestProficiencyAbility = ref("");
         const newRelationName = ref("");
 		const infoSidebarOpen = ref(false);
         const activeInfoTab = ref('combat');
@@ -143,6 +156,38 @@ localStorage.setItem('myth_active_char_id', newVal.id);
             return char.value.equippedWeapons.map(wType => weaponArsenal.find(w => w.type === wType) || null);
         });
 
+        const carriedWeaponRecords = computed(() => {
+            if (typeof weaponArsenal === 'undefined') return [];
+            return (char.value.carriedWeapons || []).map(type => weaponArsenal.find(weapon => weapon.type === type)).filter(Boolean);
+        });
+
+        const carriedWeaponOptions = computed(() => {
+            if (typeof weaponArsenal === 'undefined') return [];
+            return weaponArsenal.filter(weapon => (char.value.carriedWeapons || []).includes(weapon.type));
+        });
+
+        const weaponIsTwoHanded = (weapon) => !!weapon && (weapon.traits || []).some(trait => trait.toLowerCase().replace('-', '') === 'twohanded');
+
+        const setActiveWeapon = (slot, weaponType) => {
+            if (!char.value.carriedWeapons.includes(weaponType) && weaponType) return;
+            char.value.equippedWeapons[slot] = weaponType;
+            const weapon = weaponArsenal.find(item => item.type === weaponType);
+            if (weaponIsTwoHanded(weapon)) char.value.equippedWeapons[slot === 0 ? 1 : 0] = "";
+            const other = weaponArsenal.find(item => item.type === char.value.equippedWeapons[slot === 0 ? 1 : 0]);
+            if (weaponIsTwoHanded(other)) char.value.equippedWeapons[slot === 0 ? 1 : 0] = "";
+        };
+
+        const toggleCarriedWeapon = (weaponType) => {
+            if (!char.value.carriedWeapons) char.value.carriedWeapons = [];
+            const index = char.value.carriedWeapons.indexOf(weaponType);
+            if (index >= 0) {
+                char.value.carriedWeapons.splice(index, 1);
+                char.value.equippedWeapons = char.value.equippedWeapons.map(active => active === weaponType ? "" : active);
+            } else {
+                char.value.carriedWeapons.push(weaponType);
+            }
+        };
+
         const filteredShopAbilities = computed(() => {
             const parentGod = availableGods.value.find(g => g.name === char.value.parent);
             if (!parentGod || typeof abilitiesLibrary === 'undefined') return [];
@@ -155,6 +200,39 @@ localStorage.setItem('myth_active_char_id', newVal.id);
                 return abDomains.some(d => domains.includes(d));
             });
         });
+
+        const codexDomains = computed(() => {
+            if (typeof abilitiesLibrary === 'undefined') return [];
+            return [...new Set(abilitiesLibrary.flatMap(ab => ab.domains.split(',').map(domain => domain.trim())).filter(Boolean))].sort();
+        });
+
+        const codexCosts = computed(() => {
+            if (typeof abilitiesLibrary === 'undefined') return [];
+            return [...new Set(abilitiesLibrary.map(ab => ab.cost))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        });
+
+        const codexActions = computed(() => {
+            if (typeof abilitiesLibrary === 'undefined') return [];
+            return [...new Set(abilitiesLibrary.map(ab => ab.action))].sort();
+        });
+
+        const filteredCodexAbilities = computed(() => {
+            if (typeof abilitiesLibrary === 'undefined') return [];
+            const nameQuery = codexNameSearch.value.trim().toLowerCase();
+            const descriptionQuery = codexDescriptionSearch.value.trim().toLowerCase();
+            return abilitiesLibrary.filter(ab => {
+                const matchesName = !nameQuery || ab.name.toLowerCase().includes(nameQuery);
+                const matchesDescription = !descriptionQuery || ab.rules.toLowerCase().includes(descriptionQuery);
+                const matchesDomain = codexDomainFilter.value === 'All' || ab.domains.split(',').some(domain => domain.trim() === codexDomainFilter.value);
+                const matchesTier = codexTierFilter.value === 'All' || ab.tier === Number(codexTierFilter.value);
+                const matchesCost = codexCostFilter.value === 'All' || ab.cost === codexCostFilter.value;
+                const matchesAction = codexActionFilter.value === 'All' || ab.action === codexActionFilter.value;
+                return matchesName && matchesDescription && matchesDomain && matchesTier && matchesCost && matchesAction;
+            });
+        });
+
+        const activeQuests = computed(() => (char.value.quests || []).filter(quest => !quest.completed));
+        const completedQuests = computed(() => (char.value.quests || []).filter(quest => quest.completed));
 
         const currentWoundDescription = computed(() => {
             if (typeof woundStates === 'undefined') return "";
@@ -274,6 +352,7 @@ const randomizeStats = () => {
                 const w1 = weaponArsenal[Math.floor(Math.random() * weaponArsenal.length)].type;
                 const w2 = Math.random() > 0.5 ? weaponArsenal[Math.floor(Math.random() * weaponArsenal.length)].type : "";
                 char.value.equippedWeapons = [w1, w2];
+                char.value.carriedWeapons = [...new Set([w1, w2].filter(Boolean))];
             }
             char.value.learnedAbilities = [];
         };
@@ -291,7 +370,7 @@ char.value.learnedAbilities = [];
         const setWoundState = (state) => { char.value.wounds = state; };
         
         const getWoundClass = (state) => {
-            const colors = { Healthy: 'bg-green-900/40 text-green-300 border-green-700', Bruised: 'bg-yellow-700/40 text-yellow-300 border-yellow-600', Bleeding: 'bg-orange-800/40 text-orange-300 border-orange-600', Broken: 'bg-red-900/50 text-red-300 border-red-600', Dead: 'bg-black text-red-700 border-red-900 font-black' };
+            const colors = { Healthy: 'bg-green-900/40 text-green-300 border-green-700', Bruised: 'bg-yellow-700/40 text-yellow-300 border-yellow-600', Bloodied: 'bg-orange-800/40 text-orange-300 border-orange-600', Broken: 'bg-red-900/50 text-red-300 border-red-600', Dead: 'bg-black text-red-700 border-red-900 font-black' };
             return char.value.wounds === state ? `${colors[state]} ring-2 ring-offset-1 ring-offset-[#1a140f] ring-[#8b6d43]` : 'bg-black/20 text-[#8b6d43] border-[#4a3a2a] hover:bg-black/40 hover:text-[#d6c6ad]';
         };
 
@@ -477,6 +556,31 @@ const calcDivineDC = () => {
         
         const removeItem = (idx) => { char.value.items.splice(idx, 1); };
 
+        const addQuest = () => {
+            if (newQuestName.value.trim()) {
+                if (!char.value.quests) char.value.quests = [];
+                char.value.quests.push({ id: generateId(), text: newQuestName.value.trim(), completed: false });
+                newQuestName.value = "";
+            }
+        };
+
+        const toggleQuest = (quest) => { quest.completed = !quest.completed; };
+        const removeQuest = (idx) => { char.value.quests.splice(idx, 1); };
+        const addQuestProficiency = (quest) => {
+            if (!quest.completed || quest.proficiencyAdded || !newQuestProficiencyName.value.trim()) return;
+            if (!char.value.proficiencies) char.value.proficiencies = [];
+            char.value.proficiencies.push({
+                id: generateId(),
+                name: newQuestProficiencyName.value.trim(),
+                ability: newQuestProficiencyAbility.value.trim(),
+                source: 'Divine Quest',
+                quest: quest.text
+            });
+            quest.proficiencyAdded = true;
+            newQuestProficiencyName.value = "";
+            newQuestProficiencyAbility.value = "";
+        };
+
         const addRelation = () => {
             if (newRelationName.value.trim()) {
                 if(!char.value.relations) char.value.relations = [];
@@ -499,9 +603,14 @@ const calcDivineDC = () => {
             } else if (!c.equippedWeapons) {
                 c.equippedWeapons = ["", ""];
             }
+            if (!Array.isArray(c.carriedWeapons)) c.carriedWeapons = c.equippedWeapons.filter(Boolean);
+            c.carriedWeapons = [...new Set(c.carriedWeapons)];
+            c.equippedWeapons = c.equippedWeapons.map(weapon => c.carriedWeapons.includes(weapon) ? weapon : "");
             if (c.notes === undefined) c.notes = "";
             if (c.backstory === undefined) c.backstory = "";
             if (!c.items) c.items = [];
+            if (!c.quests) c.quests = [];
+            if (!c.proficiencies) c.proficiencies = [];
             if (!c.relations) c.relations = [];
             if (!c.potd) c.potd = [false, false, false];
             return c;
@@ -603,26 +712,28 @@ onMounted(() => {
         });
         // --- 8. Final Return to Template ---
         return {
-            char, roster, currentMode, shopOpen, manageModalOpen, isUnleashed, newSkillName, newSkillStat,
-            newItemName, newRelationName, apPromptActive, apConfirmationMessage, saveIndicator,
+            char, roster, currentMode, shopOpen, codexOpen, manageModalOpen, isUnleashed, newSkillName, newSkillStat,
+            newItemName, newQuestName, newQuestProficiencyName, newQuestProficiencyAbility, newRelationName, apPromptActive, apConfirmationMessage, saveIndicator,
             pantheons: typeof pantheons !== 'undefined' ? pantheons : {}, 
             woundStates: typeof woundStates !== 'undefined' ? woundStates : [], 
             fatigueStates: typeof fatigueStates !== 'undefined' ? fatigueStates : [], 
             weaponArsenal: typeof weaponArsenal !== 'undefined' ? weaponArsenal : [],
             armourRegistry: typeof armourRegistry !== 'undefined' ? armourRegistry : [], 
+            abilitiesLibrary: typeof abilitiesLibrary !== 'undefined' ? abilitiesLibrary : [],
             rulesContent: typeof rulesContent !== 'undefined' ? rulesContent : [],
             activeRulesTab,
             weaponTraits: typeof weaponTraits !== 'undefined' ? weaponTraits : {},     
             weaponEffects: typeof weaponEffects !== 'undefined' ? weaponEffects : {},   
             totalStats, effectiveDex, calculatedProficiency, currentWoundDescription, currentFatigueName, currentFatigueDescription,
-            availableGods, activeWeapons, filteredShopAbilities, calcMod, formatModifier, statFullName, 
+            availableGods, activeWeapons, filteredShopAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName, 
+                        availableGods, activeWeapons, carriedWeaponRecords, carriedWeaponOptions, filteredShopAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName,
             adjustStat, randomizeStats, randomizeAll, changePantheon, changeParent, setWoundState, 
             getWoundClass, getFatigueClass, addSkill, removeSkill, toggleSkillTick, calcDefenseBonus, 
             adjustTotalAp, handleApClick, decreaseActivePotd, increaseActivePotd,
             togglePotd, replenishPotd, executePurchase, refundAbility, triggerUnleash, enterPlayMode, 
             handleImageUpload, createNewCharacter, editCharacter, loadCharacter, deleteCharacter, 
             printSheet, importData, exportCurrent, exportAll, useAbilityInPlay, spentAp, remainingAp,
-            closeVault, addItem, removeItem, addRelation, removeRelation, storeFilterTier, chosenFilterTier, currentTheme, weaponAttackBonuses, apError, potdError,
+            closeVault, addItem, removeItem, addQuest, toggleQuest, removeQuest, addQuestProficiency, addRelation, removeRelation, setActiveWeapon, toggleCarriedWeapon, storeFilterTier, chosenFilterTier, codexNameSearch, codexDescriptionSearch, codexDomainFilter, codexTierFilter, codexCostFilter, codexActionFilter, currentTheme, weaponAttackBonuses, apError, potdError,
             calcDivineDC, abilitiesDropdownOpen, closeAbilitiesDropdown, scrollToAbility, abilitiesByTier, quickCastOpen,
     activeAbilityModal, expandedAbilityId, infoSidebarOpen,
             activeInfoTab,

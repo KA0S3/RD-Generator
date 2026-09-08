@@ -592,27 +592,15 @@
         .bestiary-card .meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
         .bestiary-card-actions { display: flex; gap: 8px; margin-top: 12px; }
         .bestiary-card { position: relative; }
-        .bestiary-hover-sheet {
-            position: fixed;
-            left: 3vw;
-            right: 3vw;
-            top: 5vh;
-            z-index: 50;
-            max-height: 88vh;
-            overflow-y: auto;
-            padding: 24px;
-            background: #121212;
-            border: 1px solid var(--primary-purple);
-            box-shadow: 0 24px 70px rgba(0,0,0,0.85);
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-4px);
-            transition: opacity 0.18s ease, transform 0.18s ease;
-        }
-        .bestiary-card:hover .bestiary-hover-sheet { opacity: 1; pointer-events: auto; transform: translateY(0); }
-        .bestiary-hover-sheet h4 { color: var(--highlight-gold); margin: 0 0 6px; }
-        .bestiary-hover-sheet p { margin: 4px 0; font-size: 0.78rem; }
-        .bestiary-hover-sheet .sheet-actions { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-color); }
+        .bestiary-card-actions .btn { flex: 1; }
+        .bestiary-path { display:flex; align-items:center; gap:8px; min-height:36px; color:var(--text-muted); font-size:.9rem; }
+        .bestiary-path strong { color:var(--text-main); }
+        .modal-overlay { position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,0,.72); }
+        .bestiary-sheet { width:min(860px, 100%); max-height:min(84vh, 900px); overflow:auto; padding:24px; background:var(--statblock-bg); border:1px solid var(--primary-purple); border-radius:var(--radius); box-shadow:0 24px 70px rgba(0,0,0,.85); }
+        .bestiary-sheet-header { display:flex; gap:12px; align-items:start; justify-content:space-between; margin-bottom:14px; }
+        .bestiary-sheet h4 { color:var(--highlight-gold); margin:0 0 6px; font-size:1.4rem; }
+        .bestiary-sheet p { margin:8px 0; line-height:1.45; }
+        body.resizing, body.resizing * { cursor:col-resize !important; user-select:none !important; }
         .combat-steppers { display: flex; gap: 8px; margin: 6px 0 10px; }
         .combat-stepper { display: inline-flex; align-items: center; gap: 4px; padding: 3px 5px; border: 1px solid rgba(251,191,36,0.35); background: rgba(120,53,15,0.18); border-radius: var(--radius); color: var(--highlight-gold); font-size: 0.72rem; }
         .combat-stepper button { width: 22px; height: 22px; padding: 0; border: 1px solid rgba(251,191,36,0.35); background: rgba(0,0,0,0.3); color: var(--highlight-gold); border-radius: 3px; cursor: pointer; }
@@ -696,7 +684,7 @@
             </div>
         </header>
 
-        <div class="utility-bar">
+        <div class="utility-bar" id="creator-utility-bar">
             <div class="view-mode-group" id="view-mode-group" aria-label="Monster creator view mode">
                 <button class="view-mode-btn active" type="button" data-view-mode="balanced" onclick="applyViewMode('balanced')">Balanced</button>
                 <button class="view-mode-btn" type="button" data-view-mode="editor" onclick="applyViewMode('editor')">Editor</button>
@@ -949,7 +937,7 @@
                 <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px; align-items:center; margin-bottom:18px;">
                     <div>
                         <h2 style="margin-bottom:4px;">Local Bestiary Vault</h2>
-                        <p style="color: var(--text-muted); margin:0;">Manage, filter, and load mythic creatures stored in your browser.</p>
+                        <div class="bestiary-path" id="bestiary-path"><strong>All Pantheons</strong><span>• Choose a pantheon, then a creature.</span></div>
                     </div>
                     <div style="display:flex; flex-wrap:wrap; gap:10px;">
                         <button class="btn" onclick="exportAllBestiaryJSON()">Export All (JSON)</button>
@@ -1029,7 +1017,7 @@
                             <option value="Persian">Persian</option>
                         </select>
                     </div>
-                    <button id="folder-mode-toggle" class="btn" type="button" onclick="toggleBestiaryFolderMode()">Regions: On</button>
+                    <button id="folder-mode-toggle" class="btn" type="button" onclick="returnToBestiaryRegions()">← All Pantheons</button>
                 </div>
 
                 <div class="bestiary-grid" id="bestiary-list">
@@ -1038,6 +1026,16 @@
             </div>
         </div>
     </main>
+    </div>
+
+    <div id="bestiary-view-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="bestiary-sheet-title" onclick="if(event.target === this) closeBestiaryView()">
+        <article class="bestiary-sheet">
+            <div class="bestiary-sheet-header">
+                <div id="bestiary-sheet-content"></div>
+                <button class="btn" type="button" onclick="closeBestiaryView()">Close</button>
+            </div>
+            <div id="bestiary-sheet-actions" class="bestiary-card-actions"></div>
+        </article>
     </div>
     
     <!-- Confirm Save Modal -->
@@ -1117,6 +1115,7 @@
             }
             
             localStorage.setItem('mm_active_tab', tabId); // Save state
+            document.getElementById('creator-utility-bar').classList.toggle('hidden', tabId !== 'creator');
             if(tabId === 'bestiary') renderBestiary();
         }
 
@@ -1209,7 +1208,7 @@
             const min1 = 200, min2 = 200, min3 = 300;
             let isDragging1 = false, isDragging2 = false;
 
-            function setWidths(p1, p2, p3) {
+            function setWidths(p1, p2, p3, persist = false) {
                 col1.style.display = p1 === 0 ? 'none' : 'block';
                 col2.style.display = p2 === 0 ? 'none' : 'block';
                 col3.style.display = p3 === 0 ? 'none' : 'block';
@@ -1218,6 +1217,7 @@
                 col3.style.flex = p3 === 0 ? '0 0 0' : `0 0 ${p3}%`;
                 resizer1.style.display = p1 === 0 || p2 === 0 ? 'none' : 'block';
                 resizer2.style.display = p2 === 0 || p3 === 0 ? 'none' : 'block';
+                if (persist) localStorage.setItem('mm_balanced_widths', JSON.stringify([p1, p2, p3]));
             }
 
             function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
@@ -1226,7 +1226,7 @@
                 const p1 = total ? (w1 / total) * 100 : 0;
                 const p2 = total ? (w2 / total) * 100 : 0;
                 const p3 = total ? (w3 / total) * 100 : 0;
-                setWidths(p1, p2, p3);
+                setWidths(p1, p2, p3, true);
             }
 
             function calculateResizer1(e) {
@@ -1257,8 +1257,16 @@
                 updateColumnSizesFromPositions(fixed1, w2, w3);
             }
 
-            resizer1.addEventListener('pointerdown', event => { isDragging1 = true; resizer1.setPointerCapture?.(event.pointerId); resizer1.classList.add('dragging'); });
-            resizer2.addEventListener('pointerdown', event => { isDragging2 = true; resizer2.setPointerCapture?.(event.pointerId); resizer2.classList.add('dragging'); });
+            function beginDrag(resizer, event, first) {
+                if (window.innerWidth <= 900 || localStorage.getItem('mm_view_mode') !== 'balanced') return;
+                event.preventDefault();
+                isDragging1 = first; isDragging2 = !first;
+                resizer.setPointerCapture?.(event.pointerId);
+                resizer.classList.add('dragging');
+                document.body.classList.add('resizing');
+            }
+            resizer1.addEventListener('pointerdown', event => beginDrag(resizer1, event, true));
+            resizer2.addEventListener('pointerdown', event => beginDrag(resizer2, event, false));
 
             document.addEventListener('pointermove', (e) => {
                 if (!isDragging1 && !isDragging2) return;
@@ -1267,10 +1275,13 @@
                 if (isDragging2) calculateResizer2(e);
             });
 
-            document.addEventListener('pointerup', () => {
+            function endDrag() {
                 isDragging1 = false; isDragging2 = false;
                 resizer1.classList.remove('dragging'); resizer2.classList.remove('dragging');
-            });
+                document.body.classList.remove('resizing');
+            }
+            document.addEventListener('pointerup', endDrag);
+            document.addEventListener('pointercancel', endDrag);
 
             window.addEventListener('resize', () => {
                 if (localStorage.getItem('mm_view_mode') !== 'balanced') return;
@@ -1294,9 +1305,12 @@
                 document.getElementById('col-3').style.display = 'block';
                 document.getElementById('resizer-1').style.display = 'block';
                 document.getElementById('resizer-2').style.display = 'block';
-                document.getElementById('col-1').style.flex = '0 0 30%';
-                document.getElementById('col-2').style.flex = '0 0 35%';
-                document.getElementById('col-3').style.flex = '0 0 35%';
+                let widths;
+                try { widths = JSON.parse(localStorage.getItem('mm_balanced_widths')); } catch(e) { widths = null; }
+                if (!Array.isArray(widths) || widths.length !== 3) widths = [30, 35, 35];
+                document.getElementById('col-1').style.flex = `0 0 ${widths[0]}%`;
+                document.getElementById('col-2').style.flex = `0 0 ${widths[1]}%`;
+                document.getElementById('col-3').style.flex = `0 0 ${widths[2]}%`;
             } else if (currentMode === 'editor') {
                 document.getElementById('col-1').style.display = 'block';
                 document.getElementById('col-2').style.display = 'block';
@@ -1728,16 +1742,38 @@
 
         function toggleBestiaryFolderMode() {
             bestiaryFolderMode = !bestiaryFolderMode;
-            document.getElementById('folder-mode-toggle').innerText = `Regions: ${bestiaryFolderMode ? 'On' : 'Off'}`;
+            if (bestiaryFolderMode) document.getElementById('filter-origin').value = 'any';
             renderBestiary();
         }
 
         function openBestiaryRegion(origin) {
             bestiaryFolderMode = false;
-            document.getElementById('folder-mode-toggle').innerText = 'Regions: Off';
             document.getElementById('filter-origin').value = origin;
             renderBestiary();
         }
+
+        function returnToBestiaryRegions() {
+            bestiaryFolderMode = true;
+            document.getElementById('filter-origin').value = 'any';
+            document.getElementById('filter-search').value = '';
+            renderBestiary();
+        }
+
+        function openBestiaryView(id) {
+            const monster = getStoredBestiary().find(m => m.id === id);
+            if (!monster) return;
+            document.getElementById('bestiary-sheet-content').innerHTML = monsterPlaySheetHTML(monster);
+            document.getElementById('bestiary-sheet-actions').innerHTML = `<button class="btn gold" onclick="loadMonster('${monster.id}'); closeBestiaryView()">Load in Creator</button><button class="btn" onclick="exportSingleFromBestiary('${monster.id}')">Export JSON</button>`;
+            document.getElementById('bestiary-view-modal').classList.remove('hidden');
+        }
+
+        function closeBestiaryView() {
+            document.getElementById('bestiary-view-modal').classList.add('hidden');
+        }
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeBestiaryView();
+        });
 
         function monsterPlaySheetHTML(monster) {
             const threat = parseInt(monster.threat) || 50;
@@ -1771,6 +1807,11 @@
             });
 
             const list = document.getElementById('bestiary-list');
+            const path = document.getElementById('bestiary-path');
+            const backButton = document.getElementById('folder-mode-toggle');
+            const inFolder = !bestiaryFolderMode || originFilter !== 'any';
+            backButton.classList.toggle('hidden', !inFolder);
+            path.innerHTML = inFolder ? `<button class="btn" type="button" onclick="returnToBestiaryRegions()">← Back</button><span>All Pantheons</span><span>›</span><strong>${escapeHTML(originFilter === 'any' ? 'Filtered creatures' : originFilter)}</strong>` : '<strong>All Pantheons</strong><span>• Choose a pantheon, then a creature.</span>';
             list.innerHTML = '';
             
             if(bestiary.length === 0) { list.innerHTML = '<p>No monsters found.</p>'; return; }
@@ -1798,10 +1839,10 @@
                     <p class="meta">${escapeHTML(m.origin || 'Misc')} | Threat: ${escapeHTML(m.threat)}% | ${(m.scale || 'Scale 1 (Mortal)').split(' ')[0]} | ${escapeHTML(m.align || 'Unaligned')}</p>
                     <div class="bestiary-card-actions">
                         <button class="btn" onclick="loadMonster('${m.id}')">Load</button>
+                        <button class="btn gold" onclick="openBestiaryView('${m.id}')">View</button>
                         <button class="btn" onclick="exportSingleFromBestiary('${m.id}')">Export</button>
                         <button class="btn btn-danger" onclick="deleteMonster('${m.id}')">Delete</button>
                     </div>
-                    <div class="bestiary-hover-sheet">${monsterPlaySheetHTML(m)}</div>
                 `;
                 list.appendChild(div);
             });

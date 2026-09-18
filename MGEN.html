@@ -935,16 +935,16 @@
                             <p class="sheet-field"><strong>Environment</strong><select id="sheet-environment"></select></p>
                         </div>
                         <div class="rule-line"></div>
-                        <div class="sheet-field movement-panel" id="sheet-movement-panel"><strong>Movement</strong><button type="button" class="movement-toggle" id="sheet-movement-toggle"><span id="sheet-speed"></span> <small>▾</small></button><div class="movement-editor" id="sheet-movement-editor"></div></div>
+                        <div class="sheet-field movement-panel" id="sheet-movement-panel"><strong>Movement</strong><button type="button" class="movement-toggle" id="sheet-movement-toggle"><span id="sheet-movement-summary"></span> <small>▾</small></button><div class="movement-editor" id="sheet-movement-editor"></div></div>
                         <div class="rule-line"></div>
                         <div class="statblock-section-title">Ability Scores</div>
                         <div class="sheet-stat-grid">
-                            <div class="sheet-stat"><strong>STR</strong><input class="inline-number" type="number" id="sheet-str"><small class="stat-modifier" id="sheet-str-mod">+2</small></div>
-                            <div class="sheet-stat"><strong>DEX</strong><input class="inline-number" type="number" id="sheet-dex"><small class="stat-modifier" id="sheet-dex-mod">+4</small></div>
-                            <div class="sheet-stat"><strong>CON</strong><input class="inline-number" type="number" id="sheet-con"><small class="stat-modifier" id="sheet-con-mod">+2</small></div>
-                            <div class="sheet-stat"><strong>INT</strong><input class="inline-number" type="number" id="sheet-int"><small class="stat-modifier" id="sheet-int-mod">+0</small></div>
-                            <div class="sheet-stat"><strong>WIS</strong><input class="inline-number" type="number" id="sheet-wis"><small class="stat-modifier" id="sheet-wis-mod">+1</small></div>
-                            <div class="sheet-stat"><strong>CHA</strong><input class="inline-number" type="number" id="sheet-cha"><small class="stat-modifier" id="sheet-cha-mod">-1</small></div>
+                            <div class="sheet-stat"><strong>Power</strong><input class="inline-number" type="number" id="sheet-power"><small class="stat-modifier" id="sheet-power-mod">+2</small></div>
+                            <div class="sheet-stat"><strong>Speed</strong><input class="inline-number" type="number" id="sheet-speed"><small class="stat-modifier" id="sheet-speed-mod">+4</small></div>
+                            <div class="sheet-stat"><strong>Endurance</strong><input class="inline-number" type="number" id="sheet-endurance"><small class="stat-modifier" id="sheet-endurance-mod">+2</small></div>
+                            <div class="sheet-stat"><strong>Knowledge</strong><input class="inline-number" type="number" id="sheet-knowledge"><small class="stat-modifier" id="sheet-knowledge-mod">+0</small></div>
+                            <div class="sheet-stat"><strong>Instinct</strong><input class="inline-number" type="number" id="sheet-instinct"><small class="stat-modifier" id="sheet-instinct-mod">+1</small></div>
+                            <div class="sheet-stat"><strong>Influence</strong><input class="inline-number" type="number" id="sheet-influence"><small class="stat-modifier" id="sheet-influence-mod">-1</small></div>
                         </div>
                         <div class="rule-line"></div>
                         <div class="weakness-card"><strong>Fatal Weakness</strong><span id="sheet-weakness" class="sheet-value sheet-editable" contenteditable="true" spellcheck="true"></span></div>
@@ -1060,12 +1060,12 @@
 
                     <h3>Attributes</h3>
                     <div class="stats-grid">
-                        <div><label>STR</label><input type="number" id="m-str" value="14" oninput="updatePreview()"></div>
-                        <div><label>DEX</label><input type="number" id="m-dex" value="18" oninput="updatePreview()"></div>
-                        <div><label>CON</label><input type="number" id="m-con" value="14" oninput="updatePreview()"></div>
-                        <div><label>INT</label><input type="number" id="m-int" value="10" oninput="updatePreview()"></div>
-                        <div><label>WIS</label><input type="number" id="m-wis" value="12" oninput="updatePreview()"></div>
-                        <div><label>CHA</label><input type="number" id="m-cha" value="8" oninput="updatePreview()"></div>
+                        <div><label>Power</label><input type="number" id="m-power" value="14" oninput="updatePreview()"></div>
+                        <div><label>Speed</label><input type="number" id="m-speed" value="18" oninput="updatePreview()"></div>
+                        <div><label>Endurance</label><input type="number" id="m-endurance" value="14" oninput="updatePreview()"></div>
+                        <div><label>Knowledge</label><input type="number" id="m-knowledge" value="10" oninput="updatePreview()"></div>
+                        <div><label>Instinct</label><input type="number" id="m-instinct" value="12" oninput="updatePreview()"></div>
+                        <div><label>Influence</label><input type="number" id="m-influence" value="8" oninput="updatePreview()"></div>
                     </div>
 
                     <label>Fatal Weakness</label>
@@ -1105,14 +1105,14 @@
                 <input type="hidden" id="sheet-attack"><input type="hidden" id="sheet-defence">
                         <input type="hidden" id="m-def-override">
                         <input type="hidden" id="m-atk-override">
-                        <p class="preview-only"><strong>Speed:</strong> <span id="out-speed">Walk 15m, Climb 15m</span></p>
+                        <p class="preview-only"><strong>Movement:</strong> <span id="out-movement">Walk 15m, Climb 15m</span></p>
                         <div class="scores">
-                            <div><h4>STR</h4><p id="out-str">14</p><small id="out-str-mod">(+2)</small></div>
-                            <div><h4>DEX</h4><p id="out-dex">18</p><small id="out-dex-mod">(+4)</small></div>
-                            <div><h4>CON</h4><p id="out-con">14</p><small id="out-con-mod">(+2)</small></div>
-                            <div><h4>INT</h4><p id="out-int">10</p><small id="out-int-mod">(+0)</small></div>
-                            <div><h4>WIS</h4><p id="out-wis">12</p><small id="out-wis-mod">(+1)</small></div>
-                            <div><h4>CHA</h4><p id="out-cha">8</p><small id="out-cha-mod">(-1)</small></div>
+                            <div><h4>Power</h4><p id="out-power">14</p><small id="out-power-mod">(+2)</small></div>
+                            <div><h4>Speed</h4><p id="out-speed">18</p><small id="out-speed-mod">(+4)</small></div>
+                            <div><h4>Endurance</h4><p id="out-endurance">14</p><small id="out-endurance-mod">(+2)</small></div>
+                            <div><h4>Knowledge</h4><p id="out-knowledge">10</p><small id="out-knowledge-mod">(+0)</small></div>
+                            <div><h4>Instinct</h4><p id="out-instinct">12</p><small id="out-instinct-mod">(+1)</small></div>
+                            <div><h4>Influence</h4><p id="out-influence">8</p><small id="out-influence-mod">(-1)</small></div>
                         </div>
                         <div class="rule-line"></div>
                         <div class="statblock-section-title preview-only">Traits & Vulnerabilities</div>
@@ -1168,6 +1168,7 @@
                         </label>
                         <button class="btn gold" onclick="exportAllBestiaryPDF()">Export All (PDF Bundle)</button>
                         <button class="btn gold" onclick="exportSelectedBestiaryPDF()">Export Selected PDF</button>
+                        <button class="btn gold" onclick="generateRandomMythMonster()">✨ Generate New Myth</button>
                     </div>
                 </div>
                 
@@ -1425,8 +1426,8 @@
                         title: 'Attack & Defence Bonuses',
                         body: [
                             'Proficiency: Threat 1-10 = 1 + round(Threat / 10). Threat 11-85 = 2 + round(7 x ((Threat - 10) / 75)^1.5). Threat 86-100 = 9 + round(3 x ((Threat - 85) / 15)^1.2).',
-                            'Attack bonus: take the higher of the STR modifier or DEX modifier, then add proficiency. Attack bonus = max(STR modifier, DEX modifier) + proficiency.',
-                            'Defence Bonus (DB): add the INT modifier, half the DEX score rounded down, proficiency, and Natural Armour. DB = INT modifier + floor(DEX / 2) + proficiency + Natural Armour. Natural Armour is capped at round(2 + Threat/18 + Scale/2), maximum 12, to keep ordinary creatures playable.',
+                            'Attack bonus: take the higher of the Power modifier or Speed modifier, then add proficiency. Attack bonus = max(Power modifier, Speed modifier) + proficiency.',
+                            'Defence Bonus (DB): add the Knowledge modifier, half the Speed score rounded down, proficiency, and Natural Armour. DB = Knowledge modifier + floor(Speed / 2) + proficiency + Natural Armour. Natural Armour is capped at round(2 + Threat/18 + Scale/2), maximum 12, to keep ordinary creatures playable.',
                             'Ability descriptions can use {ATK} and {DEF}; the preview replaces them with the calculated attack bonus and Defence Bonus.'
                         ]
                     }
@@ -1622,7 +1623,7 @@
             [['sheet-attack', 'm-atk-override'], ['sheet-defence', 'm-def-override']].forEach(([sheetId, sourceId]) => {
                 document.getElementById(sheetId).addEventListener('input', () => { document.getElementById(sourceId).value = document.getElementById(sheetId).value; syncCombatOverrideDisplay(); updatePreview(); });
             });
-            ['str','dex','con','int','wis','cha'].forEach(stat => {
+            ['power','speed','endurance','knowledge','instinct','influence'].forEach(stat => {
                 const sheetStat = document.getElementById(`sheet-${stat}`);
                 sheetStat.value = document.getElementById(`m-${stat}`).value;
                 sheetStat.addEventListener('input', () => { document.getElementById(`m-${stat}`).value = sheetStat.value; updatePreview(); });
@@ -1682,16 +1683,16 @@
             const prof = calculateProficiency(threat);
             const scale = document.getElementById('m-scale').value;
             const stats = {
-                str: parseInt(document.getElementById('m-str').value) || 10,
-                dex: parseInt(document.getElementById('m-dex').value) || 10,
-                int: parseInt(document.getElementById('m-int').value) || 10,
-                con: parseInt(document.getElementById('m-con').value) || 10,
-                wis: parseInt(document.getElementById('m-wis').value) || 10,
-                cha: parseInt(document.getElementById('m-cha').value) || 10,
+                power: parseInt(document.getElementById('m-power').value) || 10,
+                speed: parseInt(document.getElementById('m-speed').value) || 10,
+                knowledge: parseInt(document.getElementById('m-knowledge').value) || 10,
+                endurance: parseInt(document.getElementById('m-endurance').value) || 10,
+                instinct: parseInt(document.getElementById('m-instinct').value) || 10,
+                influence: parseInt(document.getElementById('m-influence').value) || 10,
             };
             const natArmor = boundedNaturalArmor(threat, scale, document.getElementById('m-nat-armour').value);
-            const attack = Math.max(getMod(stats.str), getMod(stats.dex)) + prof;
-            const defence = getMod(stats.int) + Math.floor(stats.dex / 2) + prof + natArmor;
+            const attack = Math.max(getMod(stats.power), getMod(stats.speed)) + prof;
+            const defence = getMod(stats.knowledge) + Math.floor(stats.speed / 2) + prof + natArmor;
             return { attack, defence };
         }
 
@@ -1720,12 +1721,12 @@
                 const calc = getCalculatedCombatBonuses();
                 const threat = parseInt(document.getElementById('m-threat-num').value) || 50;
                 const prof = calculateProficiency(threat);
-                const str = parseInt(document.getElementById('m-str').value) || 10;
-                const dex = parseInt(document.getElementById('m-dex').value) || 10;
-                const int = parseInt(document.getElementById('m-int').value) || 10;
+                const power = parseInt(document.getElementById('m-power').value) || 10;
+                const speed = parseInt(document.getElementById('m-speed').value) || 10;
+                const knowledge = parseInt(document.getElementById('m-knowledge').value) || 10;
                 const nat = boundedNaturalArmor(threat, document.getElementById('m-scale').value, document.getElementById('m-nat-armour').value);
-                const attackText = `Attack: max(STR ${getMod(str)}, DEX ${getMod(dex)}) + proficiency ${prof} = ${calc.attack}.\nManual override: ${attackField.value === '' ? 'Auto' : attackField.value}`;
-                const defenceText = `Defence: INT mod ${getMod(int)} + floor(DEX/2) ${Math.floor(dex/2)} + proficiency ${prof} + natural armour ${nat} = ${calc.defence}.\nManual override: ${defenceField.value === '' ? 'Auto' : defenceField.value}`;
+                const attackText = `Attack: max(Power ${getMod(power)}, Speed ${getMod(speed)}) + proficiency ${prof} = ${calc.attack}.\nManual override: ${attackField.value === '' ? 'Auto' : attackField.value}`;
+                const defenceText = `Defence: Knowledge mod ${getMod(knowledge)} + floor(Speed/2) ${Math.floor(speed/2)} + proficiency ${prof} + natural armour ${nat} = ${calc.defence}.\nManual override: ${defenceField.value === '' ? 'Auto' : defenceField.value}`;
                 const attackDisplay = document.getElementById('m-atk-override-display');
                 if (attackDisplay) attackDisplay.title = attackText;
             };
@@ -1866,11 +1867,11 @@
             });
             const customMv = document.getElementById('mv-custom').value;
             if(customMv) mvArr.push(customMv);
-            document.getElementById('out-speed').innerText = mvArr.length ? mvArr.join(', ') : '0m';
-            document.getElementById('sheet-speed').innerText = mvArr.length ? mvArr.join(', ') : '0m';
+            document.getElementById('out-movement').innerText = mvArr.length ? mvArr.join(', ') : '0m';
+            document.getElementById('sheet-movement-summary').innerText = mvArr.length ? mvArr.join(', ') : '0m';
 
             let scores = {};
-            ['str','dex','con','int','wis','cha'].forEach(stat => {
+            ['power','speed','endurance','knowledge','instinct','influence'].forEach(stat => {
                 let val = parseInt(document.getElementById(`m-${stat}`).value) || 10;
                 scores[stat] = val;
                 document.getElementById(`out-${stat}`).innerText = val;
@@ -1881,8 +1882,8 @@
             });
 
             const natArmor = boundedNaturalArmor(threat, scale, document.getElementById('m-nat-armour').value);
-            const calculatedAttack = Math.max(getMod(scores.str), getMod(scores.dex)) + prof;
-            const calculatedDefence = getMod(scores.int) + Math.floor(scores.dex / 2) + prof + natArmor;
+            const calculatedAttack = Math.max(getMod(scores.power), getMod(scores.speed)) + prof;
+            const calculatedDefence = getMod(scores.knowledge) + Math.floor(scores.speed / 2) + prof + natArmor;
             const attackOverride = document.getElementById('m-atk-override').value;
             const defenceOverride = document.getElementById('m-def-override').value;
             const atkBonus = attackOverride === '' ? calculatedAttack : parseInt(attackOverride);
@@ -1902,9 +1903,9 @@
                 vulnerability.style.background = vulnerabilityColors[vulnerability.value] || vulnerabilityColors.normal;
             }
             const calc = getCalculatedCombatBonuses();
-            const dex = parseInt(document.getElementById('m-dex').value) || 10;
-            const int = parseInt(document.getElementById('m-int').value) || 10;
-            document.getElementById('out-db').title = `DB = INT mod ${getMod(int)} + floor(DEX/2) ${Math.floor(dex / 2)} + proficiency ${prof} + natural armour ${natArmor} = ${calc.defence}`;
+            const speed = parseInt(document.getElementById('m-speed').value) || 10;
+            const knowledge = parseInt(document.getElementById('m-knowledge').value) || 10;
+            document.getElementById('out-db').title = `DB = Knowledge mod ${getMod(knowledge)} + floor(Speed/2) ${Math.floor(speed / 2)} + proficiency ${prof} + natural armour ${natArmor} = ${calc.defence}`;
 
             let traitsHTML = "";
             const resRule = document.querySelector('input[name="res-rule"]:checked').value;
@@ -1963,12 +1964,12 @@
                     custom: document.getElementById('mv-custom').value
                 },
                 stats: {
-                    str: document.getElementById('m-str').value,
-                    dex: document.getElementById('m-dex').value,
-                    con: document.getElementById('m-con').value,
-                    int: document.getElementById('m-int').value,
-                    wis: document.getElementById('m-wis').value,
-                    cha: document.getElementById('m-cha').value
+                    power: document.getElementById('m-power').value,
+                    speed: document.getElementById('m-speed').value,
+                    endurance: document.getElementById('m-endurance').value,
+                    knowledge: document.getElementById('m-knowledge').value,
+                    instinct: document.getElementById('m-instinct').value,
+                    influence: document.getElementById('m-influence').value
                 },
                 resRule: document.querySelector('input[name="res-rule"]:checked').value,
                 woundState: document.getElementById('sheet-wound').value,
@@ -1992,6 +1993,7 @@
         
         function populateForm(data) {
             if (!data) return;
+            data = normalizeMonsterRecord(data);
             document.getElementById('m-name').value = data.name || '';
             document.getElementById('m-desc').value = data.desc || '';
             
@@ -2024,7 +2026,7 @@
             }
 
             if (data.stats) {
-                ['str','dex','con','int','wis','cha'].forEach(s => {
+                ['power','speed','endurance','knowledge','instinct','influence'].forEach(s => {
                     document.getElementById(`m-${s}`).value = data.stats[s] || '10';
                 });
             }
@@ -2072,7 +2074,7 @@
             let bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
             let data = bestiary.find(m => m.id === id);
             if (!data) return;
-            populateForm(data);
+            populateForm(normalizeMonsterRecord(data));
             updatePreview();
             lastSavedMonsterSnapshot = getCurrentSnapshot();
             switchTab('creator');
@@ -2098,13 +2100,34 @@
             maxDisplay.innerText = Math.max(minRange, maxRange);
         }
 
+        const statAliases = {
+            power: ['power', 'str', 'strength'],
+            speed: ['speed', 'dex', 'dexterity'],
+            endurance: ['endurance', 'con', 'constitution'],
+            knowledge: ['knowledge', 'int', 'intelligence'],
+            instinct: ['instinct', 'wis', 'wisdom'],
+            influence: ['influence', 'cha', 'charisma']
+        };
+
+        function normalizeStatBlock(stats) {
+            const source = stats && typeof stats === 'object' ? stats : {};
+            const normalized = {};
+            Object.entries(statAliases).forEach(([canonical, aliases]) => {
+                const key = Object.keys(source).find(sourceKey => aliases.includes(sourceKey.toLowerCase()));
+                const value = key ? Number(source[key]) : 10;
+                normalized[canonical] = Number.isFinite(value) ? value : 10;
+            });
+            return normalized;
+        }
+
         function normalizeMonsterRecord(monster) {
-            const normalized = { ...monster };
+            const normalized = { ...(monster || {}) };
+            normalized.stats = normalizeStatBlock(normalized.stats);
             if (!normalized.id) normalized.id = Date.now().toString() + Math.random();
             if (!normalized.origin) normalized.origin = 'Misc';
             if (!normalized.environment) normalized.environment = 'Misc';
             if (!normalized.notes) normalized.notes = '';
-            if (!Array.isArray(normalized.actions)) normalized.actions = [];
+            if (!Array.isArray(normalized.actions)) normalized.actions = Array.isArray(normalized.abilities) ? normalized.abilities : [];
             return normalized;
         }
 
@@ -2250,10 +2273,10 @@
             const threat = parseInt(monster.threat) || 50;
             const prof = calculateProficiency(threat);
             const stats = monster.stats || {};
-            const atk = Math.max(getMod(parseInt(stats.str) || 10), getMod(parseInt(stats.dex) || 10)) + prof;
-            const db = getMod(parseInt(stats.int) || 10) + Math.floor((parseInt(stats.dex) || 10) / 2) + prof + boundedNaturalArmor(threat, monster.scale, monster.natArmor);
+            const atk = Math.max(getMod(parseInt(stats.power) || 10), getMod(parseInt(stats.speed) || 10)) + prof;
+            const db = getMod(parseInt(stats.knowledge) || 10) + Math.floor((parseInt(stats.speed) || 10) / 2) + prof + boundedNaturalArmor(threat, monster.scale, monster.natArmor);
             const actions = (monster.actions || []).map(action => `<p><strong>${escapeHTML(action.name)}</strong> <em>[${escapeHTML(action.tag)}]</em><br>${escapeHTML(parseVariables(action.desc || '', atk, db))}</p>`).join('');
-            return `<h4>${escapeHTML(monster.name || 'Unnamed')}</h4><p>${escapeHTML(monster.desc || '')}</p><p><strong>Origin:</strong> ${escapeHTML(monster.origin || 'Misc')} | <strong>Environment:</strong> ${escapeHTML(monster.environment || 'Misc')} | <strong>Threat:</strong> ${threat}% | <strong>Prof:</strong> +${prof}</p><p><strong>Defence:</strong> ${db} | <strong>Attack:</strong> +${atk} | <strong>Scale:</strong> ${escapeHTML(monster.scale || '')}</p><p><strong>Stats:</strong> STR ${escapeHTML(stats.str || '10')} DEX ${escapeHTML(stats.dex || '10')} CON ${escapeHTML(stats.con || '10')} INT ${escapeHTML(stats.int || '10')} WIS ${escapeHTML(stats.wis || '10')} CHA ${escapeHTML(stats.cha || '10')}</p><p><strong>Fatal Weakness:</strong> ${escapeHTML(monster.weakness || 'None')}</p><div>${actions}</div>${monster.notes ? `<p class="sheet-actions"><strong>Notes:</strong> ${escapeHTML(monster.notes)}</p>` : ''}`;
+            return `<h4>${escapeHTML(monster.name || 'Unnamed')}</h4><p>${escapeHTML(monster.desc || '')}</p><p><strong>Origin:</strong> ${escapeHTML(monster.origin || 'Misc')} | <strong>Environment:</strong> ${escapeHTML(monster.environment || 'Misc')} | <strong>Threat:</strong> ${threat}% | <strong>Prof:</strong> +${prof}</p><p><strong>Defence:</strong> ${db} | <strong>Attack:</strong> +${atk} | <strong>Scale:</strong> ${escapeHTML(monster.scale || '')}</p><p><strong>Stats:</strong> Power ${escapeHTML(stats.power || '10')} Speed ${escapeHTML(stats.speed || '10')} Endurance ${escapeHTML(stats.endurance || '10')} Knowledge ${escapeHTML(stats.knowledge || '10')} Instinct ${escapeHTML(stats.instinct || '10')} Influence ${escapeHTML(stats.influence || '10')}</p><p><strong>Fatal Weakness:</strong> ${escapeHTML(monster.weakness || 'None')}</p><div>${actions}</div>${monster.notes ? `<p class="sheet-actions"><strong>Notes:</strong> ${escapeHTML(monster.notes)}</p>` : ''}`;
         }
 
         function renderBestiary() {
@@ -2377,6 +2400,7 @@ function importMonsterJSON(event) {
 
                     // Helper function to process each monster
                     const processMonster = (item) => {
+                        item = normalizeMonsterRecord(item);
                         if (!item.name) return false; // Invalid data
                         if (!item.id) item.id = Date.now().toString() + Math.random();
                         
@@ -2455,7 +2479,7 @@ function importMonsterJSON(event) {
                         <strong>Fatal Weakness:</strong> ${monster.weakness || 'None'}
                     </div>
                     <div style="margin-top: 12px;">
-                        <strong>Stats:</strong> STR ${monster.stats?.str || '10'}, DEX ${monster.stats?.dex || '10'}, CON ${monster.stats?.con || '10'}, INT ${monster.stats?.int || '10'}, WIS ${monster.stats?.wis || '10'}, CHA ${monster.stats?.cha || '10'}
+                        <strong>Stats:</strong> Power ${monster.stats?.power || '10'}, Speed ${monster.stats?.speed || '10'}, Endurance ${monster.stats?.endurance || '10'}, Knowledge ${monster.stats?.knowledge || '10'}, Instinct ${monster.stats?.instinct || '10'}, Influence ${monster.stats?.influence || '10'}
                     </div>
                     <div style="margin-top: 12px;">
                         <strong>Actions:</strong>
@@ -2511,7 +2535,7 @@ function importMonsterJSON(event) {
             document.getElementById('m-threat-range').value = threat;
             syncThreatFromRange();
             const scale = document.getElementById('m-scale').value;
-            ['str','dex','con','int','wis','cha'].forEach(s => {
+            ['power','speed','endurance','knowledge','instinct','influence'].forEach(s => {
                 const maximum = threat >= 86 ? 24 : 20;
                 document.getElementById(`m-${s}`).value = Math.floor(Math.random() * (maximum - 10)) + 11;
             });
@@ -2552,7 +2576,7 @@ function importMonsterJSON(event) {
             document.getElementById('m-threat-num').value = '50';
             syncThreatFromNum();
             document.getElementById('m-nat-armour').value = '0';
-            ['str','dex','con','int','wis','cha'].forEach(s => document.getElementById(`m-${s}`).value = '10');
+            ['power','speed','endurance','knowledge','instinct','influence'].forEach(s => document.getElementById(`m-${s}`).value = '10');
             document.getElementById('m-weakness').value = '';
             document.getElementById('m-notes').value = '';
             document.getElementById('m-atk-override').value = '';
@@ -2574,6 +2598,25 @@ function importMonsterJSON(event) {
 
         function closeAIBox() {
             document.getElementById('ai-modal').classList.add('hidden');
+        }
+
+        // Bestiary shortcut: the AI receives every stored name and the result is
+        // checked again locally before it can be saved.
+        async function generateRandomMythMonster() {
+            const apiKey = localStorage.getItem('demigods_api_key') || '';
+            if (!apiKey) {
+                alert('Open AI Gen first and enter your Gemini API Key.');
+                proceedToAI(false);
+                return;
+            }
+            const existingNames = getStoredBestiary()
+                .map(monster => (monster.name || '').trim())
+                .filter(Boolean);
+            window.aiRandomGeneration = true;
+            document.getElementById('ai-api-key').value = apiKey;
+            document.getElementById('ai-preset').value = 'myth';
+            document.getElementById('ai-prompt').value = `Invent one random mythological creature that is not in my bestiary. Existing names to avoid (case-insensitive): ${existingNames.join(' | ') || 'none yet'}. Choose a genuinely different creature and name; do not rename or reskin an existing entry.`;
+            document.getElementById('ai-modal').classList.remove('hidden');
         }
 
         async function generateAIMonster() {
@@ -2602,8 +2645,12 @@ function importMonsterJSON(event) {
             - Use the accepted bestiary as the balance baseline: ordinary monsters usually have stats 8-20 and natural armour 0-6. Do not use 22-24 stats or natural armour above 8 below Threat 86 unless the creature is explicitly an exceptional high-tier threat.
             - Threat is a non-linear difficulty guide, not permission to max every stat. A Threat 40-60 monster should usually have attack bonuses around +4 to +9 and Defence around 12-22 after the displayed formulas.
             - Natural armour guideline: keep it at or below the frontend cap of round(2 + Threat/18 + Scale/2), maximum 12. High natural armour must be justified by the creature concept.
-            - Action tags must be: "Minor", "Major", "Reaction", or "Legendary".
-            - Use "{ATK}" and "{DEF}" exact placeholders in action descriptions for dynamic frontend math injection.
+            - The six ability scores are Power, Speed, Endurance, Knowledge, Instinct, and Influence. Map the creature's physical, mental, sensory, and social qualities to those fields; do not invent extra score keys.
+            - Every action/ability must have exactly one valid type: "Minor", "Major", "Reaction", or "Legendary". The type distribution is completely flexible: use three Major actions, one Reaction and one Legendary action, or any other mixture that fits the creature. Do not force one of each type, and do not add filler abilities.
+            - Abilities are effects, not just attack names. Explain triggers, targets, range, duration, conditions, immunities, transformations, reactions, costs, and counters when relevant to the concept. Use "{ATK}" and "{DEF}" exact placeholders only where the frontend's calculated Attack or Defence should be inserted.
+            - Damage rules are distinct: "normal" uses ordinary vulnerability; "mortal_immunity" means mundane/non-divine damage cannot harm the creature but divine or mythic sources can; "epic_invulnerability" means only the explicitly described Fatal Weakness can truly harm or kill it. Choose the least extreme rule that fits and make the Fatal Weakness a concrete gameplay puzzle.
+            - A creature may have no special damage rule, no actions, one action, or any number of meaningful actions from 1-6. There is no fixed ability layout.
+            - Map every returned field to the editor: identity, scale/alignment/origin/environment, threat, natural armour, movement flags and speeds, six stats, damage rule, fatal weakness, notes, optional attack/defence overrides, wound state, and actions.
             - Add an origin using the closest matching region from the available pantheons, or Misc if none fits.
             - Add an environment tag using a likely habitat: choose from Ocean, Skies, Sand, Swamp, Snow, Forest, Mountain, Ruins, Caverns, Plains, Volcanic, Tundra, City, Underground, or Misc.
             - Return 1-6 actions unless the concept genuinely needs fewer. Do not fill every action category. A creature may have one action, several Minor actions, only Legendary actions, or no Reaction. Prefer a small, distinctive kit over a complete generic kit.
@@ -2633,12 +2680,15 @@ function importMonsterJSON(event) {
                 "hover": {"c": boolean, "s": "String number"},
                 "custom": "String"
               },
-              "stats": { "str": "String", "dex": "String", "con": "String", "int": "String", "wis": "String", "cha": "String" },
-              "resRule": "normal",
+              "stats": { "power": "String", "speed": "String", "endurance": "String", "knowledge": "String", "instinct": "String", "influence": "String" },
+              "resRule": "normal, mortal_immunity, or epic_invulnerability",
               "weakness": "String describing a fatal weakness puzzle",
               "notes": "String",
+              "woundState": "healthy",
+              "attackOverride": "String number or empty string",
+              "defenceOverride": "String number or empty string",
               "actions": [
-                { "name": "String", "tag": "String", "desc": "String with {ATK} or {DEF}" }
+                { "name": "String", "tag": "Exactly one of: Minor, Major, Reaction, Legendary", "desc": "String describing the complete effect; may use {ATK} or {DEF}" }
               ]
             }`;
 
@@ -2663,6 +2713,14 @@ function importMonsterJSON(event) {
                 }
                 
                 const monsterData = JSON.parse(data.candidates[0].content.parts[0].text);
+
+                if (window.aiRandomGeneration) {
+                    const generatedName = (monsterData.name || '').trim().toLowerCase();
+                    const duplicate = getStoredBestiary().some(monster => (monster.name || '').trim().toLowerCase() === generatedName);
+                    if (!generatedName || duplicate) {
+                        throw new Error(duplicate ? 'The oracle returned a creature already in your Bestiary. Please generate again.' : 'The oracle returned a creature without a name. Please generate again.');
+                    }
+                }
                 
                 document.getElementById('m-name').value = monsterData.name || 'Unknown Entity';
                 document.getElementById('m-desc').value = monsterData.desc || '';
@@ -2693,7 +2751,7 @@ function importMonsterJSON(event) {
                 });
                 if(monsterData.movements) document.getElementById('mv-custom').value = monsterData.movements.custom || '';
                 
-                ['str','dex','con','int','wis','cha'].forEach(s => {
+                ['power','speed','endurance','knowledge','instinct','influence'].forEach(s => {
                     if(monsterData.stats && monsterData.stats[s]) document.getElementById(`m-${s}`).value = monsterData.stats[s];
                 });
                 
@@ -2703,6 +2761,13 @@ function importMonsterJSON(event) {
                 }
                 
                 document.getElementById('m-weakness').value = monsterData.weakness || '';
+                document.getElementById('m-atk-override').value = monsterData.attackOverride || '';
+                document.getElementById('m-def-override').value = monsterData.defenceOverride || '';
+                if (monsterData.woundState && document.querySelector(`#sheet-wound option[value="${monsterData.woundState}"]`)) {
+                    document.getElementById('sheet-wound').value = monsterData.woundState;
+                    setWoundState(monsterData.woundState);
+                }
+                syncCombatOverrideDisplay();
                 
                 actionsList = monsterData.actions || [];
                 actionsList.forEach(a => { if(!a.id) a.id = Date.now() + Math.random(); });
@@ -2710,9 +2775,22 @@ function importMonsterJSON(event) {
                 renderActions();
                 updatePreview();
                 closeAIBox();
+
+                if (window.aiRandomGeneration) {
+                    window.aiRandomGeneration = false;
+                    switchTab('creator', document.querySelector('.tab-btn[onclick*="creator"]'));
+                    if (confirm(`Review "${monsterData.name}" in the Creator. Save it to the Bestiary now?`)) {
+                        saveCurrentMonster();
+                    }
+                }
                 
             } catch (err) {
                 alert("Generation Failed. " + err.message);
+                const canRetryRandom = window.aiRandomGeneration && /already in your Bestiary|without a name/.test(err.message);
+                if (canRetryRandom) {
+                    document.getElementById('ai-status').innerText = 'No new creature was applied. Generate again for another result.';
+                }
+                if (!canRetryRandom) window.aiRandomGeneration = false;
             } finally {
                 document.getElementById('ai-generate-btn').style.display = 'inline-flex';
                 document.getElementById('ai-spinner').style.display = 'none';

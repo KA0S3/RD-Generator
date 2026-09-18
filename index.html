@@ -58,6 +58,18 @@
         [data-theme="cyber"] .border-\\[\\#6b5233\\] { border-color: #475569; }
         [data-theme="cyber"] .border-\\[\\#6b5233\\]\\/50 { border-color: rgba(71, 85, 105, 0.5); }
         [data-theme="cyber"] .bg-\\[\\#1a140f\\] { background-color: #0a0a0c; border-color: #1e293b; }
+        [data-theme="cyber"] .modal-surface,
+        [data-theme="cyber"] .modal-section,
+        [data-theme="cyber"] .modal-action { background-color: rgba(15, 15, 20, 0.94) !important; border-color: #475569 !important; color: #e2e8f0 !important; }
+        [data-theme="cyber"] .modal-surface .text-\\[\\#cba871\\],
+        [data-theme="cyber"] .modal-surface .serif-title { color: #cbd5e1 !important; }
+        [data-theme="cyber"] .modal-surface .text-\\[\\#ebd9b9\\],
+        [data-theme="cyber"] .modal-surface .text-\\[\\#d6c6ad\\],
+        [data-theme="cyber"] .modal-surface .text-white { color: #f8fafc !important; }
+        [data-theme="cyber"] .modal-surface .text-\\[\\#8b6d43\\],
+        [data-theme="cyber"] .modal-surface .text-\\[\\#a3947c\\] { color: #94a3b8 !important; }
+        [data-theme="cyber"] .modal-surface .bg-indigo-900,
+        [data-theme="cyber"] .modal-surface .bg-indigo-900\\/80 { background-color: #334155 !important; border-color: #64748b !important; color: #f8fafc !important; }
         
         .serif-title { font-family: 'Cinzel', serif; color: #d7b978; }
         [data-theme="mythic"] .text-\[\#cba871\] { color: #d7b978; }
@@ -311,7 +323,7 @@
             </div>
         </transition>
 		
-        <div id="theme-wrapper" :data-theme="currentTheme || 'mythic'" class="min-h-screen">
+        <div id="theme-wrapper" :data-theme="currentTheme || 'cyber'" class="min-h-screen">
             <div class="max-w-7xl mx-auto w-full relative">
                 
                 <div class="flex flex-wrap items-center mb-3 gap-3 no-print text-sm uppercase tracking-widest font-bold border-b border-[#6b5233] pb-1">
@@ -450,7 +462,7 @@
                                 <div class="p-2 flex-1 text-center relative flex flex-col justify-center group hover:z-[60] bg-black/20 rounded border border-[#6b5233]/30 min-w-[70px]">
                                     <div class="tooltip-box active-tooltip bottom-full mb-2 w-48 text-[10px]">
                                         <strong class="text-[#cba871] block border-b border-[#6b5233] pb-1 mb-1">Defence Bonus (DB)</strong>
-                                        Armor + Shields + Half DEX + Prof + INT mod. Protects against incoming strikes.
+                                        Armor + Shields + Half Speed + Prof + Knowledge mod. Protects against incoming strikes.
                                     </div>
                                     <span class="serif-title text-[9px] font-bold tracking-widest text-[#8b6d43] uppercase leading-tight">Defence</span>
                                     <div class="text-2xl font-black text-[#ebd9b9] mt-1 font-serif">{{ calcDefenseBonus() }}</div>
@@ -459,7 +471,7 @@
                                 <div class="p-2 flex-1 text-center flex flex-col justify-center bg-black/20 rounded border border-[#6b5233]/30 relative group hover:z-[60] min-w-[90px]">
                                     <div class="tooltip-box active-tooltip bottom-full mb-2 w-48 text-[10px]">
                                         Attack Roll = 1d20 + Mod + Prof + Relevant Bonuses. 
-                                        <br>Automatically uses STR or DEX. Shields are ignored.
+                                        <br>Automatically uses Power or Speed. Shields are ignored.
                                     </div>
                                     <span class="serif-title text-[9px] font-bold tracking-widest text-[#8b6d43] uppercase mb-1 leading-tight">Attack</span>
                                     <div class="flex justify-center divide-x divide-[#6b5233]/50 w-full">
@@ -477,7 +489,7 @@
                                 <div class="p-2 flex-1 text-center relative flex flex-col justify-center group hover:z-[60] bg-black/20 rounded border border-[#6b5233]/30 min-w-[70px]">
                                     <div class="tooltip-box active-tooltip bottom-full mb-2 w-48 text-[10px]">
                                         <strong class="text-[#cba871] block border-b border-[#6b5233] pb-1 mb-1">Divine DC</strong>
-                                        Divine DC = Half WIS + (Proficiency × 2) + WIS Mod. The difficulty to resist your divine powers.
+                                        Divine DC = Half Instinct + (Proficiency × 2) + Instinct Mod. The difficulty to resist your divine powers.
                                     </div>
                                     <span class="serif-title text-[9px] font-bold tracking-widest text-[#8b6d43] uppercase leading-tight">Divine DC</span>
                                     <div class="text-2xl font-black text-[#ebd9b9] mt-1 font-serif">{{ calcDivineDC() }}</div>
@@ -641,7 +653,8 @@
                                 <div class="text-xs text-[#a3947c] mb-3 leading-tight italic">Track Nat 20s. 3 ticks grants permanent proficiency bonus.</div>
                                 
                                 <div class="space-y-2 mb-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                    <div v-for="(skill, idx) in char.skills" :key="idx" class="flex items-center justify-between bg-black/20 p-2 rounded border border-[#6b5233]/30 hover:bg-black/30 transition-colors">
+                                    <template v-for="(skill, idx) in char.skills" :key="idx">
+                                    <div v-if="!skill.questId" class="flex items-center justify-between bg-black/20 p-2 rounded border border-[#6b5233]/30 hover:bg-black/30 transition-colors">
                                         <div class="flex items-center gap-3 flex-1">
                                             <button @click="removeSkill(idx)" class="text-red-900/80 hover:text-red-500 no-print transition-colors"><i class="fa-solid fa-xmark text-xs"></i></button>
                                             <span class="font-bold text-xs uppercase text-[#ebd9b9] w-32 truncate" :title="skill.name">{{ skill.name }}</span>
@@ -652,13 +665,15 @@
                                             <button v-for="n in 3" :key="n" @click="toggleSkillTick(idx)" class="w-4 h-4 rounded-full border-2 border-[#8b6d43] focus:outline-none cursor-pointer no-print transition-colors" :class="skill.ticks >= n ? 'bg-[#cba871] shadow-[0_0_5px_rgba(203,168,113,0.6)]' : 'bg-transparent'"></button>
                                         </div>
                                         <div v-else class="text-sm font-black text-[#cba871] w-16 text-right font-serif shadow-sm">
-                                            {{ formatModifier(calculatedProficiency + calcMod(skill.stat === 'dex' ? effectiveDex : char.stats[skill.stat])) }}
+                                            {{ formatModifier(calculatedProficiency + calcMod(skill.stat === 'speed' ? effectiveDex : char.stats[skill.stat])) }}
                                         </div>
                                     </div>
-                                    <div v-for="proficiency in char.proficiencies" :key="proficiency.id" class="flex items-center justify-between bg-amber-950/25 p-2 rounded border border-amber-700/50 shadow-[0_0_8px_rgba(217,154,49,0.12)]">
+                                    </template>
+                                    <div v-for="proficiency in char.proficiencies" :key="proficiency.id" class="flex items-center justify-between p-2 rounded border shadow-[0_0_8px_rgba(217,154,49,0.12)]" :class="proficiency.source === 'Divine Quest' ? 'bg-amber-950/35 border-amber-500/70 border-l-4' : 'bg-amber-950/25 border-amber-700/50'">
                                         <div class="flex items-center gap-3 flex-1 min-w-0">
-                                            <i class="fa-solid fa-medal text-amber-300"></i>
+                                            <i :class="proficiency.source === 'Divine Quest' ? 'fa-solid fa-award text-yellow-300' : 'fa-solid fa-medal text-amber-300'" class="shrink-0"></i>
                                             <span class="font-bold text-xs uppercase text-amber-100 truncate" :title="proficiency.name">{{ proficiency.name }}</span>
+                                            <span v-if="proficiency.source === 'Divine Quest' && proficiency.stat" class="text-[9px] text-yellow-200/80 uppercase whitespace-nowrap">({{ proficiency.stat }})</span>
                                             <span v-if="proficiency.ability" class="text-[10px] text-amber-300/80 truncate" :title="proficiency.ability">({{ proficiency.ability }})</span>
                                             <span class="text-[9px] uppercase text-amber-400/80 font-bold shrink-0">Quest</span>
                                             <span v-if="proficiency.quest" class="text-[9px] text-amber-300/60 truncate" :title="proficiency.quest">from {{ proficiency.quest }}</span>
@@ -670,8 +685,8 @@
                                 <div class="flex gap-2 no-print">
                                     <input type="text" v-model="newSkillName" placeholder="Skill/Save" class="w-full text-xs p-2 border border-[#6b5233]/50 rounded bg-black/30 focus:border-[#cba871] transition-colors">
                                     <select v-model="newSkillStat" class="text-xs p-2 border border-[#6b5233]/50 rounded bg-black/30 text-[#ebd9b9]">
-                                        <option value="str">STR</option> <option value="dex">DEX</option> <option value="con">CON</option>
-                                        <option value="int">INT</option> <option value="wis">WIS</option> <option value="cha">CHA</option>
+                                        <option value="power">Power</option> <option value="speed">Speed</option> <option value="endurance">Endurance</option>
+                                        <option value="knowledge">Knowledge</option> <option value="instinct">Instinct</option> <option value="influence">Influence</option>
                                     </select>
                                     <button @click="addSkill" class="bg-[#241c14] border border-[#6b5233] text-[#cba871] px-3 py-1 text-sm rounded hover:bg-[#382b1f] hover:text-white font-bold transition-colors shadow-sm">+</button>
                                 </div>
@@ -780,7 +795,7 @@
                                 <div class="parchment-card p-4 flex-1 text-center relative flex flex-col justify-center group hover:z-[60] bg-gradient-to-b from-transparent to-[#1a140f]/40 min-w-[110px]">
                                     <div class="tooltip-box active-tooltip" style="bottom: auto; top: 100%; margin-bottom: 0; margin-top: 8px;">
                                         <strong class="text-[#cba871] block border-b border-[#6b5233] pb-1 mb-1">Defence Bonus (DB)</strong>
-                                        Armor + Shields + Half DEX + Prof + INT mod. Protects against incoming strikes.
+                                        Armor + Shields + Half Speed + Prof + Knowledge mod. Protects against incoming strikes.
                                     </div>
                                     <span class="serif-title text-[9px] sm:text-[10px] font-bold tracking-widest text-[#8b6d43] uppercase leading-tight">Defence</span>
                                     <div class="text-4xl sm:text-5xl font-black text-[#ebd9b9] mt-2 font-serif">{{ calcDefenseBonus() }}</div>
@@ -789,7 +804,7 @@
                                 <div class="parchment-card p-4 flex-1 text-center flex flex-col justify-center bg-gradient-to-b from-transparent to-[#1a140f]/40 relative group hover:z-[60] min-w-[130px]">
                                     <div class="tooltip-box active-tooltip" style="bottom: auto; top: 100%; margin-bottom: 0; margin-top: 8px;">
                                         Attack Roll = 1d20 + Mod + Prof + Relevant Bonuses. 
-                                        <br>Automatically uses STR or DEX. Shields are ignored.
+                                        <br>Automatically uses Power or Speed. Shields are ignored.
                                     </div>
                                     <span class="serif-title text-[9px] sm:text-[10px] font-bold tracking-widest text-[#8b6d43] uppercase mb-2 leading-tight">Attack Bonuses</span>
                                     
@@ -808,7 +823,7 @@
                                 <div class="parchment-card p-4 flex-1 text-center relative flex flex-col justify-center group hover:z-[60] bg-gradient-to-b from-transparent to-[#1a140f]/40 min-w-[110px]">
                                     <div class="tooltip-box active-tooltip" style="bottom: auto; top: 100%; margin-bottom: 0; margin-top: 8px;">
                                         <strong class="text-[#cba871] block border-b border-[#6b5233] pb-1 mb-1">Divine DC</strong>
-                                        Divine DC = Half WIS + (Proficiency × 2) + WIS Mod. The difficulty to resist your divine powers.
+                                        Divine DC = Half Instinct + (Proficiency × 2) + Instinct Mod. The difficulty to resist your divine powers.
                                     </div>
                                     <span class="serif-title text-[9px] sm:text-[10px] font-bold tracking-widest text-[#8b6d43] uppercase leading-tight">Divine DC</span>
                                     <div class="text-4xl sm:text-5xl font-black text-[#ebd9b9] mt-2 font-serif">{{ calcDivineDC() }}</div>
@@ -843,17 +858,17 @@
                                     <div v-for="(score, stat) in char.stats" :key="stat" class="flex flex-col bg-black/20 p-3 rounded border border-[#6b5233]/30 hover:border-[#8b6d43]/60 transition-colors">
                                         <div class="flex justify-between items-center mb-1">
                                             <span class="serif-title font-bold text-xs uppercase text-[#8b6d43]">{{ statFullName(stat) }}</span>
-                                            <span class="text-xl font-black text-[#ebd9b9] font-serif">{{ formatModifier(calcMod(stat === 'dex' ? effectiveDex : score)) }}</span>
+                                            <span class="text-xl font-black text-[#ebd9b9] font-serif">{{ formatModifier(calcMod(stat === 'speed' ? effectiveDex : score)) }}</span>
                                         </div>
                                         <div class="flex items-center justify-between mt-2 border-t border-[#6b5233]/30 pt-2">
                                             <div class="flex gap-2 items-center w-full justify-center">
                                                 <button v-if="currentMode === 'edit'" @click="adjustStat(stat, -1)" class="w-5 h-5 bg-[#241c14] border border-[#4a3a2a] text-[#cba871] rounded font-bold text-xs hover:bg-black hover:text-white no-print flex items-center justify-center transition-colors">-</button>
-                                                <span class="w-8 text-center text-sm font-bold text-[#d6c6ad]">{{ stat === 'dex' ? effectiveDex : score }}</span>
+                                                <span class="w-8 text-center text-sm font-bold text-[#d6c6ad]">{{ stat === 'speed' ? effectiveDex : score }}</span>
                                                 <button v-if="currentMode === 'edit'" @click="adjustStat(stat, 1)" class="w-5 h-5 bg-[#241c14] border border-[#4a3a2a] text-[#cba871] rounded font-bold text-xs hover:bg-black hover:text-white no-print flex items-center justify-center transition-colors">+</button>
                                             </div>
                                         </div>
-                                        <div v-if="stat === 'dex' && char.equippedArmour !== 'Unarmoured'" class="text-[10px] text-red-400/80 font-bold mt-2 text-center bg-black/40 rounded px-1 tracking-wider border border-red-900/30 py-0.5">
-                                            Base DEX: {{ char.stats.dex }} <span class="text-red-500/50 mx-1">|</span> Penalty: -{{ char.stats.dex - effectiveDex }}
+                                        <div v-if="stat === 'speed' && char.equippedArmour !== 'Unarmoured'" class="text-[10px] text-red-400/80 font-bold mt-2 text-center bg-black/40 rounded px-1 tracking-wider border border-red-900/30 py-0.5">
+                                            Base Speed: {{ char.stats.speed }} <span class="text-red-500/50 mx-1">|</span> Penalty: -{{ char.stats.speed - effectiveDex }}
                                         </div>
                                     </div>
                                 </div>
@@ -1108,14 +1123,22 @@
                                     </h3>
                                     <div class="space-y-2 mb-3 max-h-[150px] overflow-y-auto pr-1 custom-scrollbar">
                                         <div v-for="(quest, idx) in char.quests" :key="quest.id" class="flex items-center gap-2 bg-black/20 p-1.5 rounded border border-[#4a3a2a] text-sm group">
-                                            <input type="checkbox" :checked="quest.completed" @change="toggleQuest(quest)" class="accent-amber-500 shrink-0">
+                                            <input type="checkbox" :checked="quest.completed" @click.prevent="toggleQuest(quest)" class="accent-amber-500 shrink-0">
                                             <input type="text" v-model="quest.text" :class="quest.completed ? 'line-through text-[#8b6d43]' : 'text-[#ebd9b9]'" class="w-full bg-transparent border-none focus:outline-none px-1 transition-colors">
+                                            <template v-if="quest.completed && (currentMode === 'edit' || !quest.proficiencyAdded)">
+                                                <input v-model="quest.skill" @input="currentMode === 'edit' && syncQuestProficiency(quest)" placeholder="Skill" class="w-24 text-[9px] p-1 border border-slate-600 rounded bg-black/30 text-slate-100">
+                                                <select v-model="quest.stat" @change="currentMode === 'edit' && syncQuestProficiency(quest)" class="w-24 text-[9px] p-1 border border-slate-600 rounded bg-black/30 text-slate-100">
+                                                    <option value="">Stat</option>
+                                                    <option value="power">Power</option>
+                                                    <option value="speed">Speed</option>
+                                                    <option value="endurance">Endurance</option>
+                                                    <option value="knowledge">Knowledge</option>
+                                                    <option value="instinct">Instinct</option>
+                                                    <option value="influence">Influence</option>
+                                                </select>
+                                                <button v-if="currentMode === 'play' && !quest.proficiencyAdded" @click="syncQuestProficiency(quest)" :disabled="!quest.skill || !quest.stat" class="text-[9px] uppercase font-bold text-yellow-200 border border-yellow-700/70 px-2 py-1 rounded hover:bg-yellow-900/40 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">Add</button>
+                                            </template>
                                             <button v-if="currentMode === 'edit'" @click="removeQuest(idx)" class="text-red-900/80 hover:text-red-500 no-print opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-xmark text-xs"></i></button>
-                                            <div v-if="quest.completed && !quest.proficiencyAdded" class="flex items-center gap-1 no-print">
-                                                <input v-model="newQuestProficiencyName" placeholder="Proficiency" class="w-24 text-[9px] p-1 border border-amber-700/50 rounded bg-black/30 text-amber-100">
-                                                <input v-model="newQuestProficiencyAbility" placeholder="Ability" class="w-20 text-[9px] p-1 border border-amber-700/50 rounded bg-black/30 text-amber-100">
-                                                <button @click="addQuestProficiency(quest)" class="text-[9px] uppercase font-bold text-amber-300 border border-amber-700/50 px-2 py-1 rounded hover:bg-amber-900/40 whitespace-nowrap">Add</button>
-                                            </div>
                                             <span v-if="quest.proficiencyAdded" class="text-[9px] uppercase font-bold text-amber-300/70 whitespace-nowrap"><i class="fa-solid fa-medal mr-1"></i>Added</span>
                                         </div>
                                         <div v-if="!char.quests || char.quests.length === 0" class="text-xs italic text-[#8b6d43]">No divine quests recorded...</div>

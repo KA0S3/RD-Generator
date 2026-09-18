@@ -3,7 +3,7 @@ if (typeof window.weaponTraits === 'undefined') {
 }
 Object.assign(weaponTraits, {
     "Quick": "Drawing or stowing the shield does not require a Minor Action.",
-    "Light": "Does not interfere with Dexterity-based weapons.",
+    "Light": "Does not interfere with Speed-based weapons.",
     "Standard": "Functions as described in the Shield/Cover rules.",
     "Cover": "While using the Brace action, allies directly behind you benefit from Partial Cover.",
     "Brace": "While Braced, increase the Defence Bonus to +3 against attacks originating from your front."
@@ -41,7 +41,7 @@ const expandedAbilityId = ref(null);
             equippedWeapons: ["", ""],
             carriedWeapons: [],
             weaponTraining: [],
-            stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+            stats: { power: 10, speed: 10, endurance: 10, knowledge: 10, instinct: 10, influence: 10 },
             skills: [],
             proficiencies: [],
             potd: [true, true, true, true, true, true],
@@ -62,7 +62,7 @@ const expandedAbilityId = ref(null);
         const roster = ref([]);
         const currentMode = ref("edit");
         
-        const currentTheme = ref("mythic");
+        const currentTheme = ref("cyber");
         const saveIndicator = ref(false);
         const manageModalOpen = ref(false);
         const isUnleashed = ref(false);
@@ -82,7 +82,7 @@ const expandedAbilityId = ref(null);
         const vaultSearch = ref("");
         
         const newSkillName = ref("");
-        const newSkillStat = ref("str");
+        const newSkillStat = ref("power");
         const newItemName = ref("");
         const newQuestName = ref("");
         const newQuestProficiencyName = ref("");
@@ -132,7 +132,7 @@ localStorage.setItem('myth_active_char_id', newVal.id);
         const effectiveDex = computed(() => {
             const armor = typeof armourRegistry !== 'undefined' ? armourRegistry.find(a => a.tier === char.value.equippedArmour) : null;
             const penalty = armor && armor.penalty ? armor.penalty : 0;
-            return Math.max(1, char.value.stats.dex + penalty);
+            return Math.max(1, char.value.stats.speed + penalty);
         });
 
         const calculatedProficiency = computed(() => {
@@ -294,18 +294,18 @@ localStorage.setItem('myth_active_char_id', newVal.id);
                     return "-";
                 }
 
-                let useDex = true; // Defaults to DEX for Finesse or Unarmed
+                let useDex = true; // Defaults to Speed for Finesse or Unarmed
                 
-                // If a weapon is equipped and uses STR, switch to STR
+                // If a weapon is equipped and uses Power, switch to Power
                 if (weapon && weapon.ability) {
                     const abilityStr = weapon.ability.toLowerCase();
-                    if (abilityStr.includes('str')) {
+                    if (abilityStr.includes('power')) {
                         useDex = false;
                     }
                 }
 
                 // Grab the correct score and apply the math
-                const statScore = useDex ? effectiveDex.value : char.value.stats.str;
+                const statScore = useDex ? effectiveDex.value : char.value.stats.power;
                 const statModifier = calcMod(statScore);
 
                 // formatModifier handles the + or - signs perfectly
@@ -326,7 +326,7 @@ localStorage.setItem('myth_active_char_id', newVal.id);
         // --- 5. Mechanics & Helpers ---
         const calcMod = (score) => Math.floor((score - 10) / 2);
         const formatModifier = (mod) => mod >= 0 ? `+${mod}` : mod;
-        const statFullName = (stat) => ({ str: 'Strength', dex: 'Dexterity', con: 'Constitution', int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma' }[stat]);
+        const statFullName = (stat) => ({ power: 'Power', speed: 'Speed', endurance: 'Endurance', knowledge: 'Knowledge', instinct: 'Instinct', influence: 'Influence' }[stat]);
 
         const adjustStat = (stat, amount) => {
             if (amount > 0) {
@@ -422,6 +422,15 @@ char.value.learnedAbilities = [];
         const removeSkill = (idx) => { char.value.skills.splice(idx, 1); };
         const toggleSkillTick = (idx) => {
             const s = char.value.skills[idx];
+            if (s.ticks === 3 && currentMode.value === 'play') {
+                const linked = (char.value.proficiencies || []).find(p => p.skill === s.name && p.source === 'Divine Quest');
+                if (linked && !window.confirm('Uncomplete this skill? This will remove its Divine Quest proficiency.')) return;
+                if (linked) {
+                    char.value.proficiencies = char.value.proficiencies.filter(p => p.id !== linked.id);
+                    const quest = (char.value.quests || []).find(q => q.id === linked.questId);
+                    if (quest) quest.proficiencyAdded = false;
+                }
+            }
             s.ticks = s.ticks < 3 ? s.ticks + 1 : 0;
         };
         
@@ -430,7 +439,7 @@ char.value.learnedAbilities = [];
             let baseArmor = armorData ? armorData.bonus : 0;
             
             let dexMod = Math.floor(effectiveDex.value / 2);
-            let intMod = calcMod(char.value.stats.int); // <-- CHANGED TO INT
+            let intMod = calcMod(char.value.stats.knowledge); // <-- CHANGED TO Knowledge
             
             let baseDB = baseArmor + dexMod + calculatedProficiency.value + intMod;
 
@@ -447,8 +456,8 @@ char.value.learnedAbilities = [];
         };
 
 const calcDivineDC = () => {
-    const halfWisScore = Math.floor(char.value.stats.wis / 2);
-    const wisMod = calcMod(char.value.stats.wis);
+    const halfWisScore = Math.floor(char.value.stats.instinct / 2);
+    const wisMod = calcMod(char.value.stats.instinct);
     return halfWisScore + (calculatedProficiency.value * 2) + wisMod;
 };
 
@@ -593,13 +602,40 @@ const calcDivineDC = () => {
         const addQuest = () => {
             if (newQuestName.value.trim()) {
                 if (!char.value.quests) char.value.quests = [];
-                char.value.quests.push({ id: generateId(), text: newQuestName.value.trim(), completed: false });
+                char.value.quests.push({ id: generateId(), text: newQuestName.value.trim(), completed: false, skill: '', stat: '' });
                 newQuestName.value = "";
             }
         };
 
-        const toggleQuest = (quest) => { quest.completed = !quest.completed; };
-        const removeQuest = (idx) => { char.value.quests.splice(idx, 1); };
+        const syncQuestProficiency = (quest) => {
+            if (!quest.completed || !quest.skill || !quest.stat) return;
+            if (!char.value.skills) char.value.skills = [];
+            char.value.skills = char.value.skills.filter(s => s.questId !== quest.id);
+            char.value.skills.push({ name: quest.skill, stat: quest.stat, ticks: 3, questId: quest.id });
+            if (!char.value.proficiencies) char.value.proficiencies = [];
+            char.value.proficiencies = char.value.proficiencies.filter(p => p.questId !== quest.id);
+            char.value.proficiencies.push({ id: generateId(), name: quest.skill, ability: '', source: 'Divine Quest', quest: quest.text, questId: quest.id, skill: quest.skill, stat: quest.stat });
+            quest.proficiencyAdded = true;
+        };
+        const clearQuestProficiency = (quest) => {
+            char.value.proficiencies = (char.value.proficiencies || []).filter(p => p.questId !== quest.id);
+            char.value.skills = (char.value.skills || []).filter(s => s.questId !== quest.id);
+            quest.proficiencyAdded = false;
+            quest.skill = '';
+            quest.stat = '';
+        };
+        const toggleQuest = (quest) => {
+            if (quest.completed && !window.confirm('Uncomplete this quest? This will remove its proficiency.')) return;
+            quest.completed = !quest.completed;
+            if (!quest.completed) clearQuestProficiency(quest);
+            else syncQuestProficiency(quest);
+        };
+        const removeQuest = (idx) => {
+            const quest = char.value.quests[idx];
+            if (quest.completed && !window.confirm('Delete this completed quest? Its proficiency will also be removed.')) return;
+            clearQuestProficiency(quest);
+            char.value.quests.splice(idx, 1);
+        };
         const addQuestProficiency = (quest) => {
             if (!quest.completed || quest.proficiencyAdded || !newQuestProficiencyName.value.trim()) return;
             if (!char.value.proficiencies) char.value.proficiencies = [];
@@ -608,7 +644,9 @@ const calcDivineDC = () => {
                 name: newQuestProficiencyName.value.trim(),
                 ability: newQuestProficiencyAbility.value.trim(),
                 source: 'Divine Quest',
-                quest: quest.text
+                quest: quest.text,
+                questId: quest.id,
+                skill: newQuestProficiencyName.value.trim()
             });
             quest.proficiencyAdded = true;
             newQuestProficiencyName.value = "";
@@ -626,7 +664,40 @@ const calcDivineDC = () => {
         const removeRelation = (idx) => { char.value.relations.splice(idx, 1); };
 
         // --- 7. Save & Load Utilities ---
+        const statAliases = {
+            power: ['power', 'str', 'strength'],
+            speed: ['speed', 'dex', 'dexterity'],
+            endurance: ['endurance', 'con', 'constitution'],
+            knowledge: ['knowledge', 'int', 'intelligence'],
+            instinct: ['instinct', 'wis', 'wisdom'],
+            influence: ['influence', 'cha', 'charisma']
+        };
+
+        const normalizeStatBlock = (stats) => {
+            const source = stats && typeof stats === 'object' ? stats : {};
+            const normalized = {};
+            Object.entries(statAliases).forEach(([canonical, aliases]) => {
+                const key = Object.keys(source).find(sourceKey => aliases.includes(sourceKey.toLowerCase()));
+                const value = key ? Number(source[key]) : 10;
+                normalized[canonical] = Number.isFinite(value) ? value : 10;
+            });
+            return normalized;
+        };
+
+        const normalizeStatReference = (value) => {
+            if (!value) return value;
+            const entry = Object.entries(statAliases).find(([, aliases]) => aliases.includes(String(value).toLowerCase()));
+            return entry ? entry[0] : value;
+        };
+
         const applyMigrations = (c) => {
+            c = c && typeof c === 'object' ? c : getBlankChar();
+            c.stats = normalizeStatBlock(c.stats);
+            if (Array.isArray(c.skills)) c.skills = c.skills.map(skill => ({ ...skill, stat: normalizeStatReference(skill.stat) }));
+            if (Array.isArray(c.proficiencies)) c.proficiencies = c.proficiencies.map(item => ({ ...item, stat: normalizeStatReference(item.stat) }));
+            if (!Array.isArray(c.learnedAbilities)) c.learnedAbilities = Array.isArray(c.abilities) ? c.abilities : [];
+            if (!Array.isArray(c.skills)) c.skills = [];
+            if (!Array.isArray(c.proficiencies)) c.proficiencies = [];
             if (c.startingAp === undefined) {
                 c.startingAp = c.totalAp !== undefined ? c.totalAp : 10;
                 delete c.totalAp; delete c.baseAp;
@@ -650,6 +721,21 @@ const calcDivineDC = () => {
             if (!c.items) c.items = [];
             if (!c.quests) c.quests = [];
             if (!c.proficiencies) c.proficiencies = [];
+            c.quests = c.quests.map(q => ({ id: q.id || generateId(), text: q.text || '', completed: !!q.completed, skill: q.skill || '', stat: normalizeStatReference(q.stat || '') }));
+            const questProf = new Map();
+            c.proficiencies = c.proficiencies.filter(p => {
+                if (p.source !== 'Divine Quest') return true;
+                const quest = c.quests.find(q => (p.questId && q.id === p.questId) || (p.quest && q.text === p.quest));
+                if (!quest || !quest.completed || questProf.has(quest.id)) return false;
+                p.questId = quest.id;
+                p.skill = p.skill || p.name || '';
+                p.stat = normalizeStatReference(p.stat || '');
+                if (!quest.skill) quest.skill = p.skill;
+                if (!quest.stat) quest.stat = p.stat;
+                questProf.set(quest.id, p);
+                return true;
+            });
+            c.quests.forEach(q => { q.proficiencyAdded = !!(q.completed && questProf.has(q.id)); });
             if (!c.relations) c.relations = [];
             if (!c.potd) c.potd = [false, false, false];
             return c;
@@ -773,7 +859,7 @@ onMounted(() => {
             togglePotd, replenishPotd, executePurchase, refundAbility, triggerUnleash, enterPlayMode, 
             handleImageUpload, createNewCharacter, editCharacter, loadCharacter, deleteCharacter, 
             printSheet, importData, exportCurrent, exportAll, useAbilityInPlay, spentAp, remainingAp,
-            closeVault, addItem, removeItem, addQuest, toggleQuest, removeQuest, addQuestProficiency, addRelation, removeRelation, setActiveWeapon, toggleCarriedWeapon, toggleWeaponTrainingTick, storeFilterTier, chosenFilterTier, vaultSearch, codexNameSearch, codexDescriptionSearch, codexDomainFilter, codexTierFilter, codexCostFilter, codexActionFilter, currentTheme, weaponAttackBonuses, apError, potdError,
+            closeVault, addItem, removeItem, addQuest, toggleQuest, removeQuest, addQuestProficiency, syncQuestProficiency, addRelation, removeRelation, setActiveWeapon, toggleCarriedWeapon, toggleWeaponTrainingTick, storeFilterTier, chosenFilterTier, vaultSearch, codexNameSearch, codexDescriptionSearch, codexDomainFilter, codexTierFilter, codexCostFilter, codexActionFilter, currentTheme, weaponAttackBonuses, apError, potdError,
             calcDivineDC, abilitiesDropdownOpen, closeAbilitiesDropdown, scrollToAbility, abilitiesByTier, quickCastOpen,
     activeAbilityModal, expandedAbilityId, infoSidebarOpen,
             activeInfoTab,

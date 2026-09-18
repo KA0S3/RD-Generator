@@ -45,7 +45,8 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         header {
@@ -220,7 +221,8 @@
         }
 
         .app-container {
-            display: flex;
+            display: grid;
+            grid-template-columns: minmax(300px, 42%) minmax(420px, 58%);
             width: 100%;
             height: 100%;
             min-height: 0;
@@ -228,22 +230,145 @@
             background-color: var(--bg-panel);
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
-            overflow: hidden;
+            overflow-y: auto;
         }
 
         .column {
             padding: 20px;
             min-width: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
+            height: auto;
+            overflow: visible;
         }
+        #col-1 { background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 28%); }
+        #col-2 { background: radial-gradient(circle at 50% 0%, rgba(139,92,246,0.08), transparent 42%), rgba(0,0,0,0.12); }
+        .sheet-column { background: rgba(18,18,18,.92); border: 1px solid rgba(139,92,246,.55); border-radius: 8px; padding: 18px 16px; box-shadow: 0 0 18px rgba(139,92,246,.12); min-height: 100%; }
+        .sheet-field { margin: 0 0 12px; }
+        .sheet-field strong { color: var(--highlight-gold); display: block; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 3px; }
+        .sheet-value { display: block; min-height: 1.25em; }
+        .sheet-column select, .sheet-column input { width: 100%; margin: 0; min-height: 32px; }
+        .combat-sheet-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+        .combat-sheet-controls h3 { grid-column: 1 / -1; margin: 2px 0 0; }
+        .combat-sheet-controls .full-width { grid-column: 1 / -1; }
+        .vulnerability-bar { width: 100%; min-height: 38px; border: 1px solid var(--highlight-gold); border-radius: var(--radius); padding: 8px 10px; color: #fff; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+        .weakness-card, .notes-card { margin-top: 14px; padding: 12px; border: 1px solid rgba(251,191,36,.45); border-left: 4px solid var(--highlight-gold); border-radius: 8px; background: linear-gradient(135deg, rgba(120,53,15,.22), rgba(255,255,255,.025)); }
+        .weakness-card strong, .notes-card strong { display:block; color:var(--highlight-gold); text-transform:uppercase; letter-spacing:.08em; font-size:.72rem; margin-bottom:6px; }
+        .notes-card textarea { min-height: 86px; margin: 0; }
+        .wound-select { width: 100%; min-height: 36px; border-color: var(--primary-purple); }
+        .stat-modifier { display: block; margin-top: 3px; color: var(--highlight-gold); font-weight: 800; }
+        .sheet-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .sheet-stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+        .sheet-stat { border: 1px solid var(--border-color); border-radius: 6px; padding: 9px 6px; text-align: center; }
+        .movement-toggle { width: 100%; text-align: left; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(255,255,255,.02); color: var(--text-main); cursor: pointer; }
+        .movement-editor { display: none; margin-top: 8px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,.18); }
+        .movement-panel.open .movement-editor { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+        .movement-editor label { display: flex; align-items: center; gap: 5px; font-size: .78rem; }
+        .movement-editor input[type="number"] { width: 54px; min-height: 28px; margin-left: auto; }
+        .sheet-edit-dialog { width: min(520px, calc(100vw - 32px)); background: var(--bg-panel); border: 1px solid var(--primary-purple); border-radius: 8px; padding: 18px; box-shadow: 0 18px 50px rgba(0,0,0,.55); }
+        .sheet-edit-dialog textarea, .sheet-edit-dialog input { width: 100%; margin: 8px 0 12px; }
+        .sheet-stat strong { display: block; color: var(--highlight-gold); font-size: .7rem; letter-spacing: .08em; }
+        .sheet-stat span { font-size: 1.1rem; font-weight: 800; }
+        .bestiary-folder { min-height: 132px; text-align: left; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; }
+        .bestiary-folder h3 { margin: 0; }
+        .bestiary-folder small { color: var(--text-muted); }
         #col-1 { min-width: 200px; }
         #col-2 { min-width: 200px; }
-        #col-3 { min-width: 300px; }
+        #col-3 { min-width: 300px; display: none; }
 
-        .col-1 { flex: 1 1 30%; }
-        .col-2 { flex: 1 1 35%; }
-        .col-3 { flex: 1 1 35%; background-color: rgba(0,0,0,0.2); }
+        .col-1 { flex: 1 1 38%; }
+        .col-2 { flex: 1 1 62%; }
+        .col-3 { flex: 1 1 0; background-color: rgba(0,0,0,0.2); }
+
+        .statblock-compact {
+            background: rgba(18,18,18,0.92);
+            border: 1px solid rgba(139,92,246,0.55);
+            border-radius: 8px;
+            padding: 18px 16px 14px;
+            box-shadow: 0 0 18px rgba(139,92,246,0.12);
+        }
+        .sheet-editable { cursor: text; transition: background .16s, outline-color .16s; border-radius: 4px; }
+        .sheet-editable:hover, .sheet-editable:focus { background: rgba(203,168,113,.09); outline: 1px dashed rgba(203,168,113,.6); outline-offset: 3px; }
+        .inline-number { width: 100%; min-height: 32px; text-align: center; font-weight: 800; font-size: 1rem; margin: 3px 0 0; }
+        .sheet-stat small { display:block; color:var(--text-muted); margin-top:3px; }
+        #col-2 .statblock-header, #col-2 .meta, #col-2 .traits, #col-2 .scores, #col-2 .preview-only,
+        #col-2 .statblock-section-title:first-of-type, #col-2 #out-traits,
+        #col-2 #out-traits + p { display: none; }
+        .statblock-compact h1 {
+            color: var(--highlight-gold);
+            font-size: 2rem;
+            margin: 0 0 4px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .statblock-compact .meta {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            margin-bottom: 12px;
+            letter-spacing: 0.04em;
+        }
+        .statblock-compact .traits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0 14px;
+        }
+        .statblock-compact .trait-pill {
+            border: 1px solid rgba(251,191,36,0.38);
+            background: rgba(120,53,15,0.18);
+            color: var(--highlight-gold);
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .statblock-compact .scores {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 8px;
+            margin: 12px 0;
+            text-align: center;
+        }
+        .statblock-compact .scores div {
+            padding: 8px 4px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.02);
+        }
+        .statblock-compact .scores h4 {
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--highlight-gold);
+            margin: 0 0 4px;
+        }
+        .statblock-compact .scores p {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+        .statblock-compact .scores small {
+            display: block;
+            color: var(--text-muted);
+            margin-top: 2px;
+            font-size: 0.7rem;
+        }
+        .statblock-compact .rule-line {
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(139,92,246,0.9), transparent);
+            margin: 12px 0;
+        }
+        .statblock-compact .action-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--primary-purple);
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+        .statblock-compact .action-card strong {
+            color: var(--text-main);
+        }
 
         .resizer {
             width: 6px;
@@ -563,7 +688,107 @@
         }
         .filter-bar label { margin-bottom: 4px; }
         .filter-bar input, .filter-bar select { margin-bottom: 0; }
+        .bestiary-search-row {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) auto;
+            gap: 10px;
+            align-items: end;
+        }
+        .bestiary-advanced {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .bestiary-advanced.visible {
+            display: grid;
+        }
+        .bestiary-mode-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: rgba(255,255,255,0.02);
+            margin-bottom: 12px;
+        }
+        .bestiary-mode-btn {
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-muted);
+            padding: 6px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        .bestiary-mode-btn.active {
+            background: var(--primary-purple);
+            border-color: var(--primary-purple);
+            color: white;
+        }
         .carry-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .monster-sheet-shell {
+            display: grid;
+            grid-template-columns: minmax(260px, 38%) minmax(320px, 62%);
+            gap: 18px;
+            height: 100%;
+            min-height: 0;
+        }
+        .sheet-panel {
+            background: rgba(0,0,0,0.16);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 18px;
+            overflow: auto;
+        }
+        .sheet-panel h3 {
+            color: var(--highlight-gold);
+            border-bottom-color: rgba(251,191,36,0.35);
+        }
+        .sheet-panel .field-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .sheet-panel .field-row > div {
+            min-width: 0;
+        }
+        .sheet-block {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 12px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .sheet-block[contenteditable="true"] {
+            outline: 1px solid var(--primary-purple);
+            box-shadow: 0 0 0 2px rgba(139,92,246,0.12);
+        }
+        .sheet-block-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .sheet-block-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--highlight-gold);
+            font-weight: 700;
+        }
+        .sheet-turning-sigil {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
         .view-mode-label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-muted); }
         input.gradient-range { width: 100%; appearance: none; height: 12px; border-radius: 999px; background: linear-gradient(90deg, #22c55e 0%, #fbbf24 50%, #ef4444 100%); outline: none; }
         input.gradient-range::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--primary-purple); border: 2px solid #fff; box-shadow: 0 0 6px rgba(0,0,0,0.3); cursor: pointer; margin-top: -3px; }
@@ -660,7 +885,7 @@
             .header-actions { justify-content: flex-start; }
             main { overflow: visible; padding: 10px; }
             .tab-content.active { height: auto; }
-            .app-container { flex-direction: column; height: auto; overflow: visible; }
+            .app-container { grid-template-columns: 1fr; height: auto; overflow: visible; }
             .column { width: 100% !important; flex: none !important; max-height: none; overflow: visible; }
             .resizer { display: none !important; }
             .rules-layout { flex-direction: column; height: auto; overflow: visible; }
@@ -685,11 +910,7 @@
         </header>
 
         <div class="utility-bar" id="creator-utility-bar">
-            <div class="view-mode-group" id="view-mode-group" aria-label="Monster creator view mode">
-                <button class="view-mode-btn active" type="button" data-view-mode="balanced" onclick="applyViewMode('balanced')">Balanced</button>
-                <button class="view-mode-btn" type="button" data-view-mode="editor" onclick="applyViewMode('editor')">Editor</button>
-                <button class="view-mode-btn" type="button" data-view-mode="play" onclick="applyViewMode('play')">Play</button>
-            </div>
+            <div class="creator-layout-label">MONSTER SHEET <span>· double-click any highlighted block to edit</span></div>
             <div class="header-actions">
                 <button class="action-btn" style="border-color: var(--primary-purple); color: var(--primary-purple);" onclick="openAIBoxTrigger()">✨ AI Gen</button>
                 <button class="action-btn" onclick="saveCurrentMonster()">Save to Bestiary</button>
@@ -702,15 +923,40 @@
         <!-- 1. CREATOR TAB -->
         <div id="creator" class="tab-content active">
             <div class="app-container" id="app-container">
-                
-                <!-- COLUMN 1: Base Stats & Scale -->
                 <div class="column col-1" id="col-1">
+                    <section id="sheet-left" class="sheet-column" aria-label="Monster identity and traits">
+                        <h1 id="sheet-name" class="sheet-editable" contenteditable="true" spellcheck="true">Void Weaver</h1>
+                        <p id="sheet-desc" class="sheet-editable" contenteditable="true" spellcheck="true">A monstrosity that slips between the gaps of reality.</p>
+                        <div class="rule-line"></div>
+                        <div class="sheet-grid">
+                            <p class="sheet-field"><strong>Scale</strong><select id="sheet-scale"></select></p>
+                            <p class="sheet-field"><strong>Alignment</strong><select id="sheet-align"></select></p>
+                            <p class="sheet-field"><strong>Pantheon</strong><select id="sheet-origin"></select></p>
+                            <p class="sheet-field"><strong>Environment</strong><select id="sheet-environment"></select></p>
+                        </div>
+                        <div class="rule-line"></div>
+                        <div class="sheet-field movement-panel" id="sheet-movement-panel"><strong>Movement</strong><button type="button" class="movement-toggle" id="sheet-movement-toggle"><span id="sheet-speed"></span> <small>▾</small></button><div class="movement-editor" id="sheet-movement-editor"></div></div>
+                        <div class="rule-line"></div>
+                        <div class="statblock-section-title">Ability Scores</div>
+                        <div class="sheet-stat-grid">
+                            <div class="sheet-stat"><strong>STR</strong><input class="inline-number" type="number" id="sheet-str"><small class="stat-modifier" id="sheet-str-mod">+2</small></div>
+                            <div class="sheet-stat"><strong>DEX</strong><input class="inline-number" type="number" id="sheet-dex"><small class="stat-modifier" id="sheet-dex-mod">+4</small></div>
+                            <div class="sheet-stat"><strong>CON</strong><input class="inline-number" type="number" id="sheet-con"><small class="stat-modifier" id="sheet-con-mod">+2</small></div>
+                            <div class="sheet-stat"><strong>INT</strong><input class="inline-number" type="number" id="sheet-int"><small class="stat-modifier" id="sheet-int-mod">+0</small></div>
+                            <div class="sheet-stat"><strong>WIS</strong><input class="inline-number" type="number" id="sheet-wis"><small class="stat-modifier" id="sheet-wis-mod">+1</small></div>
+                            <div class="sheet-stat"><strong>CHA</strong><input class="inline-number" type="number" id="sheet-cha"><small class="stat-modifier" id="sheet-cha-mod">-1</small></div>
+                        </div>
+                        <div class="rule-line"></div>
+                        <div class="weakness-card"><strong>Fatal Weakness</strong><span id="sheet-weakness" class="sheet-value sheet-editable" contenteditable="true" spellcheck="true"></span></div>
+                        <div class="notes-card"><strong>Sheet Notes</strong><textarea id="m-notes" placeholder="Private GM notes, encounter reminders, or balance observations..." oninput="updatePreview()"></textarea></div>
+                    </section>
+                    <div id="sheet-sources" hidden>
                     <button class="btn btn-danger btn-block" onclick="randomizeAll()">🎲 Randomize Monster</button>
-                    
+
                     <h3>Core Identity</h3>
                     <label>Monster Name</label>
                     <input type="text" id="m-name" value="Void Weaver" oninput="updatePreview()">
-                    
+
                     <label>Brief Description</label>
                     <textarea id="m-desc" oninput="updatePreview()">A monstrosity that slips between the gaps of reality.</textarea>
 
@@ -742,31 +988,55 @@
                         </div>
                     </div>
 
-                    <label>Origin / Region</label>
-                    <select id="m-origin" onchange="updatePreview()">
-                        <option value="Misc">Misc</option>
-                        <option value="Greek">Greek</option>
-                        <option value="Norse">Norse</option>
-                        <option value="Egyptian">Egyptian</option>
-                        <option value="Aboriginal">Aboriginal</option>
-                        <option value="Native American">Native American</option>
-                        <option value="Polynesian">Polynesian</option>
-                        <option value="African">African</option>
-                        <option value="Slavic">Slavic</option>
-                        <option value="Chinese">Chinese</option>
-                        <option value="Japanese">Japanese</option>
-                        <option value="Mongolian">Mongolian</option>
-                        <option value="Mesopotamian">Mesopotamian</option>
-                        <option value="Diwata">Diwata</option>
-                        <option value="Hindi">Hindi</option>
-                        <option value="Inuit">Inuit</option>
-                        <option value="Inca">Inca</option>
-                        <option value="Mayan">Mayan</option>
-                        <option value="Finnish">Finnish</option>
-                        <option value="Celtic">Celtic</option>
-                        <option value="Aztec">Aztec</option>
-                        <option value="Persian">Persian</option>
-                    </select>
+                    <div class="field-row">
+                        <div>
+                            <label>Origin / Region</label>
+                            <select id="m-origin" onchange="updatePreview()">
+                                <option value="Misc">Misc</option>
+                                <option value="Greek">Greek</option>
+                                <option value="Norse">Norse</option>
+                                <option value="Egyptian">Egyptian</option>
+                                <option value="Aboriginal">Aboriginal</option>
+                                <option value="Native American">Native American</option>
+                                <option value="Polynesian">Polynesian</option>
+                                <option value="African">African</option>
+                                <option value="Slavic">Slavic</option>
+                                <option value="Chinese">Chinese</option>
+                                <option value="Japanese">Japanese</option>
+                                <option value="Mongolian">Mongolian</option>
+                                <option value="Mesopotamian">Mesopotamian</option>
+                                <option value="Diwata">Diwata</option>
+                                <option value="Hindi">Hindi</option>
+                                <option value="Inuit">Inuit</option>
+                                <option value="Inca">Inca</option>
+                                <option value="Mayan">Mayan</option>
+                                <option value="Finnish">Finnish</option>
+                                <option value="Celtic">Celtic</option>
+                                <option value="Aztec">Aztec</option>
+                                <option value="Persian">Persian</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Environment</label>
+                            <select id="m-environment" onchange="updatePreview()">
+                                <option value="Misc">Misc</option>
+                                <option value="Ocean">Ocean</option>
+                                <option value="Skies">Skies</option>
+                                <option value="Sand">Sand</option>
+                                <option value="Swamp">Swamp</option>
+                                <option value="Snow">Snow</option>
+                                <option value="Forest">Forest</option>
+                                <option value="Mountain">Mountain</option>
+                                <option value="Ruins">Ruins</option>
+                                <option value="Caverns">Caverns</option>
+                                <option value="Plains">Plains</option>
+                                <option value="Volcanic">Volcanic</option>
+                                <option value="Tundra">Tundra</option>
+                                <option value="City">City</option>
+                                <option value="Underground">Underground</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <label>Threat Level: <span id="threat-val-display" style="color:var(--highlight-gold)">50</span>% (Proficiency: <span id="prof-val" style="color:var(--highlight-gold)">+4</span>)</label>
                     <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
@@ -777,38 +1047,14 @@
                     <label>Natural Armour (Adds to Defence Bonus)</label>
                     <input type="number" id="m-nat-armour" value="2" oninput="updatePreview()">
 
-                    <label>Movement & Speeds</label>
+                    <h3>Movement</h3>
                     <div class="movement-grid">
-                        <div class="movement-item">
-                            <input type="checkbox" id="mv-walk-check" checked onchange="updatePreview()">
-                            <span>Walk</span>
-                            <input type="number" id="mv-walk-spd" value="15" oninput="updatePreview()">
-                        </div>
-                        <div class="movement-item">
-                            <input type="checkbox" id="mv-fly-check" onchange="updatePreview()">
-                            <span>Fly</span>
-                            <input type="number" id="mv-fly-spd" value="20" oninput="updatePreview()">
-                        </div>
-                        <div class="movement-item">
-                            <input type="checkbox" id="mv-swim-check" onchange="updatePreview()">
-                            <span>Swim</span>
-                            <input type="number" id="mv-swim-spd" value="10" oninput="updatePreview()">
-                        </div>
-                        <div class="movement-item">
-                            <input type="checkbox" id="mv-climb-check" checked onchange="updatePreview()">
-                            <span>Climb</span>
-                            <input type="number" id="mv-climb-spd" value="15" oninput="updatePreview()">
-                        </div>
-                        <div class="movement-item">
-                            <input type="checkbox" id="mv-burrow-check" onchange="updatePreview()">
-                            <span>Burrow</span>
-                            <input type="number" id="mv-burrow-spd" value="5" oninput="updatePreview()">
-                        </div>
-                        <div class="movement-item">
-                            <input type="checkbox" id="mv-hover-check" onchange="updatePreview()">
-                            <span>Hover</span>
-                            <input type="number" id="mv-hover-spd" value="15" oninput="updatePreview()">
-                        </div>
+                        <div class="movement-item"><input type="checkbox" id="mv-walk-check" checked onchange="updatePreview()"><span>Walk</span><input type="number" id="mv-walk-spd" value="15" oninput="updatePreview()"></div>
+                        <div class="movement-item"><input type="checkbox" id="mv-fly-check" onchange="updatePreview()"><span>Fly</span><input type="number" id="mv-fly-spd" value="20" oninput="updatePreview()"></div>
+                        <div class="movement-item"><input type="checkbox" id="mv-swim-check" onchange="updatePreview()"><span>Swim</span><input type="number" id="mv-swim-spd" value="10" oninput="updatePreview()"></div>
+                        <div class="movement-item"><input type="checkbox" id="mv-climb-check" checked onchange="updatePreview()"><span>Climb</span><input type="number" id="mv-climb-spd" value="15" oninput="updatePreview()"></div>
+                        <div class="movement-item"><input type="checkbox" id="mv-burrow-check" onchange="updatePreview()"><span>Burrow</span><input type="number" id="mv-burrow-spd" value="5" oninput="updatePreview()"></div>
+                        <div class="movement-item"><input type="checkbox" id="mv-hover-check" onchange="updatePreview()"><span>Hover</span><input type="number" id="mv-hover-spd" value="15" oninput="updatePreview()"></div>
                     </div>
                     <input type="text" id="mv-custom" placeholder="e.g. Teleportation 10m" oninput="updatePreview()">
 
@@ -822,78 +1068,45 @@
                         <div><label>CHA</label><input type="number" id="m-cha" value="8" oninput="updatePreview()"></div>
                     </div>
 
-                    <h3>Damage Rule (Mutually Exclusive)</h3>
-                    <div class="radio-group">
-                        <label><input type="radio" name="res-rule" value="normal" checked onchange="updatePreview()"> Normal Beast (Standard Rules)</label>
-                        <label><input type="radio" name="res-rule" value="mortal_immunity" onchange="updatePreview()"> Mortal Immunity (Immune to non-divine)</label>
-                        <label><input type="radio" name="res-rule" value="epic_invulnerability" onchange="updatePreview()"> Epic Invulnerability (Only weakness damages)</label>
-                    </div>
-				</div>
-
-                <!-- Resizer 1 -->
-                <div class="resizer" id="resizer-1"></div>
-
-                <!-- COLUMN 2: Puzzles & Dynamic Actions -->
-                <div class="column col-2" id="col-2">
-                    <h3>The Puzzle Mechanics</h3>
                     <label>Fatal Weakness</label>
                     <textarea id="m-weakness" placeholder="Describe how the vulnerability is bypassed..." oninput="updatePreview()">Must be pinned to the ground with iron before it can be truly slain.</textarea>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 10px;">
-                        <h3 style="margin: 0; border: none; padding: 0;">Combat Actions</h3>
-                        <div style="display: flex; gap: 6px;">
-                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openAbilityLibraryModal()">📚 Load Saved Ability</button>
-                            <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="addActionRow()">➕ Add Action</button>
-                        </div>
+                    <h3>Damage Rule</h3>
+                    <div class="radio-group">
+                        <label><input type="radio" name="res-rule" value="normal" checked onchange="updatePreview()"> Normal Beast</label>
+                        <label><input type="radio" name="res-rule" value="mortal_immunity" onchange="updatePreview()"> Mortal Immunity</label>
+                        <label><input type="radio" name="res-rule" value="epic_invulnerability" onchange="updatePreview()"> Epic Invulnerability</label>
                     </div>
-                    <small style="color:var(--text-muted); font-size: 0.75rem; display: block; margin-bottom: 10px;">Use <code>{ATK}</code> or <code>{DEF}</code> in description to auto-inject calculated stats.</small>
-                    
-                    <div id="actions-container">
-                        <!-- Dynamic action rows injected here -->
                     </div>
-
-                    <h3>Sheet Notes</h3>
-                    <textarea id="m-notes" placeholder="Private GM notes, encounter reminders, or balance observations..." oninput="updatePreview()"></textarea>
                 </div>
 
-                <!-- Resizer 2 -->
-                <div class="resizer" id="resizer-2"></div>
-
-                <!-- COLUMN 3: Live Preview & Management -->
-                <div class="column col-3" id="col-3">
-                    <div id="statblock-preview">
+                <div class="column col-2" id="col-2">
+                    <div id="statblock-preview" class="statblock-compact">
                         <div class="statblock-header">
-                            <h1 id="out-name">Void Weaver</h1>
-                            <p class="desc" id="out-desc">A monstrosity that slips between the gaps of reality.</p>
+                            <h1 id="out-name" class="sheet-editable" data-edit-target="name" title="Double-click to edit the monster name">Void Weaver</h1>
+                            <p class="desc sheet-editable" id="out-desc" data-edit-target="description" title="Double-click to edit the description">A monstrosity that slips between the gaps of reality.</p>
                         </div>
-                        
-                        <div style="font-size: 0.9rem; margin-bottom: 10px; color: var(--text-muted);">
-                            <strong style="color:var(--text-main)" id="out-meta">Scale 1 (Mortal) | Neutral Evil | Misc</strong>
+                        <div class="meta" id="out-meta">Scale 1 (Mortal) | Neutral Evil | Misc</div>
+                        <div class="traits">
+                            <span class="trait-pill" id="out-origin-pill">Misc</span>
+                            <span class="trait-pill" id="out-environment-pill">Misc</span>
+                            <span class="trait-pill" id="out-scale-pill">Scale 1</span>
                         </div>
-                        
-                        <div class="tapered-rule"></div>
-                        
-                        <div id="out-invulnerability" class="invulnerability-banner" aria-live="polite"></div>
-                        <p><strong>Defence Bonus:</strong> <span id="out-db" class="purple-text">16</span></p>
-                        <div class="combat-steppers" aria-label="Emergency combat adjustments">
-                            <div class="combat-stepper">DEF <button type="button" onclick="adjustCombatOverride('defence', -1)">-</button><strong id="m-def-override-display">Auto</strong><button type="button" onclick="adjustCombatOverride('defence', 1)">+</button></div>
-                            <div class="combat-stepper">ATK <button type="button" onclick="adjustCombatOverride('attack', -1)">-</button><strong id="m-atk-override-display">Auto</strong><button type="button" onclick="adjustCombatOverride('attack', 1)">+</button></div>
-                            <input type="hidden" id="m-def-override">
-                            <input type="hidden" id="m-atk-override">
+                        <div class="rule-line"></div>
+                        <div class="combat-sheet-controls">
+                            <h3>Combat Profile</h3>
+                            <p class="sheet-field full-width"><strong>Threat</strong><input id="sheet-threat" type="range" min="1" max="100"><span id="sheet-threat-label" class="sheet-value"></span></p>
+                            <p class="sheet-field"><strong>Natural Armour</strong><input id="sheet-armour" type="number" min="0"></p>
+                            <div class="combat-steppers"><div class="combat-stepper">ATK <button type="button" onclick="adjustCombatOverride('attack', -1)">-</button><strong id="m-atk-override-display" title="">Auto</strong><button type="button" onclick="adjustCombatOverride('attack', 1)">+</button></div></div>
+                            <p class="sheet-field full-width"><strong>Vulnerability</strong><select id="out-vulnerability" class="vulnerability-bar" onchange="setVulnerability(this.value)"><option value="normal">Normal Beast Vulnerability</option><option value="mortal_immunity">Mortal Immunity Vulnerability</option><option value="epic_invulnerability">Epic Invulnerability Vulnerability</option></select></p>
+                            <p class="sheet-field full-width"><strong>Wound State</strong><select id="sheet-wound" class="wound-select" onchange="setWoundState(this.value)"><option value="healthy">Healthy</option><option value="wounded">Wounded</option><option value="bloodied">Bloodied</option><option value="dying">Dying</option><option value="dead">Dead</option></select></p>
                         </div>
-                        <p><strong>Speed:</strong> <span id="out-speed">Walk 15m, Climb 15m</span></p>
-
-                        <div class="wound-tracker" id="out-wounds">
-                            <div class="wound-box active" onclick="setWound(0)">Healthy</div>
-                            <div class="wound-box" onclick="setWound(1)">Bruised</div>
-                            <div class="wound-box" onclick="setWound(2)">Bloodied</div>
-                            <div class="wound-box" onclick="setWound(3)">Broken</div>
-                            <div class="wound-box" style="color:var(--danger);" onclick="setWound(4)">Dead</div>
-                        </div>
-
-                        <div class="tapered-rule"></div>
-                        
-                        <div class="stat-scores">
+                <p><strong>Defence Bonus:</strong> <span id="out-db" class="purple-text" title="Hover for formula">16</span></p>
+                <input type="hidden" id="sheet-attack"><input type="hidden" id="sheet-defence">
+                        <input type="hidden" id="m-def-override">
+                        <input type="hidden" id="m-atk-override">
+                        <p class="preview-only"><strong>Speed:</strong> <span id="out-speed">Walk 15m, Climb 15m</span></p>
+                        <div class="scores">
                             <div><h4>STR</h4><p id="out-str">14</p><small id="out-str-mod">(+2)</small></div>
                             <div><h4>DEX</h4><p id="out-dex">18</p><small id="out-dex-mod">(+4)</small></div>
                             <div><h4>CON</h4><p id="out-con">14</p><small id="out-con-mod">(+2)</small></div>
@@ -901,21 +1114,27 @@
                             <div><h4>WIS</h4><p id="out-wis">12</p><small id="out-wis-mod">(+1)</small></div>
                             <div><h4>CHA</h4><p id="out-cha">8</p><small id="out-cha-mod">(-1)</small></div>
                         </div>
-                        
-                        <div class="tapered-rule"></div>
-                        
-                        <div class="statblock-section-title">Traits & Vulnerabilities</div>
+                        <div class="rule-line"></div>
+                        <div class="statblock-section-title preview-only">Traits & Vulnerabilities</div>
                         <div id="out-traits"></div>
-                        
-                        <p style="margin-top: 10px;"><strong>Fatal Weakness:</strong> <span id="out-weakness"></span></p>
+                        <p class="preview-only" style="margin-top: 10px;"><strong>Fatal Weakness:</strong> <span id="out-weakness"></span></p>
+                        <div class="rule-line"></div>
+                        <div class="statblock-section-title">Actions (<span id="out-atk-bonus" class="purple-text"></span> to Attack)</div>
+                        <div id="out-actions"></div>
+                        <div class="rule-line"></div>
 
-                        <div class="statblock-section-title">Combat Actions (<span id="out-atk-bonus" class="purple-text"></span> to Attack)</div>
-                        <div id="out-actions">
-                            <!-- Actions injected here -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; margin-bottom: 10px;">
+                            <span style="color:var(--text-muted); font-size:.78rem;">Double-click an action to edit</span>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openAbilityLibraryModal()">📚 Load Saved Ability</button>
+                                <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="addActionRow()">➕ Add Action</button>
+                            </div>
                         </div>
+                        <small style="color:var(--text-muted); font-size: 0.75rem; display: block; margin-bottom: 10px;">Use <code>{ATK}</code> or <code>{DEF}</code> in description to auto-inject calculated stats.</small>
+                        <div id="actions-container"></div>
+
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -952,13 +1171,21 @@
                     </div>
                 </div>
                 
+                <div class="bestiary-mode-bar" aria-label="Bestiary view modes">
+                    <button type="button" class="bestiary-mode-btn active" data-view="pantheon" onclick="setBestiaryViewMode('pantheon')">Pantheons</button>
+                    <button type="button" class="bestiary-mode-btn" data-view="environment" onclick="setBestiaryViewMode('environment')">Environments</button>
+                    <button type="button" class="bestiary-mode-btn" data-view="all" onclick="setBestiaryViewMode('all')">View All</button>
+                </div>
                 <div class="filter-bar">
-                    <div style="grid-column: span 2; min-width: 220px;">
-                        <label>Live Search</label>
-                        <input type="text" id="filter-search" placeholder="Search names or descriptions..." oninput="renderBestiary()">
+                    <div class="bestiary-search-row" style="grid-column: span 2;">
+                        <div>
+                            <label>Monster Search</label>
+                            <input type="text" id="filter-search" placeholder="Name, description, or environment..." oninput="renderBestiary()">
+                        </div>
+                        <button class="btn" type="button" onclick="toggleBestiarySearchPanel()">Filters</button>
                     </div>
-                    <div>
-                        <label>Threat Range</label>
+                    <div style="grid-column: span 2;">
+                        <label>Threat Level</label>
                         <div style="display:flex; gap:10px; align-items:center;">
                             <input type="range" id="filter-threat-min" min="1" max="100" value="1" class="gradient-range" oninput="renderBestiary(); syncThreatLabel()">
                             <input type="range" id="filter-threat-max" min="1" max="100" value="100" class="gradient-range" oninput="renderBestiary(); syncThreatLabel()">
@@ -968,56 +1195,78 @@
                             <span>Max <span id="filter-threat-max-display">100</span>%</span>
                         </div>
                     </div>
-                    <div>
-                        <label>Scale Tier</label>
-                        <select id="filter-scale" onchange="renderBestiary()">
-                            <option value="any">Any</option>
-                            <option value="Scale 0">Scale 0 (Tiny)</option>
-                            <option value="Scale 1">Scale 1 (Mortal)</option>
-                            <option value="Scale 2">Scale 2 (Large)</option>
-                            <option value="Scale 3">Scale 3 (Giant)</option>
-                            <option value="Scale 4">Scale 4 (Titanic)</option>
-                            <option value="Scale 5">Scale 5 (Divine)</option>
-                        </select>
+                    <div id="bestiary-advanced" class="bestiary-advanced">
+                        <div>
+                            <label>Scale Tier</label>
+                            <select id="filter-scale" onchange="renderBestiary()">
+                                <option value="any">Any</option>
+                                <option value="Scale 0">Scale 0 (Tiny)</option>
+                                <option value="Scale 1">Scale 1 (Mortal)</option>
+                                <option value="Scale 2">Scale 2 (Large)</option>
+                                <option value="Scale 3">Scale 3 (Giant)</option>
+                                <option value="Scale 4">Scale 4 (Titanic)</option>
+                                <option value="Scale 5">Scale 5 (Divine)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Alignment</label>
+                            <select id="filter-alignment" onchange="renderBestiary()">
+                                <option value="any">Any</option>
+                                <option value="Good">Good</option>
+                                <option value="Neutral">Neutral</option>
+                                <option value="Evil">Evil</option>
+                            </select>
+                        </div>
+                        <div id="filter-origin-wrap">
+                            <label>Origin / Region</label>
+                            <select id="filter-origin" onchange="renderBestiary()">
+                                <option value="any">Any</option>
+                                <option value="Misc">Misc</option>
+                                <option value="Greek">Greek</option>
+                                <option value="Norse">Norse</option>
+                                <option value="Egyptian">Egyptian</option>
+                                <option value="Aboriginal">Aboriginal</option>
+                                <option value="Native American">Native American</option>
+                                <option value="Polynesian">Polynesian</option>
+                                <option value="African">African</option>
+                                <option value="Slavic">Slavic</option>
+                                <option value="Chinese">Chinese</option>
+                                <option value="Japanese">Japanese</option>
+                                <option value="Mongolian">Mongolian</option>
+                                <option value="Mesopotamian">Mesopotamian</option>
+                                <option value="Diwata">Diwata</option>
+                                <option value="Hindi">Hindi</option>
+                                <option value="Inuit">Inuit</option>
+                                <option value="Inca">Inca</option>
+                                <option value="Mayan">Mayan</option>
+                                <option value="Finnish">Finnish</option>
+                                <option value="Celtic">Celtic</option>
+                                <option value="Aztec">Aztec</option>
+                                <option value="Persian">Persian</option>
+                            </select>
+                        </div>
+                        <div id="filter-environment-wrap" class="hidden">
+                            <label>Environment</label>
+                            <select id="filter-environment" onchange="renderBestiary()">
+                                <option value="any">Any</option>
+                                <option value="Misc">Misc</option>
+                                <option value="Ocean">Ocean</option>
+                                <option value="Skies">Skies</option>
+                                <option value="Sand">Sand</option>
+                                <option value="Swamp">Swamp</option>
+                                <option value="Snow">Snow</option>
+                                <option value="Forest">Forest</option>
+                                <option value="Mountain">Mountain</option>
+                                <option value="Ruins">Ruins</option>
+                                <option value="Caverns">Caverns</option>
+                                <option value="Plains">Plains</option>
+                                <option value="Volcanic">Volcanic</option>
+                                <option value="Tundra">Tundra</option>
+                                <option value="City">City</option>
+                                <option value="Underground">Underground</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label>Alignment</label>
-                        <select id="filter-alignment" onchange="renderBestiary()">
-                            <option value="any">Any</option>
-                            <option value="Good">Good</option>
-                            <option value="Neutral">Neutral</option>
-                            <option value="Evil">Evil</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Origin / Region</label>
-                        <select id="filter-origin" onchange="renderBestiary()">
-                            <option value="any">Any</option>
-                            <option value="Misc">Misc</option>
-                            <option value="Greek">Greek</option>
-                            <option value="Norse">Norse</option>
-                            <option value="Egyptian">Egyptian</option>
-                            <option value="Aboriginal">Aboriginal</option>
-                            <option value="Native American">Native American</option>
-                            <option value="Polynesian">Polynesian</option>
-                            <option value="African">African</option>
-                            <option value="Slavic">Slavic</option>
-                            <option value="Chinese">Chinese</option>
-                            <option value="Japanese">Japanese</option>
-                            <option value="Mongolian">Mongolian</option>
-                            <option value="Mesopotamian">Mesopotamian</option>
-                            <option value="Diwata">Diwata</option>
-                            <option value="Hindi">Hindi</option>
-                            <option value="Inuit">Inuit</option>
-                            <option value="Inca">Inca</option>
-                            <option value="Mayan">Mayan</option>
-                            <option value="Finnish">Finnish</option>
-                            <option value="Celtic">Celtic</option>
-                            <option value="Aztec">Aztec</option>
-                            <option value="Persian">Persian</option>
-                        </select>
-                    </div>
-                    <button id="folder-mode-toggle" class="btn" type="button" onclick="returnToBestiaryRegions()">← All Pantheons</button>
                 </div>
 
                 <div class="bestiary-grid" id="bestiary-list">
@@ -1096,6 +1345,7 @@
         let lastSavedMonsterSnapshot = '';
         let selectedBestiaryIds = new Set();
         let bestiaryFolderMode = true;
+        let bestiaryViewMode = 'pantheon';
         const defaultActions = [
             { id: 1, name: 'Void Claws', tag: 'Major', desc: 'Melee Attack Roll vs DB (+{ATK}). On a margin of 5+, applies Bleed.' },
             { id: 2, name: 'Phase Step', tag: 'Minor', desc: 'Teleports up to 15m to an unoccupied space in dim light.' }
@@ -1103,6 +1353,8 @@
 
         // --- Session Restoration (On Load) ---
         function switchTab(tabId, btnElement) {
+            const previous = document.querySelector('.tab-content.active');
+            if (previous) localStorage.setItem(`mm_scroll_${previous.id}`, String(previous.scrollTop || window.scrollY || 0));
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -1117,6 +1369,12 @@
             localStorage.setItem('mm_active_tab', tabId); // Save state
             document.getElementById('creator-utility-bar').classList.toggle('hidden', tabId !== 'creator');
             if(tabId === 'bestiary') renderBestiary();
+            requestAnimationFrame(() => {
+                const next = document.getElementById(tabId);
+                const savedScroll = parseInt(localStorage.getItem(`mm_scroll_${tabId}`) || '0', 10);
+                if (next) next.scrollTop = savedScroll;
+                window.scrollTo(0, savedScroll);
+            });
         }
 
         function switchRule(ruleId, btnElement) {
@@ -1205,6 +1463,7 @@
             const col3 = document.getElementById('col-3');
             const resizer1 = document.getElementById('resizer-1');
             const resizer2 = document.getElementById('resizer-2');
+            if (!container || !col1 || !col2 || !resizer1 || !resizer2) return;
             const min1 = 200, min2 = 200, min3 = 300;
             let isDragging1 = false, isDragging2 = false;
 
@@ -1294,42 +1553,9 @@
         setupResizers();
 
         function applyViewMode(mode) {
-            const currentMode = mode === 'creation' || mode === 'statblock' ? 'balanced' : mode;
-            localStorage.setItem('mm_view_mode', currentMode);
-            document.querySelectorAll('.view-mode-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.viewMode === currentMode);
-            });
-            if (currentMode === 'balanced') {
-                document.getElementById('col-1').style.display = 'block';
-                document.getElementById('col-2').style.display = 'block';
-                document.getElementById('col-3').style.display = 'block';
-                document.getElementById('resizer-1').style.display = 'block';
-                document.getElementById('resizer-2').style.display = 'block';
-                let widths;
-                try { widths = JSON.parse(localStorage.getItem('mm_balanced_widths')); } catch(e) { widths = null; }
-                if (!Array.isArray(widths) || widths.length !== 3) widths = [30, 35, 35];
-                document.getElementById('col-1').style.flex = `0 0 ${widths[0]}%`;
-                document.getElementById('col-2').style.flex = `0 0 ${widths[1]}%`;
-                document.getElementById('col-3').style.flex = `0 0 ${widths[2]}%`;
-            } else if (currentMode === 'editor') {
-                document.getElementById('col-1').style.display = 'block';
-                document.getElementById('col-2').style.display = 'block';
-                document.getElementById('col-3').style.display = 'none';
-                document.getElementById('resizer-1').style.display = 'none';
-                document.getElementById('resizer-2').style.display = 'none';
-                document.getElementById('col-1').style.flex = '0 0 36%';
-                document.getElementById('col-2').style.flex = '0 0 64%';
-                document.getElementById('col-3').style.flex = '0 0 0';
-            } else if (currentMode === 'play') {
-                document.getElementById('col-1').style.display = 'none';
-                document.getElementById('col-2').style.display = 'none';
-                document.getElementById('col-3').style.display = 'block';
-                document.getElementById('resizer-1').style.display = 'none';
-                document.getElementById('resizer-2').style.display = 'none';
-                document.getElementById('col-1').style.flex = '0 0 0';
-                document.getElementById('col-2').style.flex = '0 0 0';
-                document.getElementById('col-3').style.flex = '0 0 100%';
-            }
+            localStorage.setItem('mm_view_mode', 'sheet');
+            ['col-1','col-2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'block'; });
+            ['resizer-1','resizer-2','col-3'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
         }
 
         function toggleSystemView() {
@@ -1344,16 +1570,22 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             renderRulesReference();
+            hydrateBestiaryFromIndexedDB();
             let wip = localStorage.getItem('mm_wip_monster');
             if (wip) {
                 try { populateForm(JSON.parse(wip)); } catch(e) { console.error("Could not load WIP:", e); }
             } else { actionsList = [...defaultActions]; }
             updatePreview();
             lastSavedMonsterSnapshot = getCurrentSnapshot();
+            setupSheetControls();
+            setupCreatorScrollSync();
             let activeTab = localStorage.getItem('mm_active_tab') || 'creator';
             switchTab(activeTab, null);
-            const savedView = localStorage.getItem('mm_view_mode') || 'balanced';
-            applyViewMode(savedView);
+            applyViewMode('sheet');
+            setupOverrideHoverText();
+            const panel = document.getElementById('bestiary-advanced');
+            if (panel) panel.classList.remove('visible');
+            setBestiaryViewMode(localStorage.getItem('mm_bestiary_view_mode') || 'pantheon');
         });
 
         // --- Math Logic ---
@@ -1373,14 +1605,58 @@
             updatePreview();
         }
 
+        function setupSheetControls() {
+            ['scale', 'align', 'origin', 'environment'].forEach(key => {
+                const source = document.getElementById(`m-${key}`);
+                const sheet = document.getElementById(`sheet-${key}`);
+                sheet.innerHTML = source.innerHTML;
+                sheet.value = source.value;
+                sheet.addEventListener('change', () => { source.value = sheet.value; updatePreview(); });
+            });
+            const sheetThreat = document.getElementById('sheet-threat');
+            sheetThreat.value = document.getElementById('m-threat-num').value;
+            sheetThreat.addEventListener('input', () => { document.getElementById('m-threat-num').value = sheetThreat.value; syncThreatFromNum(); });
+            const sheetArmour = document.getElementById('sheet-armour');
+            sheetArmour.value = document.getElementById('m-nat-armour').value;
+            sheetArmour.addEventListener('input', () => { document.getElementById('m-nat-armour').value = sheetArmour.value; updatePreview(); });
+            [['sheet-attack', 'm-atk-override'], ['sheet-defence', 'm-def-override']].forEach(([sheetId, sourceId]) => {
+                document.getElementById(sheetId).addEventListener('input', () => { document.getElementById(sourceId).value = document.getElementById(sheetId).value; syncCombatOverrideDisplay(); updatePreview(); });
+            });
+            ['str','dex','con','int','wis','cha'].forEach(stat => {
+                const sheetStat = document.getElementById(`sheet-${stat}`);
+                sheetStat.value = document.getElementById(`m-${stat}`).value;
+                sheetStat.addEventListener('input', () => { document.getElementById(`m-${stat}`).value = sheetStat.value; updatePreview(); });
+            });
+            [['sheet-name', 'm-name'], ['sheet-desc', 'm-desc'], ['sheet-weakness', 'm-weakness']].forEach(([sheetId, sourceId]) => {
+                document.getElementById(sheetId).addEventListener('input', () => { document.getElementById(sourceId).value = document.getElementById(sheetId).innerText.trim(); updatePreview(); });
+            });
+            const movementEditor = document.getElementById('sheet-movement-editor');
+            movementEditor.innerHTML = ['walk','fly','swim','climb','burrow','hover'].map(type => `<label><input type="checkbox" data-move-check="${type}"> ${type[0].toUpperCase() + type.slice(1)} <input type="number" data-move-speed="${type}" min="0"></label>`).join('');
+            ['walk','fly','swim','climb','burrow','hover'].forEach(type => {
+                const check = movementEditor.querySelector(`[data-move-check="${type}"]`);
+                const speed = movementEditor.querySelector(`[data-move-speed="${type}"]`);
+                check.checked = document.getElementById(`mv-${type}-check`).checked;
+                speed.value = document.getElementById(`mv-${type}-spd`).value;
+                check.addEventListener('change', () => { document.getElementById(`mv-${type}-check`).checked = check.checked; updatePreview(); });
+                speed.addEventListener('input', () => { document.getElementById(`mv-${type}-spd`).value = speed.value; updatePreview(); });
+            });
+            document.getElementById('sheet-movement-toggle').addEventListener('click', event => { event.stopPropagation(); document.getElementById('sheet-movement-panel').classList.toggle('open'); });
+            document.addEventListener('click', event => { if (!document.getElementById('sheet-movement-panel').contains(event.target)) document.getElementById('sheet-movement-panel').classList.remove('open'); });
+        }
+
+        function setVulnerability(value) {
+            const radio = document.querySelector(`input[name="res-rule"][value="${value}"]`);
+            if (radio) radio.checked = true;
+            updatePreview();
+        }
+
+        function setupCreatorScrollSync() { /* shared app-container scroll keeps both columns aligned */ }
+
+
         function calculateProficiency(threat) {
-            if (threat <= 10) return 1 + Math.round(threat / 10);
-            if (threat <= 85) {
-                let progress = (threat - 10) / 75;
-                return 2 + Math.round(7 * Math.pow(progress, 1.5));
-            }
-            let progress = (threat - 85) / 15;
-            return 9 + Math.round(3 * Math.pow(progress, 1.2));
+            const level = Math.max(1, Math.min(100, Number(threat) || 1));
+            if (level < 60) return Math.max(1, Math.floor(1 + 3 * Math.pow(level / 60, 1.7)));
+            return Math.min(12, 4 + Math.round(8 * Math.pow((level - 60) / 40, 1.35)));
         }
 
         function naturalArmorCap(threat, scale) {
@@ -1401,6 +1677,24 @@
             return mod >= 0 ? `+${mod}` : `${mod}`;
         }
 
+        function getCalculatedCombatBonuses() {
+            const threat = parseInt(document.getElementById('m-threat-num').value) || 50;
+            const prof = calculateProficiency(threat);
+            const scale = document.getElementById('m-scale').value;
+            const stats = {
+                str: parseInt(document.getElementById('m-str').value) || 10,
+                dex: parseInt(document.getElementById('m-dex').value) || 10,
+                int: parseInt(document.getElementById('m-int').value) || 10,
+                con: parseInt(document.getElementById('m-con').value) || 10,
+                wis: parseInt(document.getElementById('m-wis').value) || 10,
+                cha: parseInt(document.getElementById('m-cha').value) || 10,
+            };
+            const natArmor = boundedNaturalArmor(threat, scale, document.getElementById('m-nat-armour').value);
+            const attack = Math.max(getMod(stats.str), getMod(stats.dex)) + prof;
+            const defence = getMod(stats.int) + Math.floor(stats.dex / 2) + prof + natArmor;
+            return { attack, defence };
+        }
+
         function syncCombatOverrideDisplay() {
             ['attack', 'defence'].forEach(type => {
                 const field = document.getElementById(`m-${type === 'attack' ? 'atk' : 'def'}-override`);
@@ -1411,10 +1705,33 @@
 
         function adjustCombatOverride(type, amount) {
             const field = document.getElementById(`m-${type === 'attack' ? 'atk' : 'def'}-override`);
-            const current = field.value === '' ? null : parseInt(field.value);
-            field.value = current === null ? amount : current + amount;
+            const base = getCalculatedCombatBonuses()[type];
+            const currentValue = field.value === '' ? base : parseInt(field.value);
+            const nextValue = currentValue + amount;
+            field.value = String(nextValue);
             syncCombatOverrideDisplay();
             updatePreview();
+        }
+
+    function setupOverrideHoverText() {
+            const attackField = document.getElementById('m-atk-override');
+            const defenceField = document.getElementById('m-def-override');
+            const update = () => {
+                const calc = getCalculatedCombatBonuses();
+                const threat = parseInt(document.getElementById('m-threat-num').value) || 50;
+                const prof = calculateProficiency(threat);
+                const str = parseInt(document.getElementById('m-str').value) || 10;
+                const dex = parseInt(document.getElementById('m-dex').value) || 10;
+                const int = parseInt(document.getElementById('m-int').value) || 10;
+                const nat = boundedNaturalArmor(threat, document.getElementById('m-scale').value, document.getElementById('m-nat-armour').value);
+                const attackText = `Attack: max(STR ${getMod(str)}, DEX ${getMod(dex)}) + proficiency ${prof} = ${calc.attack}.\nManual override: ${attackField.value === '' ? 'Auto' : attackField.value}`;
+                const defenceText = `Defence: INT mod ${getMod(int)} + floor(DEX/2) ${Math.floor(dex/2)} + proficiency ${prof} + natural armour ${nat} = ${calc.defence}.\nManual override: ${defenceField.value === '' ? 'Auto' : defenceField.value}`;
+                const attackDisplay = document.getElementById('m-atk-override-display');
+                if (attackDisplay) attackDisplay.title = attackText;
+            };
+            attackField?.addEventListener('input', update);
+            defenceField?.addEventListener('input', update);
+            update();
         }
 
         // --- Active Actions ---
@@ -1453,6 +1770,11 @@
         function addActionRow() { addActionData('', 'Major', ''); }
         function removeAction(idx) { actionsList.splice(idx, 1); renderActions(); }
         function updateAction(idx, field, val) { actionsList[idx][field] = val; updatePreview(); }
+        function updateInlineAction(idx, field, value) {
+            if (!actionsList[idx]) return;
+            actionsList[idx][field] = value.trim();
+            localStorage.setItem('mm_wip_monster', JSON.stringify(getCurrentData()));
+        }
 
         // --- Ability Library ---
         function getLibrary() { return JSON.parse(localStorage.getItem('mm_abilities') || '[]'); }
@@ -1475,9 +1797,16 @@
             listContainer.innerHTML = lib.map((a, i) => `
                 <div style="background:var(--bg-input); padding:10px; border:1px solid var(--border-color); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                     <div><strong style="color:var(--text-main)">${a.name}</strong> <span style="font-size:0.75rem; color:var(--primary-purple)">[${a.tag}]</span></div>
-                    <button class="btn" style="padding:4px 8px; font-size:0.75rem;" onclick="loadAbilityFromLibrary(${i})">Load</button>
+                    <span><button class="btn" style="padding:4px 8px; font-size:0.75rem;" onclick="loadAbilityFromLibrary(${i})">Load</button> <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="removeAbilityFromLibrary(${i})">Remove</button></span>
                 </div>
             `).join('');
+        }
+        function removeAbilityFromLibrary(idx) {
+            const lib = getLibrary();
+            if (!lib[idx]) return;
+            lib.splice(idx, 1);
+            localStorage.setItem('mm_abilities', JSON.stringify(lib));
+            openAbilityLibraryModal();
         }
         function closeAbilityLibraryModal() { document.getElementById('ability-modal').classList.add('hidden'); }
         function loadAbilityFromLibrary(idx) {
@@ -1498,6 +1827,12 @@
             });
         }
 
+        function setWoundState(value) {
+            activeWoundIndex = ['healthy', 'wounded', 'bloodied', 'dying', 'dead'].indexOf(value);
+            if (activeWoundIndex < 0) activeWoundIndex = 0;
+            localStorage.setItem('mm_wip_monster', JSON.stringify(getCurrentData()));
+        }
+
         function updatePreview() {
             const threat = parseInt(document.getElementById('m-threat-num').value) || 50;
             const prof = calculateProficiency(threat);
@@ -1505,9 +1840,23 @@
 
             document.getElementById('out-name').innerText = document.getElementById('m-name').value || "Unnamed";
             document.getElementById('out-desc').innerText = document.getElementById('m-desc').value;
+            if (document.activeElement?.id !== 'sheet-name') document.getElementById('sheet-name').innerText = document.getElementById('m-name').value || "Unnamed";
+            if (document.activeElement?.id !== 'sheet-desc') document.getElementById('sheet-desc').innerText = document.getElementById('m-desc').value || 'No description yet.';
             const scale = document.getElementById('m-scale').value;
             const align = document.getElementById('m-align').value;
-            document.getElementById('out-meta').innerText = `${scale} | ${align} | ${document.getElementById('m-origin').value || 'Misc'}`;
+            const origin = document.getElementById('m-origin').value || 'Misc';
+            const environment = document.getElementById('m-environment').value || 'Misc';
+            [['scale', scale], ['align', align], ['origin', origin], ['environment', environment]].forEach(([key, value]) => {
+                const control = document.getElementById(`sheet-${key}`);
+                if (control) control.value = value;
+            });
+            document.getElementById('out-meta').innerText = `${scale} | ${align} | ${origin} | ${environment}`;
+            const originPill = document.getElementById('out-origin-pill');
+            const environmentPill = document.getElementById('out-environment-pill');
+            const scalePill = document.getElementById('out-scale-pill');
+            if (originPill) originPill.innerText = origin;
+            if (environmentPill) environmentPill.innerText = environment;
+            if (scalePill) scalePill.innerText = scale.replace(/ \(.*\)/, '');
             
             let mvArr = [];
             ['walk', 'fly', 'swim', 'climb', 'burrow', 'hover'].forEach(type => {
@@ -1518,6 +1867,7 @@
             const customMv = document.getElementById('mv-custom').value;
             if(customMv) mvArr.push(customMv);
             document.getElementById('out-speed').innerText = mvArr.length ? mvArr.join(', ') : '0m';
+            document.getElementById('sheet-speed').innerText = mvArr.length ? mvArr.join(', ') : '0m';
 
             let scores = {};
             ['str','dex','con','int','wis','cha'].forEach(stat => {
@@ -1525,6 +1875,9 @@
                 scores[stat] = val;
                 document.getElementById(`out-${stat}`).innerText = val;
                 document.getElementById(`out-${stat}-mod`).innerText = `(${getModStr(val)})`;
+                document.getElementById(`sheet-${stat}`).value = val;
+                const sheetModifier = document.getElementById(`sheet-${stat}-mod`);
+                if (sheetModifier) sheetModifier.innerText = getModStr(val);
             });
 
             const natArmor = boundedNaturalArmor(threat, scale, document.getElementById('m-nat-armour').value);
@@ -1537,6 +1890,21 @@
             
             document.getElementById('out-atk-bonus').innerText = `+${atkBonus}`;
             document.getElementById('out-db').innerText = dbBonus;
+            document.getElementById('sheet-attack').value = atkBonus;
+            document.getElementById('sheet-defence').value = dbBonus;
+            document.getElementById('sheet-threat').value = threat;
+            document.getElementById('sheet-threat-label').innerText = `${threat}% · Prof +${prof}`;
+            document.getElementById('sheet-armour').value = natArmor;
+            const vulnerability = document.getElementById('out-vulnerability');
+            if (vulnerability) {
+                vulnerability.value = document.querySelector('input[name="res-rule"]:checked').value;
+                const vulnerabilityColors = { normal: 'var(--bg-input)', mortal_immunity: '#92400e', epic_invulnerability: '#7f1d1d' };
+                vulnerability.style.background = vulnerabilityColors[vulnerability.value] || vulnerabilityColors.normal;
+            }
+            const calc = getCalculatedCombatBonuses();
+            const dex = parseInt(document.getElementById('m-dex').value) || 10;
+            const int = parseInt(document.getElementById('m-int').value) || 10;
+            document.getElementById('out-db').title = `DB = INT mod ${getMod(int)} + floor(DEX/2) ${Math.floor(dex / 2)} + proficiency ${prof} + natural armour ${natArmor} = ${calc.defence}`;
 
             let traitsHTML = "";
             const resRule = document.querySelector('input[name="res-rule"]:checked').value;
@@ -1545,16 +1913,27 @@
             document.getElementById('out-traits').innerHTML = traitsHTML;
             const invulnerability = document.getElementById('out-invulnerability');
             const invulnerabilityLabels = { mortal_immunity: 'Mortal Immunity: Non-divine damage does not apply', epic_invulnerability: 'Epic Invulnerability: Fatal Weakness required' };
-            invulnerability.innerText = invulnerabilityLabels[resRule] || 'Standard Vulnerability';
-            invulnerability.style.display = 'block';
-            invulnerability.style.borderColor = resRule === 'normal' ? 'var(--border-color)' : 'var(--highlight-gold)';
-            invulnerability.style.color = resRule === 'normal' ? 'var(--text-muted)' : 'var(--highlight-gold)';
-            invulnerability.style.background = resRule === 'normal' ? 'rgba(255,255,255,0.04)' : 'rgba(120,53,15,0.35)';
-            document.getElementById('out-weakness').innerText = document.getElementById('m-weakness').value || "None";
+            if (invulnerability) {
+                invulnerability.innerText = invulnerabilityLabels[resRule] || 'Standard Vulnerability';
+                invulnerability.style.display = 'block';
+                invulnerability.style.borderColor = resRule === 'normal' ? 'var(--border-color)' : 'var(--highlight-gold)';
+                invulnerability.style.color = resRule === 'normal' ? 'var(--text-muted)' : 'var(--highlight-gold)';
+                invulnerability.style.background = resRule === 'normal' ? 'rgba(255,255,255,0.04)' : 'rgba(120,53,15,0.35)';
+            }
+            const weaknessField = document.getElementById('m-weakness');
+            const weaknessText = weaknessField ? weaknessField.value : '';
+            const weaknessEl = document.getElementById('out-weakness');
+            if (weaknessEl) {
+                weaknessEl.innerText = weaknessText || 'None';
+                weaknessEl.classList.add('sheet-editable');
+                weaknessEl.setAttribute('data-edit-target', 'weakness');
+                weaknessEl.title = 'Double-click to edit the fatal weakness';
+            }
+            if (document.activeElement?.id !== 'sheet-weakness') document.getElementById('sheet-weakness').innerText = weaknessText || 'None';
 
             let actionsHTML = "";
-            actionsList.forEach(act => {
-                actionsHTML += `<p><strong>${act.name}</strong> <em style="color:var(--text-muted); font-size:0.8rem;">[${act.tag}]</em><br> ${parseVariables(act.desc, atkBonus, dbBonus)}</p>`;
+            actionsList.forEach((act, index) => {
+                actionsHTML += `<div class="action-card"><strong contenteditable="true" oninput="updateInlineAction(${index}, 'name', this.innerText)">${act.name}</strong> <em contenteditable="true" oninput="updateInlineAction(${index}, 'tag', this.innerText.replace(/[\\[\\]]/g, ''))" style="color:var(--text-muted); font-size:0.8rem;">[${act.tag}]</em><br><span contenteditable="true" oninput="updateInlineAction(${index}, 'desc', this.innerText)">${parseVariables(act.desc, atkBonus, dbBonus)}</span></div>`;
             });
             document.getElementById('out-actions').innerHTML = actionsHTML;
             
@@ -1571,6 +1950,7 @@
                 scale: document.getElementById('m-scale').value,
                 align: document.getElementById('m-align').value,
                 origin: document.getElementById('m-origin').value || 'Misc',
+                environment: document.getElementById('m-environment').value || 'Misc',
                 threat: document.getElementById('m-threat-num').value,
                 natArmor: boundedNaturalArmor(parseInt(document.getElementById('m-threat-num').value) || 50, document.getElementById('m-scale').value, document.getElementById('m-nat-armour').value),
                 movements: {
@@ -1591,6 +1971,7 @@
                     cha: document.getElementById('m-cha').value
                 },
                 resRule: document.querySelector('input[name="res-rule"]:checked').value,
+                woundState: document.getElementById('sheet-wound').value,
                 weakness: document.getElementById('m-weakness').value,
                 notes: document.getElementById('m-notes').value,
                 attackOverride: document.getElementById('m-atk-override').value,
@@ -1623,6 +2004,10 @@
             let originSelect = document.getElementById('m-origin');
             if(Array.from(originSelect.options).some(o => o.value === data.origin)) originSelect.value = data.origin;
             else originSelect.value = 'Misc';
+
+            let environmentSelect = document.getElementById('m-environment');
+            if(Array.from(environmentSelect.options).some(o => o.value === data.environment)) environmentSelect.value = data.environment;
+            else environmentSelect.value = 'Misc';
             
             document.getElementById('m-threat-num').value = data.threat || '50';
             document.getElementById('m-threat-range').value = data.threat || '50';
@@ -1653,6 +2038,8 @@
             document.getElementById('m-notes').value = data.notes || '';
             document.getElementById('m-atk-override').value = data.attackOverride || '';
             document.getElementById('m-def-override').value = data.defenceOverride || '';
+            document.getElementById('sheet-wound').value = data.woundState || 'healthy';
+            setWoundState(document.getElementById('sheet-wound').value);
             syncCombatOverrideDisplay();
             
             actionsList = data.actions || [];
@@ -1668,7 +2055,7 @@
                 data.id = bestiary[existingIdx].id; 
                 bestiary[existingIdx] = data;
             } else { bestiary.push(data); }
-            localStorage.setItem('mm_bestiary', JSON.stringify(bestiary));
+            persistBestiary(bestiary);
             lastSavedMonsterSnapshot = getCurrentSnapshot();
             if (!options.silent) alert("Saved to Bestiary!");
             renderBestiary();
@@ -1695,7 +2082,7 @@
             if(!confirm("Delete this monster?")) return;
             let bestiary = JSON.parse(localStorage.getItem('mm_bestiary') || '[]');
             bestiary = bestiary.filter(m => m.id !== id);
-            localStorage.setItem('mm_bestiary', JSON.stringify(bestiary));
+            persistBestiary(bestiary);
             renderBestiary();
         }
 
@@ -1715,9 +2102,54 @@
             const normalized = { ...monster };
             if (!normalized.id) normalized.id = Date.now().toString() + Math.random();
             if (!normalized.origin) normalized.origin = 'Misc';
+            if (!normalized.environment) normalized.environment = 'Misc';
             if (!normalized.notes) normalized.notes = '';
             if (!Array.isArray(normalized.actions)) normalized.actions = [];
             return normalized;
+        }
+
+        function openBestiaryDatabase() {
+            return new Promise((resolve) => {
+                if (!('indexedDB' in window)) return resolve(null);
+                const request = indexedDB.open('demigods_bestiary_db', 1);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('monsters')) {
+                        db.createObjectStore('monsters', { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => resolve(null);
+            });
+        }
+
+        function persistBestiary(list) {
+            const safeList = Array.isArray(list) ? list : [];
+            localStorage.setItem('mm_bestiary', JSON.stringify(safeList));
+            if (!('indexedDB' in window)) return;
+            openBestiaryDatabase().then((db) => {
+                if (!db) return;
+                const tx = db.transaction('monsters', 'readwrite');
+                const store = tx.objectStore('monsters');
+                store.put({ id: 'main', value: safeList, savedAt: Date.now() });
+            }).catch(() => {});
+        }
+
+        function hydrateBestiaryFromIndexedDB() {
+            if (!('indexedDB' in window)) return;
+            openBestiaryDatabase().then((db) => {
+                if (!db) return;
+                const tx = db.transaction('monsters', 'readonly');
+                const request = tx.objectStore('monsters').get('main');
+                request.onsuccess = () => {
+                    const value = request.result && Array.isArray(request.result.value) ? request.result.value : [];
+                    const hasLocal = localStorage.getItem('mm_bestiary');
+                if (!hasLocal && value.length) {
+                        localStorage.setItem('mm_bestiary', JSON.stringify(value));
+                        if (document.getElementById('bestiary')?.classList.contains('active')) renderBestiary();
+                    }
+                };
+            }).catch(() => {});
         }
 
         function getStoredBestiary() {
@@ -1735,25 +2167,64 @@
             if (!selectedBestiaryIds.size) return alert('Select at least one creature first.');
             if (!confirm(`Delete ${selectedBestiaryIds.size} selected creature${selectedBestiaryIds.size === 1 ? '' : 's'}?`)) return;
             const remaining = getStoredBestiary().filter(monster => !selectedBestiaryIds.has(monster.id));
-            localStorage.setItem('mm_bestiary', JSON.stringify(remaining));
+            persistBestiary(remaining);
             selectedBestiaryIds.clear();
             renderBestiary();
         }
 
-        function toggleBestiaryFolderMode() {
-            bestiaryFolderMode = !bestiaryFolderMode;
-            if (bestiaryFolderMode) document.getElementById('filter-origin').value = 'any';
+        function setBestiaryViewMode(mode) {
+            bestiaryViewMode = mode;
+            localStorage.setItem('mm_bestiary_view_mode', mode);
+            const modeButtons = document.querySelectorAll('.bestiary-mode-btn');
+            modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.view === mode));
+            const envWrap = document.getElementById('filter-environment-wrap');
+            const originWrap = document.getElementById('filter-origin-wrap');
+            if (envWrap) envWrap.classList.toggle('hidden', mode !== 'environment');
+            if (originWrap) originWrap.classList.toggle('hidden', mode !== 'pantheon');
+            bestiaryFolderMode = mode === 'pantheon';
+            if (mode === 'all') {
+                document.getElementById('filter-origin').value = 'any';
+                document.getElementById('filter-environment').value = 'any';
+            } else if (mode === 'environment') {
+                document.getElementById('filter-origin').value = 'any';
+            } else {
+                document.getElementById('filter-environment').value = 'any';
+                document.getElementById('filter-origin').value = 'any';
+            }
             renderBestiary();
         }
 
+        function toggleBestiarySearchPanel() {
+            const panel = document.getElementById('bestiary-advanced');
+            if (!panel) return;
+            panel.classList.toggle('visible');
+        }
+
+        function toggleBestiaryFolderMode() {
+            const nextMode = bestiaryFolderMode ? 'all' : 'pantheon';
+            setBestiaryViewMode(nextMode);
+        }
+
         function openBestiaryRegion(origin) {
-            bestiaryFolderMode = false;
+            bestiaryFolderMode = true;
             document.getElementById('filter-origin').value = origin;
+            document.getElementById('filter-environment').value = 'any';
+            const modeButtons = document.querySelectorAll('.bestiary-mode-btn');
+            modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.view === 'pantheon'));
+            renderBestiary();
+        }
+
+        function openBestiaryEnvironment(environment) {
+            bestiaryFolderMode = true;
+            bestiaryViewMode = 'environment';
+            document.getElementById('filter-environment').value = environment;
+            document.getElementById('filter-origin').value = 'any';
+            document.querySelectorAll('.bestiary-mode-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.view === 'environment'));
             renderBestiary();
         }
 
         function returnToBestiaryRegions() {
-            bestiaryFolderMode = true;
+            setBestiaryViewMode('pantheon');
             document.getElementById('filter-origin').value = 'any';
             document.getElementById('filter-search').value = '';
             renderBestiary();
@@ -1782,7 +2253,7 @@
             const atk = Math.max(getMod(parseInt(stats.str) || 10), getMod(parseInt(stats.dex) || 10)) + prof;
             const db = getMod(parseInt(stats.int) || 10) + Math.floor((parseInt(stats.dex) || 10) / 2) + prof + boundedNaturalArmor(threat, monster.scale, monster.natArmor);
             const actions = (monster.actions || []).map(action => `<p><strong>${escapeHTML(action.name)}</strong> <em>[${escapeHTML(action.tag)}]</em><br>${escapeHTML(parseVariables(action.desc || '', atk, db))}</p>`).join('');
-            return `<h4>${escapeHTML(monster.name || 'Unnamed')}</h4><p>${escapeHTML(monster.desc || '')}</p><p><strong>Origin:</strong> ${escapeHTML(monster.origin || 'Misc')} | <strong>Threat:</strong> ${threat}% | <strong>Prof:</strong> +${prof}</p><p><strong>Defence:</strong> ${db} | <strong>Attack:</strong> +${atk} | <strong>Scale:</strong> ${escapeHTML(monster.scale || '')}</p><p><strong>Stats:</strong> STR ${escapeHTML(stats.str || '10')} DEX ${escapeHTML(stats.dex || '10')} CON ${escapeHTML(stats.con || '10')} INT ${escapeHTML(stats.int || '10')} WIS ${escapeHTML(stats.wis || '10')} CHA ${escapeHTML(stats.cha || '10')}</p><p><strong>Fatal Weakness:</strong> ${escapeHTML(monster.weakness || 'None')}</p><div>${actions}</div>${monster.notes ? `<p class="sheet-actions"><strong>Notes:</strong> ${escapeHTML(monster.notes)}</p>` : ''}`;
+            return `<h4>${escapeHTML(monster.name || 'Unnamed')}</h4><p>${escapeHTML(monster.desc || '')}</p><p><strong>Origin:</strong> ${escapeHTML(monster.origin || 'Misc')} | <strong>Environment:</strong> ${escapeHTML(monster.environment || 'Misc')} | <strong>Threat:</strong> ${threat}% | <strong>Prof:</strong> +${prof}</p><p><strong>Defence:</strong> ${db} | <strong>Attack:</strong> +${atk} | <strong>Scale:</strong> ${escapeHTML(monster.scale || '')}</p><p><strong>Stats:</strong> STR ${escapeHTML(stats.str || '10')} DEX ${escapeHTML(stats.dex || '10')} CON ${escapeHTML(stats.con || '10')} INT ${escapeHTML(stats.int || '10')} WIS ${escapeHTML(stats.wis || '10')} CHA ${escapeHTML(stats.cha || '10')}</p><p><strong>Fatal Weakness:</strong> ${escapeHTML(monster.weakness || 'None')}</p><div>${actions}</div>${monster.notes ? `<p class="sheet-actions"><strong>Notes:</strong> ${escapeHTML(monster.notes)}</p>` : ''}`;
         }
 
         function renderBestiary() {
@@ -1792,39 +2263,44 @@
             const maxT = parseInt(document.getElementById('filter-threat-max').value) || 100;
             const scaleFilter = document.getElementById('filter-scale').value;
             const alignmentFilter = document.getElementById('filter-alignment').value;
+            const viewMode = bestiaryViewMode || 'pantheon';
             const originFilter = document.getElementById('filter-origin').value;
+            const environmentFilter = document.getElementById('filter-environment').value;
 
             bestiary = bestiary.filter(m => {
                 const threat = parseInt(m.threat) || 0;
                 const nameMatch = (m.name || '').toLowerCase().includes(search);
                 const descMatch = (m.desc || '').toLowerCase().includes(search);
-                const matchText = nameMatch || descMatch;
+                const envMatch = (m.environment || 'Misc').toLowerCase().includes(search);
+                const matchText = !search || nameMatch || descMatch || envMatch;
                 const matchThreat = threat >= Math.min(minT, maxT) && threat <= Math.max(minT, maxT);
                 const matchScale = scaleFilter === 'any' || (m.scale || '').startsWith(scaleFilter);
                 const matchAlignment = alignmentFilter === 'any' || (m.align || '').toLowerCase().includes(alignmentFilter.toLowerCase());
-                const matchOrigin = originFilter === 'any' || (m.origin || 'Misc') === originFilter;
-                return matchText && matchThreat && matchScale && matchAlignment && matchOrigin;
+                const matchOrigin = viewMode !== 'pantheon' || originFilter === 'any' || (m.origin || 'Misc') === originFilter;
+                const matchEnvironment = viewMode !== 'environment' || environmentFilter === 'any' || (m.environment || 'Misc') === environmentFilter;
+                return matchText && matchThreat && matchScale && matchAlignment && matchOrigin && matchEnvironment;
             });
 
             const list = document.getElementById('bestiary-list');
             const path = document.getElementById('bestiary-path');
-            const backButton = document.getElementById('folder-mode-toggle');
-            const inFolder = !bestiaryFolderMode || originFilter !== 'any';
-            backButton.classList.toggle('hidden', !inFolder);
-            path.innerHTML = inFolder ? `<button class="btn" type="button" onclick="returnToBestiaryRegions()">← Back</button><span>All Pantheons</span><span>›</span><strong>${escapeHTML(originFilter === 'any' ? 'Filtered creatures' : originFilter)}</strong>` : '<strong>All Pantheons</strong><span>• Choose a pantheon, then a creature.</span>';
+            const currentGroupLabel = viewMode === 'environment' ? (environmentFilter === 'any' ? 'All Environments' : environmentFilter) : (originFilter === 'any' ? 'All Pantheons' : originFilter);
+            path.innerHTML = '<strong>Bestiary</strong><span>• ' + escapeHTML(currentGroupLabel) + '</span>';
             list.innerHTML = '';
             
             if(bestiary.length === 0) { list.innerHTML = '<p>No monsters found.</p>'; return; }
 
-            if (bestiaryFolderMode && originFilter === 'any' && !search) {
-                const groups = {};
-                bestiary.forEach(monster => { const origin = monster.origin || 'Misc'; (groups[origin] ||= []).push(monster); });
-                Object.keys(groups).sort().forEach(origin => {
+            const showFolders = !search && ((viewMode === 'pantheon' && originFilter === 'any') || (viewMode === 'environment' && environmentFilter === 'any'));
+            if (showFolders) {
+                const key = viewMode === 'pantheon' ? 'origin' : 'environment';
+                const groups = [...new Set(bestiary.map(monster => monster[key] || 'Misc'))].sort((a, b) => a.localeCompare(b));
+                path.innerHTML = `<strong>Bestiary</strong><span>• Choose a ${viewMode === 'pantheon' ? 'pantheon' : 'environment'} folder</span>`;
+                groups.forEach(group => {
+                    const count = bestiary.filter(monster => (monster[key] || 'Misc') === group).length;
                     const folder = document.createElement('button');
-                    folder.className = 'bestiary-card';
                     folder.type = 'button';
-                    folder.innerHTML = `<h3>📁 ${escapeHTML(origin)}</h3><p class="meta">${groups[origin].length} creature${groups[origin].length === 1 ? '' : 's'}</p><span class="btn">Open Region</span>`;
-                    folder.onclick = () => openBestiaryRegion(origin);
+                    folder.className = 'bestiary-card bestiary-folder';
+                    folder.innerHTML = `<h3>${escapeHTML(group)}</h3><small>${count} creature${count === 1 ? '' : 's'}</small><span class="btn">Open folder</span>`;
+                    folder.onclick = () => viewMode === 'pantheon' ? openBestiaryRegion(group) : openBestiaryEnvironment(group);
                     list.appendChild(folder);
                 });
                 return;
@@ -1836,7 +2312,7 @@
                 div.innerHTML = `
                     <label style="position:absolute; top:12px; right:12px; z-index:2;" title="Select for export"><input type="checkbox" ${selectedBestiaryIds.has(m.id) ? 'checked' : ''} onchange="toggleBestiarySelection('${m.id}', this.checked)"></label>
                     <h3>${escapeHTML(m.name)}</h3>
-                    <p class="meta">${escapeHTML(m.origin || 'Misc')} | Threat: ${escapeHTML(m.threat)}% | ${(m.scale || 'Scale 1 (Mortal)').split(' ')[0]} | ${escapeHTML(m.align || 'Unaligned')}</p>
+                    <p class="meta">${escapeHTML(m.origin || 'Misc')} | ${escapeHTML(m.environment || 'Misc')} | Threat: ${escapeHTML(m.threat)}% | ${(m.scale || 'Scale 1 (Mortal)').split(' ')[0]} | ${escapeHTML(m.align || 'Unaligned')}</p>
                     <div class="bestiary-card-actions">
                         <button class="btn" onclick="loadMonster('${m.id}')">Load</button>
                         <button class="btn gold" onclick="openBestiaryView('${m.id}')">View</button>
@@ -1972,7 +2448,7 @@ function importMonsterJSON(event) {
                 block.innerHTML = `
                     <div style="font-family: sans-serif; margin-bottom: 16px;">
                         <h1 style="margin:0 0 8px 0; color:#fbbf24;">${monster.name}</h1>
-                        <p style="margin:0 0 4px 0; color:#a1a1aa;">${monster.origin || 'Misc'} | ${monster.scale} | ${monster.align} | Threat ${monster.threat}%</p>
+                        <p style="margin:0 0 4px 0; color:#a1a1aa;">${monster.origin || 'Misc'} | ${monster.environment || 'Misc'} | ${monster.scale} | ${monster.align} | Threat ${monster.threat}%</p>
                         <p style="margin:8px 0 0 0;">${monster.desc || 'No description provided.'}</p>
                     </div>
                     <div style="margin-top: 12px;">
@@ -2072,6 +2548,7 @@ function importMonsterJSON(event) {
             document.getElementById('m-name').value = '';
             document.getElementById('m-desc').value = '';
             document.getElementById('m-origin').value = 'Misc';
+            document.getElementById('m-environment').value = 'Misc';
             document.getElementById('m-threat-num').value = '50';
             syncThreatFromNum();
             document.getElementById('m-nat-armour').value = '0';
@@ -2128,6 +2605,7 @@ function importMonsterJSON(event) {
             - Action tags must be: "Minor", "Major", "Reaction", or "Legendary".
             - Use "{ATK}" and "{DEF}" exact placeholders in action descriptions for dynamic frontend math injection.
             - Add an origin using the closest matching region from the available pantheons, or Misc if none fits.
+            - Add an environment tag using a likely habitat: choose from Ocean, Skies, Sand, Swamp, Snow, Forest, Mountain, Ruins, Caverns, Plains, Volcanic, Tundra, City, Underground, or Misc.
             - Return 1-6 actions unless the concept genuinely needs fewer. Do not fill every action category. A creature may have one action, several Minor actions, only Legendary actions, or no Reaction. Prefer a small, distinctive kit over a complete generic kit.
             - Prefer unusual, specific abilities over common filler. Every action must be meaningfully different and tied to the creature's myth or concept.
             - Follow the user's description and constraints before adding any general system assumptions.
@@ -2143,6 +2621,7 @@ function importMonsterJSON(event) {
               "scale": "String like 'Scale 2 (Large)'",
               "align": "String",
               "origin": "One available pantheon/region or Misc",
+              "environment": "One likely habitat from the allowed list or Misc",
               "threat": "String (number 1-100)",
               "natArmor": "String",
               "movements": {
@@ -2164,8 +2643,8 @@ function importMonsterJSON(event) {
             }`;
 
             try {
-                // Updated Endpoint to the current default robust model: gemini-3.6-flash
-                const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" + apiKey, {
+                // Updated Endpoint to the current default robust model: gemini-3.5-flash-lite
+                const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=" + apiKey, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -2190,6 +2669,10 @@ function importMonsterJSON(event) {
 
                 const originSelect = document.getElementById('m-origin');
                 originSelect.value = Array.from(originSelect.options).some(o => o.value === monsterData.origin) ? monsterData.origin : 'Misc';
+
+                const environmentSelect = document.getElementById('m-environment');
+                const chosenEnvironment = (monsterData.environment || 'Misc');
+                environmentSelect.value = Array.from(environmentSelect.options).some(o => o.value === chosenEnvironment) ? chosenEnvironment : 'Misc';
                 document.getElementById('m-notes').value = monsterData.notes || '';
                 
                 const scaleSelect = document.getElementById('m-scale');

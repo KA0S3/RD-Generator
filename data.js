@@ -358,6 +358,31 @@ const pantheons = {
         { name: "Zam", primary: "Earth", secondary: "Wealth", tertiary: ["Nature", "Protection", "Life"], myth: "Earth spirit guards mountains and territories" }
     ]
 };
+
+const pantheonFeatures = {
+    "Greek": "Advantage on Charisma checks in civilized settlements, cities, and formal courts.",
+    "Norse": "Advantage on Survival checks in cold climates and snowy environments.",
+    "Egyptian": "Advantage on Lore checks involving tombs, death rituals, and the underworld.",
+    "Aboriginal": "Advantage on Navigation checks when traveling through untamed wilderness.",
+    "Native American": "Advantage on Animal Handling checks with wild beasts and natural spirits.",
+    "Hawaiian": "Advantage on Athletics checks while swimming, diving, or in ocean water.",
+    "Polynesian": "Advantage on Athletics checks while swimming, diving, or in ocean water.",
+    "African": "Advantage on Persuasion checks when interacting with tight-knit communities or tribes.",
+    "Slavic": "Advantage on Perception checks while navigating dense forests and swamps.",
+    "Chinese": "Advantage on History checks involving legal matters, contracts, and official bureaucracy.",
+    "Japanese": "Advantage on Stealth checks when hiding in shadows or natural concealment.",
+    "Mongolian": "Advantage on Animal Handling checks while mounted or traveling open plains.",
+    "Mesopotamian": "Advantage on Crafting checks involving stone, clay, and structural engineering.",
+    "Diwata": "Advantage on Nature checks inside sacred groves, jungles, and rainforests.",
+    "Hindi": "Advantage on Saving Throws against magical illusions, curses, and mental control.",
+    "Inuit": "Advantage on Constitution checks to resist freezing temperatures and sub-zero cold.",
+    "Inca": "Advantage on Athletics checks when climbing or navigating high-altitude mountain terrain.",
+    "Mayan": "Advantage on Intelligence checks involving calendars, astronomy, and tracking time.",
+    "Finnish": "Advantage on Crafting checks when forging tools or shelters from forest materials.",
+    "Celtic": "Advantage on Medicine checks made near natural rivers, lakes, and ancient stone circles.",
+    "Aztec": "Advantage on Attack rolls while your character is currently bloodied or injured.",
+    "Persian": "Advantage on Insight checks to detect lies, deceit, and illusions."
+};
  // List of names for the randomizer to pull from
 const randomNames = [
     "Achilles", "Kaelen", "Lyra", "Theron", "Cassia", 
@@ -406,6 +431,7 @@ const weaponEffects = {
   "Crush": "Reduce the target's Armour Defence Bonus by 1 against this attack.",
   "Daze": "Target loses its Minor Action next turn.",
   "Disarm": "Target drops one held item.",
+  "Entangle": "Target becomes Restrained until it succeeds on a Strength or Dexterity check to break free, or the entangling weapon is removed.",
   "Grapple": "Apply the Grappled condition.",
   "Hook": "Pull the target 2 metres or Trip it.",
   "Ignore Guard": "Ignore the Defence Bonus of Shields or Light Cover against this attack",
@@ -421,6 +447,8 @@ const weaponEffects = {
 };
 	 
 const weaponArsenal = [
+  { name: "Fighting (Unarmed)", type: "Fighting (Unarmed)", range: "Touch", ability: "Str/Dex", bonus: "+0", traits: [], effects: ["Stagger", "Daze"] },
+  { name: "Fighting (Martial Artist)", type: "Fighting (Martial Artist)", range: "Touch", ability: "Str/Dex", bonus: "+1 Light", traits: ["Finesse"], effects: ["Trip", "Disarm"] },
   { name: "Knife", type: "Knife", range: "Touch", ability: "Dex", bonus: "+1 Light, Medium, Plate", traits: ["Concealable", "Dual"], effects: ["Bleed", "Pierce"] },
   { name: "Punch Dagger", type: "Punch Dagger", range: "Touch", ability: "Dex", bonus: "+1 Medium, Plate, +2 Heavy", traits: ["Concealable", "Dual"], effects: ["Pierce", "Disarm"] },
   { name: "Hatchet", type: "Hatchet", range: "Close", ability: "Dex", bonus: "+1 Light", traits: ["Thrown", "Dual"], effects: ["Cleave", "Disarm"] },

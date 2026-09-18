@@ -40,6 +40,7 @@ const expandedAbilityId = ref(null);
             equippedArmour: "Unarmoured",
             equippedWeapons: ["", ""],
             carriedWeapons: [],
+            weaponTraining: [],
             stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
             skills: [],
             proficiencies: [],
@@ -78,6 +79,7 @@ const expandedAbilityId = ref(null);
         const codexTierFilter = ref("All");
         const codexCostFilter = ref("All");
         const codexActionFilter = ref("All");
+        const vaultSearch = ref("");
         
         const newSkillName = ref("");
         const newSkillStat = ref("str");
@@ -166,6 +168,23 @@ localStorage.setItem('myth_active_char_id', newVal.id);
             return weaponArsenal.filter(weapon => (char.value.carriedWeapons || []).includes(weapon.type));
         });
 
+        const weaponTrainingFor = (weaponType) => {
+            const record = (char.value.weaponTraining || []).find(item => item.type === weaponType);
+            return record || { type: weaponType, ticks: 0 };
+        };
+
+        const weaponIsProficient = (weaponType) => weaponTrainingFor(weaponType).ticks >= 3;
+
+        const toggleWeaponTrainingTick = (weaponType, tick) => {
+            if (!char.value.weaponTraining) char.value.weaponTraining = [];
+            let record = char.value.weaponTraining.find(item => item.type === weaponType);
+            if (!record) {
+                record = { type: weaponType, ticks: 0 };
+                char.value.weaponTraining.push(record);
+            }
+            record.ticks = record.ticks === tick ? tick - 1 : tick;
+        };
+
         const weaponIsTwoHanded = (weapon) => !!weapon && (weapon.traits || []).some(trait => trait.toLowerCase().replace('-', '') === 'twohanded');
 
         const setActiveWeapon = (slot, weaponType) => {
@@ -185,6 +204,11 @@ localStorage.setItem('myth_active_char_id', newVal.id);
                 char.value.equippedWeapons = char.value.equippedWeapons.map(active => active === weaponType ? "" : active);
             } else {
                 char.value.carriedWeapons.push(weaponType);
+                const starterCount = (char.value.weaponTraining || []).filter(item => item.ticks >= 3).length;
+                if (starterCount < 2) {
+                    if (!char.value.weaponTraining) char.value.weaponTraining = [];
+                    char.value.weaponTraining.push({ type: weaponType, ticks: 3 });
+                }
             }
         };
 
@@ -192,14 +216,24 @@ localStorage.setItem('myth_active_char_id', newVal.id);
             const parentGod = availableGods.value.find(g => g.name === char.value.parent);
             if (!parentGod || typeof abilitiesLibrary === 'undefined') return [];
             const domains = [parentGod.primary, parentGod.secondary, ...(parentGod.tertiary || [])].filter(Boolean).map(d => d.trim().toLowerCase());
+            const query = vaultSearch.value.trim().toLowerCase();
             
             return abilitiesLibrary.filter(ab => {
                 const alreadyLearned = char.value.learnedAbilities.some(learned => learned.name === ab.name);
                 if (alreadyLearned) return false;
                 const abDomains = ab.domains.split(',').map(d => d.trim().toLowerCase());
-                return abDomains.some(d => domains.includes(d));
+                const matchesSearch = !query || `${ab.name} ${ab.rules}`.toLowerCase().includes(query);
+                return abDomains.some(d => domains.includes(d)) && matchesSearch;
             });
         });
+
+        const highlightText = (text, query) => {
+            const source = String(text || '');
+            const term = String(query || '').trim();
+            if (!term) return source;
+            const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return source.replace(new RegExp(`(${escaped})`, 'gi'), '<mark class="bg-amber-300 text-black rounded px-0.5">$1</mark>');
+        };
 
         const codexDomains = computed(() => {
             if (typeof abilitiesLibrary === 'undefined') return [];
@@ -275,7 +309,7 @@ localStorage.setItem('myth_active_char_id', newVal.id);
                 const statModifier = calcMod(statScore);
 
                 // formatModifier handles the + or - signs perfectly
-                return formatModifier(statModifier + calculatedProficiency.value);
+                return formatModifier(statModifier + (weapon && weaponIsProficient(weapon.type) ? calculatedProficiency.value : 0));
             });
         });
 
@@ -605,6 +639,11 @@ const calcDivineDC = () => {
             }
             if (!Array.isArray(c.carriedWeapons)) c.carriedWeapons = c.equippedWeapons.filter(Boolean);
             c.carriedWeapons = [...new Set(c.carriedWeapons)];
+            if (!Array.isArray(c.weaponTraining)) c.weaponTraining = [];
+            c.weaponTraining = c.weaponTraining.filter(item => item && c.carriedWeapons.includes(item.type)).map(item => ({ type: item.type, ticks: Math.max(0, Math.min(3, Number(item.ticks) || 0)) }));
+            c.carriedWeapons.forEach((weaponType, index) => {
+                if (!c.weaponTraining.some(item => item.type === weaponType) && index < 2) c.weaponTraining.push({ type: weaponType, ticks: 3 });
+            });
             c.equippedWeapons = c.equippedWeapons.map(weapon => c.carriedWeapons.includes(weapon) ? weapon : "");
             if (c.notes === undefined) c.notes = "";
             if (c.backstory === undefined) c.backstory = "";
@@ -695,7 +734,7 @@ onMounted(() => {
 
             const saved = localStorage.getItem('myth_roster');
             if (saved) {
-                roster.value = JSON.parse(saved);
+                roster.value = JSON.parse(saved).map(applyMigrations);
                 const lastActiveId = localStorage.getItem('myth_active_char_id');
                 
                 if (lastActiveId) {
@@ -718,6 +757,7 @@ onMounted(() => {
             woundStates: typeof woundStates !== 'undefined' ? woundStates : [], 
             fatigueStates: typeof fatigueStates !== 'undefined' ? fatigueStates : [], 
             weaponArsenal: typeof weaponArsenal !== 'undefined' ? weaponArsenal : [],
+            pantheonFeatures: typeof pantheonFeatures !== 'undefined' ? pantheonFeatures : {},
             armourRegistry: typeof armourRegistry !== 'undefined' ? armourRegistry : [], 
             abilitiesLibrary: typeof abilitiesLibrary !== 'undefined' ? abilitiesLibrary : [],
             rulesContent: typeof rulesContent !== 'undefined' ? rulesContent : [],
@@ -726,14 +766,14 @@ onMounted(() => {
             weaponEffects: typeof weaponEffects !== 'undefined' ? weaponEffects : {},   
             totalStats, effectiveDex, calculatedProficiency, currentWoundDescription, currentFatigueName, currentFatigueDescription,
             availableGods, activeWeapons, filteredShopAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName, 
-                        availableGods, activeWeapons, carriedWeaponRecords, carriedWeaponOptions, filteredShopAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName,
+            availableGods, activeWeapons, carriedWeaponRecords, carriedWeaponOptions, weaponTrainingFor, weaponIsProficient, filteredShopAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName, highlightText,
             adjustStat, randomizeStats, randomizeAll, changePantheon, changeParent, setWoundState, 
             getWoundClass, getFatigueClass, addSkill, removeSkill, toggleSkillTick, calcDefenseBonus, 
             adjustTotalAp, handleApClick, decreaseActivePotd, increaseActivePotd,
             togglePotd, replenishPotd, executePurchase, refundAbility, triggerUnleash, enterPlayMode, 
             handleImageUpload, createNewCharacter, editCharacter, loadCharacter, deleteCharacter, 
             printSheet, importData, exportCurrent, exportAll, useAbilityInPlay, spentAp, remainingAp,
-            closeVault, addItem, removeItem, addQuest, toggleQuest, removeQuest, addQuestProficiency, addRelation, removeRelation, setActiveWeapon, toggleCarriedWeapon, storeFilterTier, chosenFilterTier, codexNameSearch, codexDescriptionSearch, codexDomainFilter, codexTierFilter, codexCostFilter, codexActionFilter, currentTheme, weaponAttackBonuses, apError, potdError,
+            closeVault, addItem, removeItem, addQuest, toggleQuest, removeQuest, addQuestProficiency, addRelation, removeRelation, setActiveWeapon, toggleCarriedWeapon, toggleWeaponTrainingTick, storeFilterTier, chosenFilterTier, vaultSearch, codexNameSearch, codexDescriptionSearch, codexDomainFilter, codexTierFilter, codexCostFilter, codexActionFilter, currentTheme, weaponAttackBonuses, apError, potdError,
             calcDivineDC, abilitiesDropdownOpen, closeAbilitiesDropdown, scrollToAbility, abilitiesByTier, quickCastOpen,
     activeAbilityModal, expandedAbilityId, infoSidebarOpen,
             activeInfoTab,

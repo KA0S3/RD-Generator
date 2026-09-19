@@ -2605,12 +2605,21 @@ function importMonsterJSON(event) {
             // Open Modal
             document.getElementById('ai-modal').classList.remove('hidden');
             document.getElementById('ai-decision-panel').classList.add('hidden');
+            document.getElementById('ai-mode-controls').classList.remove('hidden');
+            document.getElementById('ai-generate-btn').style.display = 'inline-flex';
+            document.getElementById('ai-spinner').style.display = 'none';
+            document.getElementById('ai-status').innerText = '';
             const savedKey = localStorage.getItem('demigods_api_key');
             if(savedKey) document.getElementById('ai-api-key').value = savedKey;
         }
 
         function closeAIBox() {
             document.getElementById('ai-modal').classList.add('hidden');
+            document.getElementById('ai-decision-panel').classList.add('hidden');
+            document.getElementById('ai-mode-controls').classList.remove('hidden');
+            document.getElementById('ai-generate-btn').style.display = 'inline-flex';
+            document.getElementById('ai-spinner').style.display = 'none';
+            document.getElementById('ai-status').innerText = '';
         }
 
         function getNoPileNames() {
@@ -2679,7 +2688,7 @@ function importMonsterJSON(event) {
             document.getElementById('ai-status').innerText = 'Consulting the oracles...';
             
             const promptContext = window.aiRandomGeneration
-                ? `Research widely across reliable mythology references and choose ONE genuinely attested mythological creature or being that is not in the excluded lists below. Return a new bestiary entry based on that real myth. Do not invent, combine, rename, reskin, or suggest options. Exclude Bestiary names: ${getStoredBestiary().map(monster => monster.name).join(' | ') || 'none'}. Exclude no-pile names: ${getNoPileNames().join(' | ') || 'none'}.`
+                ? `Research widely across reliable mythology references and choose ONE genuinely attested mythological creature, god, spirit, or being that is not in the excluded lists below. Return a new bestiary entry based on that real myth. Do not invent, combine, rename, reskin, use an alternate spelling of, or suggest options for an excluded creature. Exclude Bestiary names: ${getStoredBestiary().map(monster => monster.name).join(' | ') || 'none'}. Exclude no-pile names: ${getNoPileNames().join(' | ') || 'none'}.`
                 : mode === 'myth' 
                 ? `Use the real mythology of "${desc}" as the primary source. Include only powers, actions, traits, weaknesses, or stories genuinely associated with that creature or figure. Do not add generic fantasy abilities merely to fill space. If mythology is uncertain, keep the entry restrained and do not put the uncertainty in Sheet Notes.` 
                 : `Create a completely brand new, custom monster based on this description: "${desc}".`;
@@ -2764,9 +2773,10 @@ function importMonsterJSON(event) {
 
                 if (window.aiRandomGeneration) {
                     const generatedName = (monsterData.name || '').trim().toLowerCase();
-                    const duplicate = getStoredBestiary().some(monster => (monster.name || '').trim().toLowerCase() === generatedName);
+                    const duplicate = getStoredBestiary().some(monster => (monster.name || '').trim().toLowerCase() === generatedName)
+                        || getNoPileNames().some(name => name.trim().toLowerCase() === generatedName);
                     if (!generatedName || duplicate) {
-                        throw new Error(duplicate ? 'The oracle returned a creature already in your Bestiary. Please generate again.' : 'The oracle returned a creature without a name. Please generate again.');
+                        throw new Error(duplicate ? 'The oracle returned a creature already excluded. Retrying automatically.' : 'The oracle returned a creature without a name. Retrying automatically.');
                     }
                 }
                 
@@ -2833,10 +2843,12 @@ function importMonsterJSON(event) {
                 }
                 
             } catch (err) {
-                alert("Generation Failed. " + err.message);
-                const canRetryRandom = window.aiRandomGeneration && /already in your Bestiary|without a name/.test(err.message);
+                const canRetryRandom = window.aiRandomGeneration && /already excluded|without a name/.test(err.message);
                 if (canRetryRandom) {
-                    document.getElementById('ai-status').innerText = 'No new creature was applied. Generate again for another result.';
+                    document.getElementById('ai-status').innerText = 'That result was already excluded. Finding another myth...';
+                    setTimeout(() => generateAIMonster(), 250);
+                } else {
+                    alert("Generation Failed. " + err.message);
                 }
                 if (!canRetryRandom) window.aiRandomGeneration = false;
             } finally {

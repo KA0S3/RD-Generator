@@ -359,6 +359,16 @@ const pantheons = {
     ]
 };
 
+// Domain names intentionally remain distinct from the six core stats. The
+// workbook uses Strength and Wisdom as domains, while the rules use Power and
+// Instinct as core stats.
+const canonicalDomainName = (domain) => ({ Power: "Strength", Instinct: "Wisdom" }[domain] || domain);
+Object.values(pantheons).forEach(gods => gods.forEach(god => {
+    god.primary = canonicalDomainName(god.primary);
+    god.secondary = canonicalDomainName(god.secondary);
+    god.tertiary = (god.tertiary || []).map(canonicalDomainName);
+}));
+
 const pantheonFeatures = {
     "Greek": "Advantage on Influence checks in civilized settlements, cities, and formal courts.",
     "Norse": "Advantage on Survival checks in cold climates and snowy environments.",
@@ -992,3 +1002,12 @@ const abilitiesLibrary = [
     {"name": "Eclipse of the Sun", "tier": 3, "cost": "5 PotD", "action": "Major Action", "rules": "Plunge the battlefield into absolute, magical darkness that even darkvision cannot pierce, except for you and designated allies. Enemies without a form of truesight suffer automatic Disadvantage on all attacks and saves while within the area, and allies who can see have advantage on attacks against them. Lasts for 3 rounds.", "domains": "Sun, Moon, Darkness, Shadow, Void, Magic"},
     {"name": "Chains of Justice", "tier": 3, "cost": "5 PotD", "action": "Major Action", "rules": "Summon ethereal chains that bind up to three targets within Medium range. Targets must pass a Power save or become Restrained and completely incapable of lying or using magical teleportation for 10 minutes.", "domains": "Justice, Law, Order, Will, Knowledge"}
 ];
+
+// Keep ability-domain labels aligned with the workbook without changing core
+// stat wording inside ability rules.
+abilitiesLibrary.forEach(ability => {
+    ability.domains = ability.domains
+        .split(',')
+        .map(domain => canonicalDomainName(domain.trim()))
+        .join(', ');
+});

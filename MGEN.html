@@ -1309,6 +1309,7 @@
             <label>Gemini API Key (Saves locally so you only type it once)</label>
             <input type="password" id="ai-api-key" placeholder="AIzaSy...">
             
+            <div id="ai-mode-controls">
             <label>Generation Mode</label>
             <select id="ai-preset">
                 <option value="myth">🏛️ Mythological Creature (Research myths & scale to rules)</option>
@@ -1318,6 +1319,7 @@
             <label>Monster Name or Description</label>
             <textarea id="ai-prompt" placeholder="e.g., 'Minotaur' OR 'A six-legged molten wolf that spits acid...'"></textarea>
             
+            </div>
             <div style="text-align: center; margin-top: 15px;">
                 <button id="ai-generate-btn" class="btn gold btn-block" style="padding: 12px; font-size: 1.1rem;" onclick="generateAIMonster()">Summon Monster</button>
                 <div id="ai-spinner" class="spinner"></div>
@@ -2600,6 +2602,18 @@ function importMonsterJSON(event) {
             document.getElementById('ai-modal').classList.add('hidden');
         }
 
+        function getNoPileNames() {
+            return JSON.parse(localStorage.getItem('demigods_no_pile') || '[]');
+        }
+
+        function addToNoPile(monsterName) {
+            const name = (monsterName || '').trim();
+            if (!name) return;
+            const names = getNoPileNames();
+            if (!names.some(existing => existing.toLowerCase() === name.toLowerCase())) names.push(name);
+            localStorage.setItem('demigods_no_pile', JSON.stringify(names));
+        }
+
         // Bestiary shortcut: the AI receives every stored name and the result is
         // checked again locally before it can be saved.
         async function generateRandomMythMonster() {
@@ -2609,13 +2623,11 @@ function importMonsterJSON(event) {
                 proceedToAI(false);
                 return;
             }
-            const existingNames = getStoredBestiary()
-                .map(monster => (monster.name || '').trim())
-                .filter(Boolean);
             window.aiRandomGeneration = true;
             document.getElementById('ai-api-key').value = apiKey;
             document.getElementById('ai-preset').value = 'myth';
-            document.getElementById('ai-prompt').value = `Invent one random mythological creature that is not in my bestiary. Existing names to avoid (case-insensitive): ${existingNames.join(' | ') || 'none yet'}. Choose a genuinely different creature and name; do not rename or reskin an existing entry.`;
+            document.getElementById('ai-prompt').value = '';
+            document.getElementById('ai-mode-controls').classList.add('hidden');
             document.getElementById('ai-modal').classList.remove('hidden');
         }
 
@@ -2625,7 +2637,7 @@ function importMonsterJSON(event) {
             const desc = document.getElementById('ai-prompt').value.trim();
             
             if(!apiKey) return alert("Please enter your Gemini API Key.");
-            if(!desc) return alert("Please enter a monster description or mythological name.");
+            if(!window.aiRandomGeneration && !desc) return alert("Please enter a monster description or mythological name.");
             
             localStorage.setItem('demigods_api_key', apiKey);
             
@@ -2633,8 +2645,10 @@ function importMonsterJSON(event) {
             document.getElementById('ai-spinner').style.display = 'block';
             document.getElementById('ai-status').innerText = 'Consulting the oracles...';
             
-            const promptContext = mode === 'myth' 
-                ? `Use the real mythology of "${desc}" as the primary source. Include only powers, actions, traits, weaknesses, or stories genuinely associated with that creature or figure. Do not add generic fantasy abilities merely to fill space. If mythology is uncertain, keep the entry restrained and mark uncertainty in notes.` 
+            const promptContext = window.aiRandomGeneration
+                ? `Research widely across reliable mythology references and choose ONE genuinely attested mythological creature or being that is not in the excluded lists below. Return a new bestiary entry based on that real myth. Do not invent, combine, rename, reskin, or suggest options. Exclude Bestiary names: ${getStoredBestiary().map(monster => monster.name).join(' | ') || 'none'}. Exclude no-pile names: ${getNoPileNames().join(' | ') || 'none'}.`
+                : mode === 'myth' 
+                ? `Use the real mythology of "${desc}" as the primary source. Include only powers, actions, traits, weaknesses, or stories genuinely associated with that creature or figure. Do not add generic fantasy abilities merely to fill space. If mythology is uncertain, keep the entry restrained and do not put the uncertainty in Sheet Notes.` 
                 : `Create a completely brand new, custom monster based on this description: "${desc}".`;
 
             const fullPrompt = `You are an expert TTRPG monster designer for the 'Demigods' system.
@@ -2650,7 +2664,8 @@ function importMonsterJSON(event) {
             - Abilities are effects, not just attack names. Explain triggers, targets, range, duration, conditions, immunities, transformations, reactions, costs, and counters when relevant to the concept. Use "{ATK}" and "{DEF}" exact placeholders only where the frontend's calculated Attack or Defence should be inserted.
             - Damage rules are distinct: "normal" uses ordinary vulnerability; "mortal_immunity" means mundane/non-divine damage cannot harm the creature but divine or mythic sources can; "epic_invulnerability" means only the explicitly described Fatal Weakness can truly harm or kill it. Choose the least extreme rule that fits and make the Fatal Weakness a concrete gameplay puzzle.
             - A creature may have no special damage rule, no actions, one action, or any number of meaningful actions from 1-6. There is no fixed ability layout.
-            - Map every returned field to the editor: identity, scale/alignment/origin/environment, threat, natural armour, movement flags and speeds, six stats, damage rule, fatal weakness, notes, optional attack/defence overrides, wound state, and actions.
+            - Map every returned field to the editor: identity, scale/alignment/origin/environment, threat, natural armour, movement flags and speeds, six stats, damage rule, fatal weakness, optional attack/defence overrides, wound state, and actions.
+            - The "notes" field must always be an empty string. Never write research commentary, uncertainty, citations, or custom instructions into Sheet Notes.
             - Add an origin using the closest matching region from the available pantheons, or Misc if none fits.
             - Add an environment tag using a likely habitat: choose from Ocean, Skies, Sand, Swamp, Snow, Forest, Mountain, Ruins, Caverns, Plains, Volcanic, Tundra, City, Underground, or Misc.
             - Return 1-6 actions unless the concept genuinely needs fewer. Do not fill every action category. A creature may have one action, several Minor actions, only Legendary actions, or no Reaction. Prefer a small, distinctive kit over a complete generic kit.
@@ -2683,7 +2698,7 @@ function importMonsterJSON(event) {
               "stats": { "power": "String", "speed": "String", "endurance": "String", "knowledge": "String", "instinct": "String", "influence": "String" },
               "resRule": "normal, mortal_immunity, or epic_invulnerability",
               "weakness": "String describing a fatal weakness puzzle",
-              "notes": "String",
+              "notes": "Always empty string",
               "woundState": "healthy",
               "attackOverride": "String number or empty string",
               "defenceOverride": "String number or empty string",
@@ -2731,7 +2746,7 @@ function importMonsterJSON(event) {
                 const environmentSelect = document.getElementById('m-environment');
                 const chosenEnvironment = (monsterData.environment || 'Misc');
                 environmentSelect.value = Array.from(environmentSelect.options).some(o => o.value === chosenEnvironment) ? chosenEnvironment : 'Misc';
-                document.getElementById('m-notes').value = monsterData.notes || '';
+                document.getElementById('m-notes').value = '';
                 
                 const scaleSelect = document.getElementById('m-scale');
                 if(Array.from(scaleSelect.options).some(o => o.value === monsterData.scale)) scaleSelect.value = monsterData.scale;
@@ -2779,8 +2794,12 @@ function importMonsterJSON(event) {
                 if (window.aiRandomGeneration) {
                     window.aiRandomGeneration = false;
                     switchTab('creator', document.querySelector('.tab-btn[onclick*="creator"]'));
-                    if (confirm(`Review "${monsterData.name}" in the Creator. Save it to the Bestiary now?`)) {
+                    const choice = prompt(`Review "${monsterData.name}" in the Creator. Type SAVE to add it to the Bestiary, NO to add its name to the no pile, or CANCEL to leave it unsaved.`, 'SAVE');
+                    if ((choice || '').trim().toUpperCase() === 'SAVE') {
                         saveCurrentMonster();
+                    } else if ((choice || '').trim().toUpperCase() === 'NO') {
+                        addToNoPile(monsterData.name);
+                        alert(`${monsterData.name} was added to the no pile and will not be recreated.`);
                     }
                 }
                 
@@ -2792,6 +2811,7 @@ function importMonsterJSON(event) {
                 }
                 if (!canRetryRandom) window.aiRandomGeneration = false;
             } finally {
+                document.getElementById('ai-mode-controls').classList.remove('hidden');
                 document.getElementById('ai-generate-btn').style.display = 'inline-flex';
                 document.getElementById('ai-spinner').style.display = 'none';
                 document.getElementById('ai-status').innerText = '';

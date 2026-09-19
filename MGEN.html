@@ -867,6 +867,7 @@
         .confirm-save-actions {
             display: flex; gap: 10px; justify-content: center; margin-top: 20px;
         }
+		.ai-decision-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
 		.column::-webkit-scrollbar,
         .rules-sidebar::-webkit-scrollbar,
         .rules-content-area::-webkit-scrollbar,
@@ -914,6 +915,7 @@
             <div class="header-actions">
                 <button class="action-btn" style="border-color: var(--primary-purple); color: var(--primary-purple);" onclick="openAIBoxTrigger()">✨ AI Gen</button>
                 <button class="action-btn" onclick="saveCurrentMonster()">Save to Bestiary</button>
+                <button class="action-btn" onclick="addCurrentMonsterToNoPile()">No Pile</button>
                 <button class="action-btn" onclick="exportCurrentMonsterJSON()">Export JSON</button>
                 <button class="action-btn gold" onclick="exportPDF()">Download PDF</button>
             </div>
@@ -1324,6 +1326,14 @@
                 <button id="ai-generate-btn" class="btn gold btn-block" style="padding: 12px; font-size: 1.1rem;" onclick="generateAIMonster()">Summon Monster</button>
                 <div id="ai-spinner" class="spinner"></div>
                 <p id="ai-status" style="color:var(--highlight-gold); margin-top: 10px; font-size: 0.9rem;"></p>
+                <div id="ai-decision-panel" class="hidden">
+                    <p style="color:var(--text-muted); margin:12px 0 0;">Creature generated. What would you like to do with it?</p>
+                    <div class="ai-decision-actions">
+                        <button class="btn gold" onclick="finishAIDecision('save')">Save to Bestiary</button>
+                        <button class="btn btn-danger" onclick="finishAIDecision('no-pile')">Add to No Pile</button>
+                        <button class="btn" onclick="finishAIDecision('cancel')">Keep Editing</button>
+                    </div>
+                </div>
             </div>
             
             <button class="btn btn-block" style="margin-top: 10px;" onclick="closeAIBox()">Cancel</button>
@@ -2594,6 +2604,7 @@ function importMonsterJSON(event) {
             
             // Open Modal
             document.getElementById('ai-modal').classList.remove('hidden');
+            document.getElementById('ai-decision-panel').classList.add('hidden');
             const savedKey = localStorage.getItem('demigods_api_key');
             if(savedKey) document.getElementById('ai-api-key').value = savedKey;
         }
@@ -2614,6 +2625,27 @@ function importMonsterJSON(event) {
             localStorage.setItem('demigods_no_pile', JSON.stringify(names));
         }
 
+        function addCurrentMonsterToNoPile() {
+            const name = document.getElementById('m-name').value.trim();
+            if (!name || name === 'Unnamed') return alert('Give the monster a name before adding it to the no pile.');
+            addToNoPile(name);
+            const status = document.getElementById('ai-status');
+            if (status) status.innerText = `${name} added to the no pile.`;
+        }
+
+        function finishAIDecision(choice) {
+            const name = document.getElementById('m-name').value.trim();
+            document.getElementById('ai-decision-panel').classList.add('hidden');
+            document.getElementById('ai-mode-controls').classList.remove('hidden');
+            closeAIBox();
+            window.aiRandomGeneration = false;
+            if (choice === 'save') saveCurrentMonster();
+            if (choice === 'no-pile') {
+                addToNoPile(name);
+                alert(`${name} was added to the no pile and will not be recreated.`);
+            }
+        }
+
         // Bestiary shortcut: the AI receives every stored name and the result is
         // checked again locally before it can be saved.
         async function generateRandomMythMonster() {
@@ -2628,6 +2660,7 @@ function importMonsterJSON(event) {
             document.getElementById('ai-preset').value = 'myth';
             document.getElementById('ai-prompt').value = '';
             document.getElementById('ai-mode-controls').classList.add('hidden');
+            document.getElementById('ai-decision-panel').classList.add('hidden');
             document.getElementById('ai-modal').classList.remove('hidden');
         }
 
@@ -2660,15 +2693,15 @@ function importMonsterJSON(event) {
             - Threat is a non-linear difficulty guide, not permission to max every stat. A Threat 40-60 monster should usually have attack bonuses around +4 to +9 and Defence around 12-22 after the displayed formulas.
             - Natural armour guideline: keep it at or below the frontend cap of round(2 + Threat/18 + Scale/2), maximum 12. High natural armour must be justified by the creature concept.
             - The six ability scores are Power, Speed, Endurance, Knowledge, Instinct, and Influence. Map the creature's physical, mental, sensory, and social qualities to those fields; do not invent extra score keys.
-            - Every action/ability must have exactly one valid type: "Minor", "Major", "Reaction", or "Legendary". The type distribution is completely flexible: use three Major actions, one Reaction and one Legendary action, or any other mixture that fits the creature. Do not force one of each type, and do not add filler abilities.
-            - Abilities are effects, not just attack names. Explain triggers, targets, range, duration, conditions, immunities, transformations, reactions, costs, and counters when relevant to the concept. Use "{ATK}" and "{DEF}" exact placeholders only where the frontend's calculated Attack or Defence should be inserted.
+            - Every action/ability must have exactly one valid type: "Minor", "Major", "Reaction", or "Legendary". Choose a genuinely myth-faithful, irregular array: the creature may have several Major actions, several Minor actions, multiple Reactions, Legendary actions, or any combination. Never default to one Major, one Minor, and one Reaction. Do not add filler abilities or force balanced categories.
+            - Abilities are effects, not just attack names. This system tracks Wounds rather than conventional hit-point damage: never write damage dice, damage points, damage bonuses, "deals X damage", or similar conventional damage language. Attacks should describe an Attack Roll vs {DEF} and what Wound, condition, displacement, restraint, transformation, or other consequence occurs on a hit. Use "{ATK}" and "{DEF}" exact placeholders only where the frontend's calculated Attack or Defence should be inserted.
             - Damage rules are distinct: "normal" uses ordinary vulnerability; "mortal_immunity" means mundane/non-divine damage cannot harm the creature but divine or mythic sources can; "epic_invulnerability" means only the explicitly described Fatal Weakness can truly harm or kill it. Choose the least extreme rule that fits and make the Fatal Weakness a concrete gameplay puzzle.
             - A creature may have no special damage rule, no actions, one action, or any number of meaningful actions from 1-6. There is no fixed ability layout.
             - Map every returned field to the editor: identity, scale/alignment/origin/environment, threat, natural armour, movement flags and speeds, six stats, damage rule, fatal weakness, optional attack/defence overrides, wound state, and actions.
             - The "notes" field must always be an empty string. Never write research commentary, uncertainty, citations, or custom instructions into Sheet Notes.
             - Add an origin using the closest matching region from the available pantheons, or Misc if none fits.
             - Add an environment tag using a likely habitat: choose from Ocean, Skies, Sand, Swamp, Snow, Forest, Mountain, Ruins, Caverns, Plains, Volcanic, Tundra, City, Underground, or Misc.
-            - Return 1-6 actions unless the concept genuinely needs fewer. Do not fill every action category. A creature may have one action, several Minor actions, only Legendary actions, or no Reaction. Prefer a small, distinctive kit over a complete generic kit.
+            - Return the number of actions the myth actually supports, from 1-6. Preserve strange or uneven arrangements; do not normalize the result to one Major, one Minor, and one Reaction. Prefer every distinct myth-attested ability over generic combat completeness.
             - Prefer unusual, specific abilities over common filler. Every action must be meaningfully different and tied to the creature's myth or concept.
             - Follow the user's description and constraints before adding any general system assumptions.
             
@@ -2789,18 +2822,14 @@ function importMonsterJSON(event) {
                 
                 renderActions();
                 updatePreview();
-                closeAIBox();
+                if (!window.aiRandomGeneration) closeAIBox();
 
                 if (window.aiRandomGeneration) {
-                    window.aiRandomGeneration = false;
                     switchTab('creator', document.querySelector('.tab-btn[onclick*="creator"]'));
-                    const choice = prompt(`Review "${monsterData.name}" in the Creator. Type SAVE to add it to the Bestiary, NO to add its name to the no pile, or CANCEL to leave it unsaved.`, 'SAVE');
-                    if ((choice || '').trim().toUpperCase() === 'SAVE') {
-                        saveCurrentMonster();
-                    } else if ((choice || '').trim().toUpperCase() === 'NO') {
-                        addToNoPile(monsterData.name);
-                        alert(`${monsterData.name} was added to the no pile and will not be recreated.`);
-                    }
+                    document.getElementById('ai-status').innerText = `Review ${monsterData.name} in the Creator.`;
+                    document.getElementById('ai-decision-panel').classList.remove('hidden');
+                    document.getElementById('ai-generate-btn').style.display = 'none';
+                    return;
                 }
                 
             } catch (err) {
@@ -2811,10 +2840,10 @@ function importMonsterJSON(event) {
                 }
                 if (!canRetryRandom) window.aiRandomGeneration = false;
             } finally {
-                document.getElementById('ai-mode-controls').classList.remove('hidden');
-                document.getElementById('ai-generate-btn').style.display = 'inline-flex';
+                if (!window.aiRandomGeneration) document.getElementById('ai-mode-controls').classList.remove('hidden');
+                document.getElementById('ai-generate-btn').style.display = window.aiRandomGeneration ? 'none' : 'inline-flex';
                 document.getElementById('ai-spinner').style.display = 'none';
-                document.getElementById('ai-status').innerText = '';
+                if (!window.aiRandomGeneration) document.getElementById('ai-status').innerText = '';
             }
         }
     </script>

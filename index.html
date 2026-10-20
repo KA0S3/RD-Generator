@@ -1034,6 +1034,9 @@
                                     </div>
                                 </div>
 
+                                <button @click.stop="randomizeAbilities" :disabled="!randomizableVaultAbilities.length || !(Number(char.startingAp) > 0)" title="Replace learned abilities with a random set across tiers 1-3, using as much of this character's AP as possible." class="h-10 px-3 flex items-center justify-center gap-2 rounded bg-black/30 hover:bg-black/60 border border-[#6b5233]/40 text-[#cba871] disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                                    <i class="fa-solid fa-dice"></i> Randomize
+                                </button>
                                 <button @click.stop="shopOpen = !shopOpen" class="w-10 h-10 flex justify-center items-center rounded bg-black/30 hover:bg-black/60 border border-[#6b5233]/40 transition-colors focus:outline-none">
                                     <i :class="shopOpen ? 'fa-solid fa-chevron-up text-[#cba871]' : 'fa-solid fa-chevron-down text-[#8b6d43]'" class="text-lg transition-transform duration-300"></i>
                                 </button>

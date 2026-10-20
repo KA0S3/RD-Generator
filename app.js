@@ -212,18 +212,29 @@ localStorage.setItem('myth_active_char_id', newVal.id);
             }
         };
 
-        const filteredShopAbilities = computed(() => {
+        const eligibleVaultAbilities = computed(() => {
             const parentGod = availableGods.value.find(g => g.name === char.value.parent);
             if (!parentGod || typeof abilitiesLibrary === 'undefined') return [];
             const domains = [parentGod.primary, parentGod.secondary, ...(parentGod.tertiary || [])].filter(Boolean).map(d => d.trim().toLowerCase());
+            return abilitiesLibrary.filter(ab => {
+                const abDomains = ab.domains.split(',').map(d => d.trim().toLowerCase());
+                return abDomains.some(d => domains.includes(d));
+            });
+        });
+
+        const randomizableVaultAbilities = computed(() => eligibleVaultAbilities.value.filter(ab => {
+            const tier = Number(ab.tier);
+            return tier >= 1 && tier <= 3 && Number.isInteger(tier);
+        }));
+
+        const filteredShopAbilities = computed(() => {
             const query = vaultSearch.value.trim().toLowerCase();
             
-            return abilitiesLibrary.filter(ab => {
+            return eligibleVaultAbilities.value.filter(ab => {
                 const alreadyLearned = char.value.learnedAbilities.some(learned => learned.name === ab.name);
                 if (alreadyLearned) return false;
-                const abDomains = ab.domains.split(',').map(d => d.trim().toLowerCase());
                 const matchesSearch = !query || `${ab.name} ${ab.rules}`.toLowerCase().includes(query);
-                return abDomains.some(d => domains.includes(d)) && matchesSearch;
+                return matchesSearch;
             });
         });
 
@@ -545,6 +556,35 @@ const calcDivineDC = () => {
             if (idx !== -1) char.value.learnedAbilities.splice(idx, 1);
         };
 
+        const randomizeAbilities = () => {
+            const budget = Math.max(0, Math.floor(Number(char.value.startingAp) || 0));
+            if (!budget || randomizableVaultAbilities.value.length === 0) return;
+
+            const candidates = [...randomizableVaultAbilities.value];
+            for (let i = candidates.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+            }
+
+            const maxSpend = Math.min(budget, candidates.reduce((sum, ab) => sum + Number(ab.tier), 0));
+            const selections = Array(maxSpend + 1).fill(null);
+            selections[0] = [];
+
+            candidates.forEach(ab => {
+                const tier = Number(ab.tier);
+                for (let spent = maxSpend; spent >= tier; spent--) {
+                    const previous = selections[spent - tier];
+                    if (previous && (!selections[spent] || Math.random() < 0.5)) {
+                        selections[spent] = [...previous, ab];
+                    }
+                }
+            });
+
+            let spent = maxSpend;
+            while (spent > 0 && !selections[spent]) spent--;
+            char.value.learnedAbilities = (selections[spent] || []).map(ab => ({ ...ab, hideLabel: false }));
+        };
+
         const triggerUnleash = () => { 
             const activePotdCount = char.value.potd.filter(p => p).length;
             
@@ -851,12 +891,12 @@ onMounted(() => {
             weaponTraits: typeof weaponTraits !== 'undefined' ? weaponTraits : {},     
             weaponEffects: typeof weaponEffects !== 'undefined' ? weaponEffects : {},   
             totalStats, effectiveDex, calculatedProficiency, currentWoundDescription, currentFatigueName, currentFatigueDescription,
-            availableGods, activeWeapons, filteredShopAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName, 
+            availableGods, activeWeapons, filteredShopAbilities, eligibleVaultAbilities, randomizableVaultAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName, 
             availableGods, activeWeapons, carriedWeaponRecords, carriedWeaponOptions, weaponTrainingFor, weaponIsProficient, filteredShopAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName, highlightText,
             adjustStat, randomizeStats, randomizeAll, changePantheon, changeParent, setWoundState, 
             getWoundClass, getFatigueClass, addSkill, removeSkill, toggleSkillTick, calcDefenseBonus, 
             adjustTotalAp, handleApClick, decreaseActivePotd, increaseActivePotd,
-            togglePotd, replenishPotd, executePurchase, refundAbility, triggerUnleash, enterPlayMode, 
+            togglePotd, replenishPotd, executePurchase, refundAbility, randomizeAbilities, triggerUnleash, enterPlayMode, 
             handleImageUpload, createNewCharacter, editCharacter, loadCharacter, deleteCharacter, 
             printSheet, importData, exportCurrent, exportAll, useAbilityInPlay, spentAp, remainingAp,
             closeVault, addItem, removeItem, addQuest, toggleQuest, removeQuest, addQuestProficiency, syncQuestProficiency, addRelation, removeRelation, setActiveWeapon, toggleCarriedWeapon, toggleWeaponTrainingTick, storeFilterTier, chosenFilterTier, vaultSearch, codexNameSearch, codexDescriptionSearch, codexDomainFilter, codexTierFilter, codexCostFilter, codexActionFilter, currentTheme, weaponAttackBonuses, apError, potdError,

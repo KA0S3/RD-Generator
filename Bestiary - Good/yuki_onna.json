@@ -1,0 +1,72 @@
+{
+  "id": "1788877717077",
+  "name": "Yuki-onna",
+  "desc": "A hauntingly beautiful spirit born from mountain blizzards. Clad in a translucent white kimono, she wanders frozen peaks, luring weary travelers into snowdrifts to drain their vital heat with an icy breath.",
+  "scale": "Scale 3 (Giant)",
+  "align": "Neutral Evil",
+  "threat": "45",
+  "natArmor": "0",
+  "movements": {
+    "walk": {
+      "c": true,
+      "s": "30"
+    },
+    "fly": {
+      "c": true,
+      "s": "40"
+    },
+    "swim": {
+      "c": false,
+      "s": "0"
+    },
+    "climb": {
+      "c": false,
+      "s": "0"
+    },
+    "burrow": {
+      "c": false,
+      "s": "0"
+    },
+    "hover": {
+      "c": true,
+      "s": "40"
+    },
+    "custom": "Floats effortlessly over deep snow without leaving footprints."
+  },
+  "stats": {
+    "power": "10",
+    "speed": "18",
+    "endurance": "14",
+    "knowledge": "13",
+    "instinct": "15",
+    "influence": "22"
+  },
+  "resRule": "normal",
+  "weakness": "Exposing the Yuki-onna to boiling water, intense radiant heat, or forcing her to break a sworn secret causes her physical manifestation to instantly melt into mist.",
+  "actions": [
+    {
+      "name": "Freezing Gale",
+      "tag": "Major",
+      "desc": "Yuki-onna exhales a freezing cone of arctic wind. Creatures in the area must roll against {ATK} or take cold damage and become heavily restrained by rime ice.",
+      "id": 1787686079850.3875
+    },
+    {
+      "name": "Life-Draining Kiss",
+      "tag": "Major",
+      "desc": "Melee Spell Attack: {ATK} to hit a willing, incapacitated, or charmed creature. Deals massive cold damage, draining the victim's vital warmth and healing Yuki-onna for the same amount.",
+      "id": 1787686079850.7207
+    },
+    {
+      "name": "Seductive Glare",
+      "tag": "Minor",
+      "desc": "Yuki-onna fixes her piercing gaze on a mortal within 60 feet. The target must defend against {ATK} or become charmed, walking helplessly towards her.",
+      "id": 1787686079850.9495
+    },
+    {
+      "name": "Snowfall Dissolution",
+      "tag": "Reaction",
+      "desc": "When targeted by a physical attack, Yuki-onna uses {DEF} to dissolve into a cloud of swirling snowflakes, mitigating damage and reforming up to 20 feet away.",
+      "id": 1787686079850.349
+    }
+  ]
+}

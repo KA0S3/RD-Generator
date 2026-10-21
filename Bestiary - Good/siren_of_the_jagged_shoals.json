@@ -1,0 +1,72 @@
+{
+  "id": "1788877693519",
+  "name": "Siren of the Jagged Shoals",
+  "desc": "A monstrous avian-human hybrid with a visage that shifts from haunting beauty to a terrifying maw filled with rows of needle-sharp teeth. Her hypnotic song entrances mortal minds, drawing sailors and heroes into the crushing waves where her deadly jaw awaits.",
+  "scale": "Scale 2 (Large)",
+  "align": "Chaotic Evil",
+  "threat": "45",
+  "natArmor": "6",
+  "movements": {
+    "walk": {
+      "c": true,
+      "s": "20"
+    },
+    "fly": {
+      "c": true,
+      "s": "60"
+    },
+    "swim": {
+      "c": true,
+      "s": "40"
+    },
+    "climb": {
+      "c": false,
+      "s": "0"
+    },
+    "burrow": {
+      "c": false,
+      "s": "0"
+    },
+    "hover": {
+      "c": true,
+      "s": "30"
+    },
+    "custom": ""
+  },
+  "stats": {
+    "power": "14",
+    "speed": "18",
+    "endurance": "15",
+    "knowledge": "12",
+    "instinct": "14",
+    "influence": "22"
+  },
+  "resRule": "normal",
+  "weakness": "Creatures that block their hearing entirely (e.g., using beeswax or magical deafness) are completely immune to her song. If she fails to charm a target, her confidence shatters, giving attackers advantage on offense.",
+  "actions": [
+    {
+      "name": "Enchanting Song",
+      "tag": "Major",
+      "desc": "The Siren sings an irresistible, haunting melody. Make an attack roll {ATK} against the target's mental defense. On a hit, the target is charmed and forced to spend their turn moving directly toward the Siren in a trance.",
+      "id": 1787075113188.7004
+    },
+    {
+      "name": "Needle Maw Bite",
+      "tag": "Major",
+      "desc": "Unhinging her jaw to reveal rows of razor-sharp teeth, the Siren bites deeply into her victim. Roll {ATK} to hit. Deals heavy piercing damage, and heals the Siren for half the damage dealt if the target is charmed.",
+      "id": 1787075113188.3528
+    },
+    {
+      "name": "Discordant Screech",
+      "tag": "Reaction",
+      "desc": "When struck by a physical attack, the Siren emits a deafening shriek. Roll {DEF} to reduce incoming damage and push the attacker 10 feet away.",
+      "id": 1787075113188.247
+    },
+    {
+      "name": "Feast on the Entranced",
+      "tag": "Legendary",
+      "desc": "The Siren immediately makes a free 'Needle Maw Bite' attack with {ATK} against any target currently charmed by her song.",
+      "id": 1787075113188.99
+    }
+  ]
+}

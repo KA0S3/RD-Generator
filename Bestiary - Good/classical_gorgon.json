@@ -1,0 +1,66 @@
+{
+  "id": "1788877753493",
+  "name": "Classical Gorgon",
+  "desc": "A monstrous female entity from ancient Greek legend, featuring a mane of living venomous snakes, brass hands, tusks like a boar, and golden wings. Her gaze possesses the tragic power to turn any mortal who meets her eyes directly into solid stone.",
+  "scale": "Scale 3 (Giant)",
+  "align": "Chaotic Evil",
+  "threat": "45",
+  "natArmor": "4",
+  "movements": {
+    "walk": {
+      "c": true,
+      "s": "30"
+    },
+    "fly": {
+      "c": true,
+      "s": "40"
+    },
+    "swim": {
+      "c": false,
+      "s": "0"
+    },
+    "climb": {
+      "c": true,
+      "s": "20"
+    },
+    "burrow": {
+      "c": false,
+      "s": "0"
+    },
+    "hover": {
+      "c": false,
+      "s": "0"
+    },
+    "custom": ""
+  },
+  "stats": {
+    "power": "16",
+    "speed": "15",
+    "endurance": "16",
+    "knowledge": "10",
+    "instinct": "12",
+    "influence": "8"
+  },
+  "resRule": "normal",
+  "weakness": "Direct eye contact is required for her petrification. Opponents using polished, reflective surfaces (such as a bronze shield) can fight her safely without looking directly into her face. Blindness or fighting blindfolded completely negates her gaze attack.",
+  "actions": [
+    {
+      "name": "Petrifying Gaze",
+      "tag": "Major",
+      "desc": "The gorgon turns her terrifying eyes upon a mortal within 60 feet. The target must roll {DEF} Endurance. On a failure, their flesh turns to heavy grey stone, restraining them. If they fail the Endurance a second time on their following turn, they are permanently transformed into a stone statue.",
+      "id": 1788275604503.4446
+    },
+    {
+      "name": "Brass Claws",
+      "tag": "Major",
+      "desc": "Rips into an enemy using her metallic hands, making a strike with {ATK} to rend flesh and splinter armor.",
+      "id": 1788275604503.3796
+    },
+    {
+      "name": "Hissing Deflection",
+      "tag": "Reaction",
+      "desc": "When targeted by a melee attack, the gorgon's snake hair rears back and strikes defensively, forcing the attacker to roll against {DEF} or take a penalty on their attack roll.",
+      "id": 1788275604503.9639
+    }
+  ]
+}

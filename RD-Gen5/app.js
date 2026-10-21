@@ -1,0 +1,951 @@
+if (typeof window.weaponTraits === 'undefined') {
+    window.weaponTraits = {};
+}
+Object.assign(weaponTraits, {
+    "Quick": "Drawing or stowing the shield does not require a Minor Action.",
+    "Light": "Does not interfere with Speed-based weapons.",
+    "Standard": "Functions as described in the Shield/Cover rules.",
+    "Cover": "While using the Brace action, allies directly behind you benefit from Partial Cover.",
+    "Brace": "While Braced, increase the Defence Bonus to +3 against attacks originating from your front."
+});
+
+if (typeof window.weaponArsenal === 'undefined') {
+    window.weaponArsenal = [];
+}
+weaponArsenal.push(
+    { type: "Buckler", bonus: "N/A", range: "Melee", ability: "N/A", traits: ["Quick", "Light"], effects: [], dbBonus: 1 },
+    { type: "Shield", bonus: "N/A", range: "Melee", ability: "N/A", traits: ["Standard"], effects: [], dbBonus: 2 },
+    { type: "Tower Shield", bonus: "N/A", range: "Melee", ability: "N/A", traits: ["Heavy", "Cover", "Brace"], effects: [], dbBonus: 2 }
+);
+weaponArsenal.sort((a, b) => a.type.localeCompare(b.type));
+
+const { createApp, ref, computed, onMounted, watch } = Vue;
+
+const app = createApp({
+    setup() {
+        // --- 1. Base Setup & Data Structures ---
+        const generateId = () => '_' + Math.random().toString(36).substr(2, 9);
+
+const expandedAbilityId = ref(null);
+        const apError = ref(false);
+        const potdError = ref(false);
+        const getBlankChar = () => ({
+            id: generateId(),
+            name: "",
+            image: "",
+            pantheon: "Greek",
+            parent: "",
+            alignment: "",
+            gender: "",
+            age: "",
+            equippedArmour: "Unarmoured",
+            equippedWeapons: ["", ""],
+            carriedWeapons: [],
+            weaponTraining: [],
+            stats: { power: 10, speed: 10, endurance: 10, knowledge: 10, instinct: 10, influence: 10 },
+            skills: [],
+            proficiencies: [],
+            potd: [true, true, true, true, true, true],
+            wounds: "Healthy",
+            fatigue: 0,
+            learnedAbilities: [],
+            items: [],
+            quests: [],
+            backstory: "",
+            relations: [],
+            startingAp: 3,
+            notes: "",
+			gold: 0,
+        });
+
+        // --- 2. State References ---
+        const char = ref(getBlankChar());
+        const roster = ref([]);
+        const currentMode = ref("edit");
+        
+        const currentTheme = ref("cyber");
+        const saveIndicator = ref(false);
+        const manageModalOpen = ref(false);
+        const isUnleashed = ref(false);
+        const shopOpen = ref(false);
+        const codexOpen = ref(false);
+        const apPromptActive = ref(false);
+        const apConfirmationMessage = ref(false);
+        
+        const chosenFilterTier = ref("All");
+        const storeFilterTier = ref("All");
+        const codexNameSearch = ref("");
+        const codexDescriptionSearch = ref("");
+        const codexDomainFilter = ref("All");
+        const codexTierFilter = ref("All");
+        const codexCostFilter = ref("All");
+        const codexActionFilter = ref("All");
+        const vaultSearch = ref("");
+        
+        const newSkillName = ref("");
+        const newSkillStat = ref("power");
+        const newItemName = ref("");
+        const newQuestName = ref("");
+        const newQuestProficiencyName = ref("");
+        const newQuestProficiencyAbility = ref("");
+        const newRelationName = ref("");
+		const infoSidebarOpen = ref(false);
+        const activeInfoTab = ref('combat');
+		const quickCastOpen = ref(false);
+const activeAbilityModal = ref(null);
+        const activeRulesTab = computed(() => {
+            const tabs = typeof rulesContent !== 'undefined' ? rulesContent : [];
+            return tabs.find(tab => tab.id === activeInfoTab.value) || tabs[0] || null;
+        });
+
+        const abilitiesDropdownOpen = ref(false);
+
+        let saveTimeout = null;
+
+        // --- 3. Watchers ---
+        watch(char, (newVal) => {
+            const idx = roster.value.findIndex(r => r.id === newVal.id);
+            if (idx !== -1) {
+                roster.value[idx] = JSON.parse(JSON.stringify(newVal));
+            } else {
+                roster.value.push(JSON.parse(JSON.stringify(newVal)));
+            }
+            localStorage.setItem('myth_roster', JSON.stringify(roster.value));
+localStorage.setItem('myth_active_char_id', newVal.id);
+            saveIndicator.value = true;
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => { saveIndicator.value = false; }, 1500);
+        }, { deep: true });
+
+        // Add these to watch for changes in Mode and Theme
+        watch(currentMode, (newMode) => {
+            localStorage.setItem('myth_mode', newMode);
+        });
+        watch(currentTheme, (newTheme) => {
+            localStorage.setItem('myth_theme', newTheme);
+        });
+
+        // --- 4. Computed Properties ---
+        const totalStats = computed(() => Object.values(char.value.stats).reduce((a, b) => a + b, 0));
+        const spentAp = computed(() => char.value.learnedAbilities.reduce((sum, ab) => sum + (ab.tier || 0), 0));
+        const remainingAp = computed(() => char.value.startingAp - spentAp.value);
+
+        const effectiveDex = computed(() => {
+            const armor = typeof armourRegistry !== 'undefined' ? armourRegistry.find(a => a.tier === char.value.equippedArmour) : null;
+            const penalty = armor && armor.penalty ? armor.penalty : 0;
+            return Math.max(1, char.value.stats.speed + penalty);
+        });
+
+        const calculatedProficiency = computed(() => {
+    // Uses the character's total AP capacity to determine proficiency.
+    const ap = char.value.startingAp; 
+    
+    if (ap <= 3) return 1;
+    if (ap <= 6) return 2;
+    if (ap <= 9) return 3;
+    if (ap <= 13) return 4;
+    if (ap <= 17) return 5;
+    if (ap <= 22) return 6;
+    if (ap <= 30) return 7;
+    return 8; // For 31+ AP
+});
+
+        const availableGods = computed(() => {
+            return typeof pantheons !== 'undefined' ? (pantheons[char.value.pantheon] || []) : [];
+        });
+
+        const activeWeapons = computed(() => {
+            if (typeof weaponArsenal === 'undefined') return [null, null];
+            return char.value.equippedWeapons.map(wType => weaponArsenal.find(w => w.type === wType) || null);
+        });
+
+        const carriedWeaponRecords = computed(() => {
+            if (typeof weaponArsenal === 'undefined') return [];
+            return (char.value.carriedWeapons || []).map(type => weaponArsenal.find(weapon => weapon.type === type)).filter(Boolean);
+        });
+
+        const carriedWeaponOptions = computed(() => {
+            if (typeof weaponArsenal === 'undefined') return [];
+            return weaponArsenal.filter(weapon => (char.value.carriedWeapons || []).includes(weapon.type));
+        });
+
+        const weaponTrainingFor = (weaponType) => {
+            const record = (char.value.weaponTraining || []).find(item => item.type === weaponType);
+            return record || { type: weaponType, ticks: 0 };
+        };
+
+        const weaponIsProficient = (weaponType) => weaponTrainingFor(weaponType).ticks >= 3;
+
+        const toggleWeaponTrainingTick = (weaponType, tick) => {
+            if (!char.value.weaponTraining) char.value.weaponTraining = [];
+            let record = char.value.weaponTraining.find(item => item.type === weaponType);
+            if (!record) {
+                record = { type: weaponType, ticks: 0 };
+                char.value.weaponTraining.push(record);
+            }
+            record.ticks = record.ticks === tick ? tick - 1 : tick;
+        };
+
+        const weaponIsTwoHanded = (weapon) => !!weapon && (weapon.traits || []).some(trait => trait.toLowerCase().replace('-', '') === 'twohanded');
+
+        const setActiveWeapon = (slot, weaponType) => {
+            if (!char.value.carriedWeapons.includes(weaponType) && weaponType) return;
+            char.value.equippedWeapons[slot] = weaponType;
+            const weapon = weaponArsenal.find(item => item.type === weaponType);
+            if (weaponIsTwoHanded(weapon)) char.value.equippedWeapons[slot === 0 ? 1 : 0] = "";
+            const other = weaponArsenal.find(item => item.type === char.value.equippedWeapons[slot === 0 ? 1 : 0]);
+            if (weaponIsTwoHanded(other)) char.value.equippedWeapons[slot === 0 ? 1 : 0] = "";
+        };
+
+        const toggleCarriedWeapon = (weaponType) => {
+            if (!char.value.carriedWeapons) char.value.carriedWeapons = [];
+            const index = char.value.carriedWeapons.indexOf(weaponType);
+            if (index >= 0) {
+                char.value.carriedWeapons.splice(index, 1);
+                char.value.equippedWeapons = char.value.equippedWeapons.map(active => active === weaponType ? "" : active);
+            } else {
+                char.value.carriedWeapons.push(weaponType);
+                const starterCount = (char.value.weaponTraining || []).filter(item => item.ticks >= 3).length;
+                if (starterCount < 2) {
+                    if (!char.value.weaponTraining) char.value.weaponTraining = [];
+                    char.value.weaponTraining.push({ type: weaponType, ticks: 3 });
+                }
+            }
+        };
+
+        const eligibleVaultAbilities = computed(() => {
+            const parentGod = availableGods.value.find(g => g.name === char.value.parent);
+            if (!parentGod || typeof abilitiesLibrary === 'undefined') return [];
+            const domains = [parentGod.primary, parentGod.secondary, ...(parentGod.tertiary || [])].filter(Boolean).map(d => d.trim().toLowerCase());
+            return abilitiesLibrary.filter(ab => {
+                const abDomains = ab.domains.split(',').map(d => d.trim().toLowerCase());
+                return abDomains.some(d => domains.includes(d));
+            });
+        });
+
+        const randomizableVaultAbilities = computed(() => eligibleVaultAbilities.value.filter(ab => {
+            const tier = Number(ab.tier);
+            return tier >= 1 && tier <= 3 && Number.isInteger(tier);
+        }));
+
+        const filteredShopAbilities = computed(() => {
+            const query = vaultSearch.value.trim().toLowerCase();
+            
+            return eligibleVaultAbilities.value.filter(ab => {
+                const alreadyLearned = char.value.learnedAbilities.some(learned => learned.name === ab.name);
+                if (alreadyLearned) return false;
+                const matchesSearch = !query || `${ab.name} ${ab.rules}`.toLowerCase().includes(query);
+                return matchesSearch;
+            });
+        });
+
+        const highlightText = (text, query) => {
+            const source = String(text || '');
+            const term = String(query || '').trim();
+            if (!term) return source;
+            const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return source.replace(new RegExp(`(${escaped})`, 'gi'), '<mark class="bg-amber-300 text-black rounded px-0.5">$1</mark>');
+        };
+
+        const codexDomains = computed(() => {
+            if (typeof abilitiesLibrary === 'undefined') return [];
+            return [...new Set(abilitiesLibrary.flatMap(ab => ab.domains.split(',').map(domain => domain.trim())).filter(Boolean))].sort();
+        });
+
+        const codexCosts = computed(() => {
+            if (typeof abilitiesLibrary === 'undefined') return [];
+            return [...new Set(abilitiesLibrary.map(ab => ab.cost))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        });
+
+        const codexActions = computed(() => {
+            if (typeof abilitiesLibrary === 'undefined') return [];
+            return [...new Set(abilitiesLibrary.map(ab => ab.action))].sort();
+        });
+
+        const filteredCodexAbilities = computed(() => {
+            if (typeof abilitiesLibrary === 'undefined') return [];
+            const nameQuery = codexNameSearch.value.trim().toLowerCase();
+            const descriptionQuery = codexDescriptionSearch.value.trim().toLowerCase();
+            return abilitiesLibrary.filter(ab => {
+                const matchesName = !nameQuery || ab.name.toLowerCase().includes(nameQuery);
+                const matchesDescription = !descriptionQuery || ab.rules.toLowerCase().includes(descriptionQuery);
+                const matchesDomain = codexDomainFilter.value === 'All' || ab.domains.split(',').some(domain => domain.trim() === codexDomainFilter.value);
+                const matchesTier = codexTierFilter.value === 'All' || ab.tier === Number(codexTierFilter.value);
+                const matchesCost = codexCostFilter.value === 'All' || ab.cost === codexCostFilter.value;
+                const matchesAction = codexActionFilter.value === 'All' || ab.action === codexActionFilter.value;
+                return matchesName && matchesDescription && matchesDomain && matchesTier && matchesCost && matchesAction;
+            });
+        });
+
+        const activeQuests = computed(() => (char.value.quests || []).filter(quest => !quest.completed));
+        const completedQuests = computed(() => (char.value.quests || []).filter(quest => quest.completed));
+
+        const currentWoundDescription = computed(() => {
+            if (typeof woundStates === 'undefined') return "";
+            const w = woundStates.find(x => x.state === char.value.wounds);
+            return w ? w.description : "No description available.";
+        });
+
+        const currentFatigueName = computed(() => {
+            if (typeof fatigueStates === 'undefined') return "Fresh";
+            const f = fatigueStates.find(x => x.level === char.value.fatigue);
+            return f ? f.state : "Fresh";
+        });
+
+        const currentFatigueDescription = computed(() => {
+            if (typeof fatigueStates === 'undefined') return "";
+            const effects = fatigueStates
+                .filter(state => state.level > 0 && state.level <= char.value.fatigue)
+                .map(state => `${state.state}: ${state.description}`);
+            return effects.length ? effects.join('\n') : fatigueStates[0]?.description || "";
+        });
+		
+		const weaponAttackBonuses = computed(() => {
+            // We map through both equipped weapon slots
+            return activeWeapons.value.map(weapon => {
+                // If it's a shield (ability is N/A), return a dash to ignore it
+                if (weapon && weapon.ability === "N/A") {
+                    return "-";
+                }
+
+                let useDex = true; // Defaults to Speed for Finesse or Unarmed
+                
+                // If a weapon is equipped and uses Power, switch to Power
+                if (weapon && weapon.ability) {
+                    const abilityStr = weapon.ability.toLowerCase();
+                    if (abilityStr.includes('power')) {
+                        useDex = false;
+                    }
+                }
+
+                // Grab the correct score and apply the math
+                const statScore = useDex ? effectiveDex.value : char.value.stats.power;
+                const statModifier = calcMod(statScore);
+
+                // formatModifier handles the + or - signs perfectly
+                return formatModifier(statModifier + (weapon && weaponIsProficient(weapon.type) ? calculatedProficiency.value : 0));
+            });
+        });
+
+        const abilitiesByTier = computed(() => {
+            const grouped = { 1: [], 2: [], 3: [] };
+            char.value.learnedAbilities.forEach(ab => {
+                if (grouped[ab.tier]) {
+                    grouped[ab.tier].push(ab);
+                }
+            });
+            return grouped;
+        });
+
+        // --- 5. Mechanics & Helpers ---
+        const calcMod = (score) => Math.floor((score - 10) / 2);
+        const formatModifier = (mod) => mod >= 0 ? `+${mod}` : mod;
+        const statFullName = (stat) => ({ power: 'Power', speed: 'Speed', endurance: 'Endurance', knowledge: 'Knowledge', instinct: 'Instinct', influence: 'Influence' }[stat]);
+
+        const adjustStat = (stat, amount) => {
+            if (amount > 0) {
+                if (totalStats.value >= 85) return;
+                if (char.value.stats[stat] >= 20) return;
+            }
+            const nextVal = char.value.stats[stat] + amount;
+            if (nextVal >= 1 && nextVal <= 20) char.value.stats[stat] = nextVal;
+        };
+
+const randomizeStats = () => {
+    const roll6d4DropLowest = () => {
+        const rolls = Array.from({ length: 6 }, () => Math.floor(Math.random() * 4) + 1);
+        rolls.sort((a, b) => a - b);
+        rolls.shift(); // Remove the single lowest roll
+        return rolls.reduce((a, b) => a + b, 0);
+    };
+    Object.keys(char.value.stats).forEach(s => { char.value.stats[s] = roll6d4DropLowest(); });
+};
+
+        const randomizeAll = () => {
+            randomizeStats();
+            
+            // Add this to your randomize properties list
+            if (typeof armourRegistry !== 'undefined' && armourRegistry.length > 0) {
+                char.value.equippedArmour = armourRegistry[Math.floor(Math.random() * armourRegistry.length)].tier;
+            }
+            
+            if (typeof pantheons !== 'undefined') {
+                const pKeys = Object.keys(pantheons);
+                if (pKeys.length) {
+                    char.value.pantheon = pKeys[Math.floor(Math.random() * pKeys.length)];
+                    const gods = pantheons[char.value.pantheon];
+                    if (gods && gods.length) char.value.parent = gods[Math.floor(Math.random() * gods.length)].name;
+                }
+            }
+            const alignments = ["Lawful Good", "True Neutral", "Chaotic Good", "Neutral Good", "Chaotic Neutral"];
+            char.value.alignment = alignments[Math.floor(Math.random() * alignments.length)];
+            char.value.gender = Math.random() > 0.5 ? "Male" : "Female";
+            
+            const ageCheck = Math.random();
+            if (ageCheck <= 0.98) {
+                char.value.age = Math.random() < 0.70 
+                    ? Math.floor(Math.random() * 8) + 14
+                    : Math.floor(Math.random() * 9) + 22;
+            } else {
+                char.value.age = Math.floor(Math.random() * 70) + 31;
+            }
+
+            if (typeof randomNames !== 'undefined' && randomNames.length > 0) {
+                char.value.name = randomNames[Math.floor(Math.random() * randomNames.length)];
+            } else {
+                char.value.name = "Unknown Hero";
+            }
+
+            if (typeof weaponArsenal !== 'undefined' && weaponArsenal.length > 0) {
+                const w1 = weaponArsenal[Math.floor(Math.random() * weaponArsenal.length)].type;
+                const w2 = Math.random() > 0.5 ? weaponArsenal[Math.floor(Math.random() * weaponArsenal.length)].type : "";
+                char.value.equippedWeapons = [w1, w2];
+                char.value.carriedWeapons = [...new Set([w1, w2].filter(Boolean))];
+            }
+            char.value.learnedAbilities = [];
+        };
+
+        const changePantheon = (e) => {
+            char.value.pantheon = e.target.value;
+            char.value.parent = "";
+        };
+
+        const changeParent = (e) => { 
+    char.value.parent = e.target.value; 
+char.value.learnedAbilities = [];
+            char.value.potd = [true, true, true, true, true, true];
+			};
+        const setWoundState = (state) => { char.value.wounds = state; };
+        
+        const getWoundClass = (state) => {
+            const colors = { Healthy: 'bg-green-900/40 text-green-300 border-green-700', Bruised: 'bg-yellow-700/40 text-yellow-300 border-yellow-600', Bloodied: 'bg-orange-800/40 text-orange-300 border-orange-600', Broken: 'bg-red-900/50 text-red-300 border-red-600', Dead: 'bg-black text-red-700 border-red-900 font-black' };
+            return char.value.wounds === state ? `${colors[state]} ring-2 ring-offset-1 ring-offset-[#1a140f] ring-[#8b6d43]` : 'bg-black/20 text-[#8b6d43] border-[#4a3a2a] hover:bg-black/40 hover:text-[#d6c6ad]';
+        };
+
+        const getFatigueClass = (level) => {
+            const colors = ['bg-green-900/40 text-green-300 border-green-700', 'bg-yellow-700/40 text-yellow-300 border-yellow-600', 'bg-orange-700/40 text-orange-300 border-orange-600', 'bg-orange-900/60 text-orange-400 border-orange-700', 'bg-red-900/60 text-red-300 border-red-700', 'bg-black text-red-700 border-red-900 font-black'];
+            return char.value.fatigue === level ? `${colors[level]} ring-2 ring-offset-1 ring-offset-[#1a140f] ring-[#8b6d43]` : 'bg-black/20 text-[#8b6d43] border-[#4a3a2a] hover:bg-black/40 hover:text-[#d6c6ad]';
+        };
+
+        const addSkill = () => {
+            if (newSkillName.value.trim()) {
+                char.value.skills.push({ name: newSkillName.value.trim(), stat: newSkillStat.value, ticks: 0 });
+                newSkillName.value = "";
+            }
+        };
+        const removeSkill = (idx) => { char.value.skills.splice(idx, 1); };
+        const toggleSkillTick = (idx) => {
+            const s = char.value.skills[idx];
+            if (s.ticks === 3 && currentMode.value === 'play') {
+                const linked = (char.value.proficiencies || []).find(p => p.skill === s.name && p.source === 'Divine Quest');
+                if (linked && !window.confirm('Uncomplete this skill? This will remove its Divine Quest proficiency.')) return;
+                if (linked) {
+                    char.value.proficiencies = char.value.proficiencies.filter(p => p.id !== linked.id);
+                    const quest = (char.value.quests || []).find(q => q.id === linked.questId);
+                    if (quest) quest.proficiencyAdded = false;
+                }
+            }
+            s.ticks = s.ticks < 3 ? s.ticks + 1 : 0;
+        };
+        
+        const calcDefenseBonus = () => {
+            let armorData = typeof armourRegistry !== 'undefined' ? armourRegistry.find(a => a.tier === char.value.equippedArmour) : null;
+            let baseArmor = armorData ? armorData.bonus : 0;
+            
+            let dexMod = Math.floor(effectiveDex.value / 2);
+            let intMod = calcMod(char.value.stats.knowledge); // <-- CHANGED TO Knowledge
+            
+            let baseDB = baseArmor + dexMod + calculatedProficiency.value + intMod;
+
+            let shieldBonus = 0;
+            if (typeof weaponArsenal !== 'undefined') {
+                char.value.equippedWeapons.forEach(w => {
+                    let weaponData = weaponArsenal.find(wa => wa.type === w);
+                    if (weaponData && weaponData.dbBonus) {
+                        shieldBonus += weaponData.dbBonus;
+                    }
+                });
+            }
+            return baseDB + shieldBonus;
+        };
+
+const calcDivineDC = () => {
+    const halfWisScore = Math.floor(char.value.stats.instinct / 2);
+    const wisMod = calcMod(char.value.stats.instinct);
+    return halfWisScore + (calculatedProficiency.value * 2) + wisMod;
+};
+
+        const closeAbilitiesDropdown = () => {
+            abilitiesDropdownOpen.value = false;
+        };
+
+        const scrollToAbility = (ab) => {
+            // Generate identical ID as the one in HTML
+            const elementId = 'ability-' + ab.name.replace(/\s+/g, '-');
+            const el = document.getElementById(elementId);
+            if (el) {
+                // Expand vault to view it 
+                chosenFilterTier.value = 'All'; 
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Briefly flash yellow border for visibility
+                el.style.transition = 'border-color 0.3s ease';
+                el.style.borderColor = '#cba871';
+                setTimeout(() => { el.style.borderColor = ''; }, 1500);
+                closeAbilitiesDropdown();
+            }
+        };
+
+        const adjustTotalAp = (amount) => {
+            const nextVal = char.value.startingAp + amount;
+            if (nextVal >= 0) char.value.startingAp = nextVal;
+        };
+
+        const handleApClick = () => {
+            if (!apPromptActive.value) {
+                apPromptActive.value = true;
+            } else {
+                apPromptActive.value = false;
+                char.value.startingAp += 1;
+                apConfirmationMessage.value = true;
+                setTimeout(() => { apConfirmationMessage.value = false; }, 2000);
+            }
+        };
+
+        const decreaseActivePotd = () => {
+            const idx = char.value.potd.lastIndexOf(true);
+            if (idx !== -1) char.value.potd[idx] = false;
+        };
+        const increaseActivePotd = () => {
+            const idx = char.value.potd.indexOf(false);
+            if (idx !== -1) char.value.potd[idx] = true;
+        };
+        const togglePotd = (idx) => { char.value.potd[idx] = !char.value.potd[idx]; };
+        const replenishPotd = () => { char.value.potd = Array(char.value.potd.length).fill(true); };
+
+        const useAbilityInPlay = (ab) => {
+            if (currentMode.value !== 'play') return;
+            const cost = parseInt(ab.cost) || 0;
+            if (cost <= 0) return;
+
+            const activePotdCount = char.value.potd.filter(p => p).length;
+            if (activePotdCount < cost) {
+                potdError.value = true;
+                setTimeout(() => { potdError.value = false; }, 2000);
+                return;
+            }
+
+            let depleted = 0;
+            for (let i = char.value.potd.length - 1; i >= 0; i--) {
+                if (char.value.potd[i] === true && depleted < cost) {
+                    char.value.potd[i] = false;
+                    depleted++;
+                }
+            }
+        };
+
+        const executePurchase = (ab) => {
+            if (char.value.learnedAbilities.some(a => a.name === ab.name)) return;
+            const cost = parseInt(ab.tier) || 0; 
+            if (remainingAp.value >= cost) {
+                char.value.learnedAbilities.push({ ...ab, hideLabel: false });
+            } else {
+                apError.value = true;
+                setTimeout(() => { apError.value = false; }, 2000);
+            }
+        };
+
+        const refundAbility = (ab) => {
+            const idx = char.value.learnedAbilities.findIndex(a => a.name === ab.name);
+            if (idx !== -1) char.value.learnedAbilities.splice(idx, 1);
+        };
+
+        const randomizeAbilities = () => {
+            const budget = Math.max(0, Math.floor(Number(char.value.startingAp) || 0));
+            if (!budget || randomizableVaultAbilities.value.length === 0) return;
+
+            const candidates = [...randomizableVaultAbilities.value];
+            for (let i = candidates.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+            }
+
+            const maxSpend = Math.min(budget, candidates.reduce((sum, ab) => sum + Number(ab.tier), 0));
+            const selections = Array(maxSpend + 1).fill(null);
+            selections[0] = [];
+
+            candidates.forEach(ab => {
+                const tier = Number(ab.tier);
+                for (let spent = maxSpend; spent >= tier; spent--) {
+                    const previous = selections[spent - tier];
+                    if (previous && (!selections[spent] || Math.random() < 0.5)) {
+                        selections[spent] = [...previous, ab];
+                    }
+                }
+            });
+
+            let spent = maxSpend;
+            while (spent > 0 && !selections[spent]) spent--;
+            char.value.learnedAbilities = (selections[spent] || []).map(ab => ({ ...ab, hideLabel: false }));
+        };
+
+        const triggerUnleash = () => { 
+            const activePotdCount = char.value.potd.filter(p => p).length;
+            
+            // Check if they have 3 PotD
+            if (activePotdCount < 3) {
+                potdError.value = true;
+                setTimeout(() => { potdError.value = false; }, 2000);
+                return;
+            }
+
+            // Consume 3 PotD
+            let depleted = 0;
+            for (let i = char.value.potd.length - 1; i >= 0; i--) {
+                if (char.value.potd[i] === true && depleted < 3) {
+                    char.value.potd[i] = false;
+                    depleted++;
+                }
+            }
+            
+            // Increase fatigue
+            if (char.value.fatigue < 5) char.value.fatigue += 1; 
+            
+            isUnleashed.value = true; 
+        };
+		
+        const enterPlayMode = () => {
+            if (window.confirm("Warning: Entering Play Mode seals character generation variables. Proceed?")) {
+                currentMode.value = 'play';
+            }
+        };
+
+        const handleImageUpload = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => { char.value.image = event.target.result; };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        const closeVault = () => {
+            if (shopOpen.value) shopOpen.value = false;
+        };
+
+        const addItem = () => {
+            if (newItemName.value.trim()) {
+                if(!char.value.items) char.value.items = [];
+                char.value.items.push(newItemName.value.trim());
+                newItemName.value = "";
+            }
+        };
+        
+        const removeItem = (idx) => { char.value.items.splice(idx, 1); };
+
+        const addQuest = () => {
+            if (newQuestName.value.trim()) {
+                if (!char.value.quests) char.value.quests = [];
+                char.value.quests.push({ id: generateId(), text: newQuestName.value.trim(), completed: false, skill: '', stat: '' });
+                newQuestName.value = "";
+            }
+        };
+
+        const syncQuestProficiency = (quest) => {
+            if (!quest.completed || !quest.skill || !quest.stat) return;
+            if (!char.value.skills) char.value.skills = [];
+            char.value.skills = char.value.skills.filter(s => s.questId !== quest.id);
+            char.value.skills.push({ name: quest.skill, stat: quest.stat, ticks: 3, questId: quest.id });
+            if (!char.value.proficiencies) char.value.proficiencies = [];
+            char.value.proficiencies = char.value.proficiencies.filter(p => p.questId !== quest.id);
+            char.value.proficiencies.push({ id: generateId(), name: quest.skill, ability: '', source: 'Divine Quest', quest: quest.text, questId: quest.id, skill: quest.skill, stat: quest.stat });
+            quest.proficiencyAdded = true;
+        };
+        const clearQuestProficiency = (quest) => {
+            char.value.proficiencies = (char.value.proficiencies || []).filter(p => p.questId !== quest.id);
+            char.value.skills = (char.value.skills || []).filter(s => s.questId !== quest.id);
+            quest.proficiencyAdded = false;
+            quest.skill = '';
+            quest.stat = '';
+        };
+        const toggleQuest = (quest) => {
+            if (quest.completed && !window.confirm('Uncomplete this quest? This will remove its proficiency.')) return;
+            quest.completed = !quest.completed;
+            if (!quest.completed) clearQuestProficiency(quest);
+            else syncQuestProficiency(quest);
+        };
+        const removeQuest = (idx) => {
+            const quest = char.value.quests[idx];
+            if (quest.completed && !window.confirm('Delete this completed quest? Its proficiency will also be removed.')) return;
+            clearQuestProficiency(quest);
+            char.value.quests.splice(idx, 1);
+        };
+        const addQuestProficiency = (quest) => {
+            if (!quest.completed || quest.proficiencyAdded || !newQuestProficiencyName.value.trim()) return;
+            if (!char.value.proficiencies) char.value.proficiencies = [];
+            char.value.proficiencies.push({
+                id: generateId(),
+                name: newQuestProficiencyName.value.trim(),
+                ability: newQuestProficiencyAbility.value.trim(),
+                source: 'Divine Quest',
+                quest: quest.text,
+                questId: quest.id,
+                skill: newQuestProficiencyName.value.trim()
+            });
+            quest.proficiencyAdded = true;
+            newQuestProficiencyName.value = "";
+            newQuestProficiencyAbility.value = "";
+        };
+
+        const addRelation = () => {
+            if (newRelationName.value.trim()) {
+                if(!char.value.relations) char.value.relations = [];
+                char.value.relations.push(newRelationName.value.trim());
+                newRelationName.value = "";
+            }
+        };
+        
+        const removeRelation = (idx) => { char.value.relations.splice(idx, 1); };
+
+        // --- 7. Save & Load Utilities ---
+        const statAliases = {
+            power: ['power', 'str', 'strength'],
+            speed: ['speed', 'dex', 'dexterity'],
+            endurance: ['endurance', 'con', 'constitution'],
+            knowledge: ['knowledge', 'int', 'intelligence'],
+            instinct: ['instinct', 'wis', 'wisdom'],
+            influence: ['influence', 'cha', 'charisma']
+        };
+
+        const normalizeStatBlock = (stats) => {
+            const source = stats && typeof stats === 'object' ? stats : {};
+            const normalized = {};
+            Object.entries(statAliases).forEach(([canonical, aliases]) => {
+                const key = Object.keys(source).find(sourceKey => aliases.includes(sourceKey.toLowerCase()));
+                const value = key ? Number(source[key]) : 10;
+                normalized[canonical] = Number.isFinite(value) ? value : 10;
+            });
+            return normalized;
+        };
+
+        const normalizeStatReference = (value) => {
+            if (!value) return value;
+            const entry = Object.entries(statAliases).find(([, aliases]) => aliases.includes(String(value).toLowerCase()));
+            return entry ? entry[0] : value;
+        };
+
+        const applyMigrations = (c) => {
+            c = c && typeof c === 'object' ? c : getBlankChar();
+            c.stats = normalizeStatBlock(c.stats);
+            if (Array.isArray(c.skills)) c.skills = c.skills.map(skill => ({ ...skill, stat: normalizeStatReference(skill.stat) }));
+            if (Array.isArray(c.proficiencies)) c.proficiencies = c.proficiencies.map(item => ({ ...item, stat: normalizeStatReference(item.stat) }));
+            if (!Array.isArray(c.learnedAbilities)) c.learnedAbilities = Array.isArray(c.abilities) ? c.abilities : [];
+            const abilityNameAliases = {
+                "Phantasmagoric Display": "Ghastly Display",
+                "Primordial Avatar": "Elemental Avatar"
+            };
+            c.learnedAbilities = c.learnedAbilities.map(learned => {
+                if (!learned || typeof learned !== 'object') return learned;
+                const name = abilityNameAliases[learned.name] || learned.name;
+                const currentAbility = abilitiesLibrary.find(ability => ability.name === name);
+                return currentAbility
+                    ? { ...learned, ...currentAbility, hideLabel: learned.hideLabel ?? false }
+                    : learned;
+            });
+            const seenAbilityNames = new Set();
+            c.learnedAbilities = c.learnedAbilities.filter(ability => {
+                if (!ability || typeof ability !== 'object' || typeof ability.name !== 'string') return true;
+                if (seenAbilityNames.has(ability.name)) return false;
+                seenAbilityNames.add(ability.name);
+                return true;
+            });
+            if (!Array.isArray(c.skills)) c.skills = [];
+            if (!Array.isArray(c.proficiencies)) c.proficiencies = [];
+            if (c.startingAp === undefined) {
+                c.startingAp = c.totalAp !== undefined ? c.totalAp : 10;
+                delete c.totalAp; delete c.baseAp;
+            }
+            if (!c.equippedWeapons && c.equippedWeapon) {
+                c.equippedWeapons = [c.equippedWeapon, ""];
+                delete c.equippedWeapon;
+            } else if (!c.equippedWeapons) {
+                c.equippedWeapons = ["", ""];
+            }
+            if (!Array.isArray(c.carriedWeapons)) c.carriedWeapons = c.equippedWeapons.filter(Boolean);
+            c.carriedWeapons = [...new Set(c.carriedWeapons)];
+            if (!Array.isArray(c.weaponTraining)) c.weaponTraining = [];
+            c.weaponTraining = c.weaponTraining.filter(item => item && c.carriedWeapons.includes(item.type)).map(item => ({ type: item.type, ticks: Math.max(0, Math.min(3, Number(item.ticks) || 0)) }));
+            c.carriedWeapons.forEach((weaponType, index) => {
+                if (!c.weaponTraining.some(item => item.type === weaponType) && index < 2) c.weaponTraining.push({ type: weaponType, ticks: 3 });
+            });
+            c.equippedWeapons = c.equippedWeapons.map(weapon => c.carriedWeapons.includes(weapon) ? weapon : "");
+            if (c.notes === undefined) c.notes = "";
+            if (c.backstory === undefined) c.backstory = "";
+            if (!c.items) c.items = [];
+            if (!c.quests) c.quests = [];
+            if (!c.proficiencies) c.proficiencies = [];
+            c.quests = c.quests.map(q => ({ id: q.id || generateId(), text: q.text || '', completed: !!q.completed, skill: q.skill || '', stat: normalizeStatReference(q.stat || '') }));
+            const questProf = new Map();
+            c.proficiencies = c.proficiencies.filter(p => {
+                if (p.source !== 'Divine Quest') return true;
+                const quest = c.quests.find(q => (p.questId && q.id === p.questId) || (p.quest && q.text === p.quest));
+                if (!quest || !quest.completed || questProf.has(quest.id)) return false;
+                p.questId = quest.id;
+                p.skill = p.skill || p.name || '';
+                p.stat = normalizeStatReference(p.stat || '');
+                if (!quest.skill) quest.skill = p.skill;
+                if (!quest.stat) quest.stat = p.stat;
+                questProf.set(quest.id, p);
+                return true;
+            });
+            c.quests.forEach(q => { q.proficiencyAdded = !!(q.completed && questProf.has(q.id)); });
+            if (!c.relations) c.relations = [];
+            if (!c.potd) c.potd = [false, false, false];
+            return c;
+        };
+
+        const loadCharacter = (id) => {
+            const target = roster.value.find(r => r.id === id);
+            if (target) char.value = applyMigrations(JSON.parse(JSON.stringify(target)));
+        };
+
+        const deleteCharacter = (id) => {
+            roster.value = roster.value.filter(r => r.id !== id);
+            localStorage.setItem('myth_roster', JSON.stringify(roster.value));
+            if (char.value.id === id) char.value = getBlankChar();
+        };
+
+        const createNewCharacter = () => {
+            char.value = getBlankChar();
+            currentMode.value = 'edit';
+            manageModalOpen.value = false;
+        };
+
+        const editCharacter = (id) => {
+            loadCharacter(id);
+            currentMode.value = 'edit';
+            manageModalOpen.value = false;
+        };
+
+        const exportCurrent = () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(char.value));
+            const dlNode = document.createElement('a');
+            dlNode.setAttribute("href", dataStr);
+            dlNode.setAttribute("download", `${char.value.name || "hero"}.json`);
+            document.body.appendChild(dlNode);
+            dlNode.click();
+            dlNode.remove();
+        };
+
+        const exportAll = () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(roster.value));
+            const dlNode = document.createElement('a');
+            dlNode.setAttribute("href", dataStr);
+            dlNode.setAttribute("download", "myth_roster_backup.json");
+            document.body.appendChild(dlNode);
+            dlNode.click();
+            dlNode.remove();
+        };
+
+        const importData = (e) => {
+            const files = e.target.files;
+            if (!files.length) return;
+            Array.from(files).forEach(f => {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    try {
+                        const raw = JSON.parse(evt.target.result);
+                        if (Array.isArray(raw)) {
+                            roster.value = raw.map(applyMigrations);
+                            if (raw.length) char.value = JSON.parse(JSON.stringify(roster.value[0]));
+                        } else if (raw && raw.id) {
+                            const migratedRaw = applyMigrations(raw);
+                            const idx = roster.value.findIndex(r => r.id === migratedRaw.id);
+                            if (idx !== -1) roster.value[idx] = migratedRaw;
+                            else roster.value.push(migratedRaw);
+                            char.value = JSON.parse(JSON.stringify(migratedRaw));
+                        }
+                        localStorage.setItem('myth_roster', JSON.stringify(roster.value));
+                    } catch (err) { alert("Invalid structure"); }
+                };
+                reader.readAsText(f);
+            });
+        };
+
+        const printSheet = () => { window.print(); };
+
+onMounted(() => {
+            const savedTheme = localStorage.getItem('myth_theme');
+            if (savedTheme) currentTheme.value = savedTheme;
+            
+            const savedMode = localStorage.getItem('myth_mode');
+            if (savedMode) currentMode.value = savedMode;
+
+            const saved = localStorage.getItem('myth_roster');
+            if (saved) {
+                roster.value = JSON.parse(saved).map(applyMigrations);
+                const lastActiveId = localStorage.getItem('myth_active_char_id');
+                
+                if (lastActiveId) {
+                    const found = roster.value.find(c => c.id === lastActiveId);
+                    if (found) {
+                        char.value = JSON.parse(JSON.stringify(found));
+                    } else if (roster.value.length > 0) {
+                        char.value = JSON.parse(JSON.stringify(roster.value[0]));
+                    }
+                } else if (roster.value.length > 0) {
+                    char.value = JSON.parse(JSON.stringify(roster.value[0]));
+                }
+            }
+        });
+        // --- 8. Final Return to Template ---
+        return {
+            char, roster, currentMode, shopOpen, codexOpen, manageModalOpen, isUnleashed, newSkillName, newSkillStat,
+            newItemName, newQuestName, newQuestProficiencyName, newQuestProficiencyAbility, newRelationName, apPromptActive, apConfirmationMessage, saveIndicator,
+            pantheons: typeof pantheons !== 'undefined' ? pantheons : {}, 
+            woundStates: typeof woundStates !== 'undefined' ? woundStates : [], 
+            fatigueStates: typeof fatigueStates !== 'undefined' ? fatigueStates : [], 
+            weaponArsenal: typeof weaponArsenal !== 'undefined' ? weaponArsenal : [],
+            pantheonFeatures: typeof pantheonFeatures !== 'undefined' ? pantheonFeatures : {},
+            armourRegistry: typeof armourRegistry !== 'undefined' ? armourRegistry : [], 
+            abilitiesLibrary: typeof abilitiesLibrary !== 'undefined' ? abilitiesLibrary : [],
+            rulesContent: typeof rulesContent !== 'undefined' ? rulesContent : [],
+            activeRulesTab,
+            weaponTraits: typeof weaponTraits !== 'undefined' ? weaponTraits : {},     
+            weaponEffects: typeof weaponEffects !== 'undefined' ? weaponEffects : {},   
+            totalStats, effectiveDex, calculatedProficiency, currentWoundDescription, currentFatigueName, currentFatigueDescription,
+            availableGods, activeWeapons, filteredShopAbilities, eligibleVaultAbilities, randomizableVaultAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName, 
+            availableGods, activeWeapons, carriedWeaponRecords, carriedWeaponOptions, weaponTrainingFor, weaponIsProficient, filteredShopAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName, highlightText,
+            adjustStat, randomizeStats, randomizeAll, changePantheon, changeParent, setWoundState, 
+            getWoundClass, getFatigueClass, addSkill, removeSkill, toggleSkillTick, calcDefenseBonus, 
+            adjustTotalAp, handleApClick, decreaseActivePotd, increaseActivePotd,
+            togglePotd, replenishPotd, executePurchase, refundAbility, randomizeAbilities, triggerUnleash, enterPlayMode, 
+            handleImageUpload, createNewCharacter, editCharacter, loadCharacter, deleteCharacter, 
+            printSheet, importData, exportCurrent, exportAll, useAbilityInPlay, spentAp, remainingAp,
+            closeVault, addItem, removeItem, addQuest, toggleQuest, removeQuest, addQuestProficiency, syncQuestProficiency, addRelation, removeRelation, setActiveWeapon, toggleCarriedWeapon, toggleWeaponTrainingTick, storeFilterTier, chosenFilterTier, vaultSearch, codexNameSearch, codexDescriptionSearch, codexDomainFilter, codexTierFilter, codexCostFilter, codexActionFilter, currentTheme, weaponAttackBonuses, apError, potdError,
+            calcDivineDC, abilitiesDropdownOpen, closeAbilitiesDropdown, scrollToAbility, abilitiesByTier, quickCastOpen,
+    activeAbilityModal, expandedAbilityId, infoSidebarOpen,
+            activeInfoTab,
+        };
+    }
+});
+
+// --- 9. Custom Directives ---
+app.directive('click-outside', {
+  mounted(el, binding) {
+    el.clickOutsideEvent = function(event) {
+      if (!(el === event.target || el.contains(event.target))) {
+        binding.value(event);
+      }
+    };
+    // Delay adding the event listener so it doesn't trigger on the click that opens the menu
+    setTimeout(() => {
+      document.body.addEventListener('click', el.clickOutsideEvent);
+    }, 0);
+  },
+  unmounted(el) {
+    document.body.removeEventListener('click', el.clickOutsideEvent);
+  }
+});
+
+// Finally, mount the app
+app.mount('#app');

@@ -1,0 +1,78 @@
+{
+  "id": "1788877681632",
+  "name": "Minotaur of Crete",
+  "desc": "A monstrous hybrid with the head of a bull and the body of a towering man. Asterion, the Minotaur, was imprisoned in the sprawling Labyrinth by King Minos and fed on human tributes from Athens before being slain by Theseus.",
+  "scale": "Scale 2 (Large)",
+  "align": "Chaotic Evil",
+  "threat": "42",
+  "natArmor": "0",
+  "movements": {
+    "walk": {
+      "c": true,
+      "s": "40"
+    },
+    "fly": {
+      "c": false,
+      "s": "0"
+    },
+    "swim": {
+      "c": false,
+      "s": "0"
+    },
+    "climb": {
+      "c": false,
+      "s": "0"
+    },
+    "burrow": {
+      "c": false,
+      "s": "0"
+    },
+    "hover": {
+      "c": false,
+      "s": "0"
+    },
+    "custom": "Perfect Navigation: The Minotaur can never be disoriented or lost within any maze or enclosed structure."
+  },
+  "stats": {
+    "power": "20",
+    "speed": "12",
+    "endurance": "18",
+    "knowledge": "8",
+    "instinct": "14",
+    "influence": "9"
+  },
+  "resRule": "normal",
+  "weakness": "Ariadne's Thread: The Minotaur relies heavily on its prey becoming lost and panicked in confined spaces. If tracked or bound using a sacred tether or lured into wide open terrain where its maze advantage is neutralized, its morale breaks, reducing its defense and allowing attackers to bypass its natural armor.",
+  "actions": [
+    {
+      "name": "Labrys Cleave",
+      "tag": "Major",
+      "desc": "The Minotaur swings its massive double-headed battleaxe in a wide, devastating arc. Make a melee attack {ATK} dealing severe slashing damage to up to two adjacent targets.",
+      "id": 1786119343532.4482
+    },
+    {
+      "name": "Bull Charge",
+      "tag": "Major",
+      "desc": "The beast lowers its massive horns and rushes in a straight line toward a foe. Make an attack {ATK}. On a hit, the target takes heavy piercing damage and must succeed on a {DEF} check or be knocked prone and pushed 15 feet.",
+      "id": 1786119343532.9858
+    },
+    {
+      "name": "Bellow of the Labyrinth",
+      "tag": "Minor",
+      "desc": "The Minotaur lets out a bloodcurdling roar that echoes off surrounding surfaces. All enemies within 30 feet must pass a {DEF} check or become shaken, suffering a penalty to their next attack roll.",
+      "id": 1786119343532.5781
+    },
+    {
+      "name": "Gory Retaliation",
+      "tag": "Reaction",
+      "desc": "When hit by a close-range attack, the Minotaur instantly lashes out with a gore attack using its deadly horns. The attacker must make a {DEF} check to dodge the counter-strike or take immediate piercing damage.",
+      "id": 1786119343532.308
+    },
+    {
+      "name": "Relentless Trample",
+      "tag": "Legendary",
+      "desc": "Asterion surges through the battlefield in an unstoppable frenzy, moving up to its full speed. Any creature whose space it passes through must make a {DEF} check or be stomped into the dirt, taking heavy bludgeoning damage.",
+      "id": 1786119343532.7283
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "id": "1788877659491",
+  "name": "Cyclops",
+  "desc": "A one-eyed giant that makes up for it's lack of depth perception by being very large.",
+  "scale": "Scale 2 (Large)",
+  "align": "Chaotic Neutral",
+  "threat": "45",
+  "natArmor": "3",
+  "movements": {
+    "walk": {
+      "c": true,
+      "s": "20"
+    },
+    "fly": {
+      "c": false,
+      "s": "20"
+    },
+    "swim": {
+      "c": false,
+      "s": "10"
+    },
+    "climb": {
+      "c": false,
+      "s": "15"
+    },
+    "burrow": {
+      "c": false,
+      "s": "5"
+    },
+    "hover": {
+      "c": false,
+      "s": "15"
+    },
+    "custom": ""
+  },
+  "stats": {
+    "power": "14",
+    "speed": "18",
+    "endurance": "14",
+    "knowledge": "10",
+    "instinct": "12",
+    "influence": "8"
+  },
+  "resRule": "mortal_immunity",
+  "weakness": "Must be struck in the eye with any type of piercing weapon",
+  "actions": [
+    {
+      "id": 1786026701353.6545,
+      "name": "Stomp",
+      "tag": "Major",
+      "desc": "The cyclops stomps the ground and all creatures within 5m are knocked back 5m and prone unless they make a succesful endurance save."
+    },
+    {
+      "id": 1786026780369.3784,
+      "name": "Greatest Club",
+      "tag": "Major",
+      "desc": "+8 smash down onto a creature within 5m range. "
+    }
+  ]
+}

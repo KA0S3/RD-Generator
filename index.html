@@ -2124,7 +2124,7 @@ abilitiesLibrary.forEach(ability => {
                             </div>
 
                             <!-- PLAY MODE COMPACT MANIFESTED GIFTS -->
-                            <div data-play-panel="gifts" v-if="currentMode === 'play'" class="parchment-card p-6 w-full flex-1">
+                            <div data-play-panel="gifts" v-if="currentMode === 'play'" class="parchment-card p-6 w-full flex-1" v-click-outside="() => expandedAbilityId = null">
                                 <div class="flex justify-between items-center mb-4 border-b-2 border-[#6b5233]/50 pb-2">
                                     <h3 class="serif-title font-bold text-sm text-[#cba871] uppercase tracking-widest">
                                         <i class="fa-solid fa-fire mr-2 text-[#8b6d43]"></i> Manifested Gifts
@@ -2143,25 +2143,43 @@ abilitiesLibrary.forEach(ability => {
                                         <h4 class="text-[10px] uppercase tracking-widest font-bold text-indigo-200">Prepared Spells</h4>
                                         <span class="text-[10px] text-indigo-200">{{ preparedMagicSpent }}/{{ preparedMagicBudget }} AP</span>
                                     </div>
-                                    <div v-for="ab in preparedMagicList" :key="'prepared-' + ab.name" class="flex items-center justify-between gap-3 rounded bg-indigo-950/30 px-3 py-2">
-                                        <span class="text-xs text-[#ebd9b9]">{{ ab.name }} <span class="text-[10px] text-indigo-200">T{{ ab.tier }}</span></span>
-                                        <span class="flex items-center gap-2">
-                                            <button v-if="currentMode === 'play'" @click.stop="useAbilityInPlay(ab)" class="text-[9px] px-2 py-1 rounded border border-indigo-500/70 text-indigo-100 font-bold uppercase hover:bg-indigo-800/60">Use</button>
-                                            <button @click.stop="togglePreparedMagic(ab)" class="text-[9px] px-2 py-1 rounded border border-indigo-500/70 text-indigo-100 font-bold uppercase hover:bg-indigo-800/60">Unprepare</button>
-                                            <button v-if="currentMode === 'edit'" @click.stop="refundAbility(ab)" class="text-red-400 hover:text-red-300" title="Remove learned spell"><i class="fa-solid fa-xmark"></i></button>
-                                        </span>
+                                    <div v-for="ab in preparedMagicList" :key="'prepared-' + ab.name" class="rounded bg-indigo-950/30 px-3 py-2">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-xs text-[#ebd9b9]">
+                                                <button @click.stop="expandedAbilityId = expandedAbilityId === ab.name ? null : ab.name" class="text-left hover:text-white" :aria-expanded="expandedAbilityId === ab.name" :aria-controls="'prepared-spell-' + ab.name.replace(/\s+/g, '-')">{{ ab.name }}</button>
+                                                <span class="text-[10px] text-indigo-200">T{{ ab.tier }}</span>
+                                            </span>
+                                            <span class="flex items-center gap-2">
+                                                <button v-if="currentMode === 'play'" @click.stop="useAbilityInPlay(ab)" class="text-[9px] px-2 py-1 rounded border border-indigo-500/70 text-indigo-100 font-bold uppercase hover:bg-indigo-800/60">Use</button>
+                                                <button @click.stop="togglePreparedMagic(ab)" class="text-[9px] px-2 py-1 rounded border border-indigo-500/70 text-indigo-100 font-bold uppercase hover:bg-indigo-800/60">Unprepare</button>
+                                                <button v-if="currentMode === 'edit'" @click.stop="refundAbility(ab)" class="text-red-400 hover:text-red-300" title="Remove learned spell"><i class="fa-solid fa-xmark"></i></button>
+                                            </span>
+                                        </div>
+                                        <div :id="'prepared-spell-' + ab.name.replace(/\s+/g, '-')" v-show="expandedAbilityId === ab.name" class="mt-2 border-t border-indigo-800/40 pt-2">
+                                            <p class="text-xs text-[#d6c6ad] leading-relaxed mb-2">{{ ab.rules }}</p>
+                                            <div class="text-[10px] text-indigo-200/80 italic font-bold">Domains: {{ ab.domains }}</div>
+                                        </div>
                                     </div>
                                     <p v-if="!preparedMagicList.length" class="text-[10px] italic text-[#8b6d43]">No spells prepared.</p>
                                     <div class="flex items-center justify-between border-b border-[#6b5233]/40 pb-2 pt-3">
                                         <h4 class="text-[10px] uppercase tracking-widest font-bold text-[#cba871]">Unprepared Spells</h4>
                                         <span class="text-[10px] text-[#cba871]">{{ learnedMagicSpent }}/{{ learnedMagicBudget }} AP + MP</span>
                                     </div>
-                                    <div v-for="ab in unpreparedMagicList" :key="'unprepared-' + ab.name" class="flex items-center justify-between gap-3 rounded bg-black/30 px-3 py-2">
-                                        <span class="text-xs text-[#ebd9b9]">{{ ab.name }} <span class="text-[10px] text-indigo-200">T{{ ab.tier }}</span></span>
-                                        <span class="flex items-center gap-2">
-                                            <button @click.stop="togglePreparedMagic(ab)" class="text-[9px] px-2 py-1 rounded border border-[#6b5233] text-[#cba871] font-bold uppercase hover:bg-[#2a2118]">Prepare</button>
-                                            <button v-if="currentMode === 'edit'" @click.stop="refundAbility(ab)" class="text-red-400 hover:text-red-300" title="Remove learned spell"><i class="fa-solid fa-xmark"></i></button>
-                                        </span>
+                                    <div v-for="ab in unpreparedMagicList" :key="'unprepared-' + ab.name" class="rounded bg-black/30 px-3 py-2">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-xs text-[#ebd9b9]">
+                                                <button @click.stop="expandedAbilityId = expandedAbilityId === ab.name ? null : ab.name" class="text-left hover:text-white" :aria-expanded="expandedAbilityId === ab.name" :aria-controls="'unprepared-spell-' + ab.name.replace(/\s+/g, '-')">{{ ab.name }}</button>
+                                                <span class="text-[10px] text-indigo-200">T{{ ab.tier }}</span>
+                                            </span>
+                                            <span class="flex items-center gap-2">
+                                                <button @click.stop="togglePreparedMagic(ab)" class="text-[9px] px-2 py-1 rounded border border-[#6b5233] text-[#cba871] font-bold uppercase hover:bg-[#2a2118]">Prepare</button>
+                                                <button v-if="currentMode === 'edit'" @click.stop="refundAbility(ab)" class="text-red-400 hover:text-red-300" title="Remove learned spell"><i class="fa-solid fa-xmark"></i></button>
+                                            </span>
+                                        </div>
+                                        <div :id="'unprepared-spell-' + ab.name.replace(/\s+/g, '-')" v-show="expandedAbilityId === ab.name" class="mt-2 border-t border-[#6b5233]/40 pt-2">
+                                            <p class="text-xs text-[#d6c6ad] leading-relaxed mb-2">{{ ab.rules }}</p>
+                                            <div class="text-[10px] text-indigo-200/80 italic font-bold">Domains: {{ ab.domains }}</div>
+                                        </div>
                                     </div>
                                     <p v-if="!unpreparedMagicList.length" class="text-[10px] italic text-[#8b6d43]">No unprepared spells.</p>
                                 </div>
@@ -2170,7 +2188,7 @@ abilitiesLibrary.forEach(ability => {
                                     No abilities are ready to use. Prepare learned Magic spells above.
                                 </div>
                                 
-                                <div class="grid grid-cols-1 gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar no-print-scroll" v-if="playManifestAbilities.length > 0" v-click-outside="() => expandedAbilityId = null">
+                                <div class="grid grid-cols-1 gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar no-print-scroll" v-if="playManifestAbilities.length > 0">
                                     <div v-for="ab in playManifestAbilities.filter(a => chosenFilterTier === 'All' || Number(a.tier) === Number(chosenFilterTier))" :key="ab.name" 
                                          :id="'ability-' + ab.name.replace(/\s+/g, '-')" 
                                          @click.stop="expandedAbilityId = expandedAbilityId === ab.name ? null : ab.name" 

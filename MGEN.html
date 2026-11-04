@@ -868,6 +868,16 @@
             display: flex; gap: 10px; justify-content: center; margin-top: 20px;
         }
 		.ai-decision-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+        .monster-fixer-panel { width:min(1500px, 96vw); max-height:94vh; overflow:auto; padding:22px; background:var(--bg-panel); border:1px solid var(--primary-purple); border-radius:var(--radius); box-shadow:0 24px 70px rgba(0,0,0,.85); }
+        .monster-fixer-columns { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; margin:14px 0; }
+        .monster-fixer-columns textarea { width:100%; min-height:48vh; resize:vertical; font:12px/1.45 Consolas, monospace; }
+        .monster-fixer-pane { min-width:0; }
+        .monster-fixer-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+        .monster-fixer-warning { padding:10px 12px; border:1px solid var(--highlight-gold); border-radius:var(--radius); color:var(--highlight-gold); background:rgba(120,53,15,.2); }
+        @media (max-width: 760px) {
+            .monster-fixer-columns { grid-template-columns:1fr; }
+            .monster-fixer-columns textarea { min-height:34vh; }
+        }
 		.column::-webkit-scrollbar,
         .rules-sidebar::-webkit-scrollbar,
         .rules-content-area::-webkit-scrollbar,
@@ -914,6 +924,7 @@
             <div class="creator-layout-label">MONSTER SHEET <span>· double-click any highlighted block to edit</span></div>
             <div class="header-actions">
                 <button class="action-btn" style="border-color: var(--primary-purple); color: var(--primary-purple);" onclick="openAIBoxTrigger()">✨ AI Gen</button>
+                <button class="action-btn" style="border-color: var(--highlight-gold); color: var(--highlight-gold);" onclick="openMonsterFixer()">🛠 Fix Monster</button>
                 <button class="action-btn" onclick="saveCurrentMonster()">Save to Bestiary</button>
                 <button class="action-btn" onclick="addCurrentMonsterToNoPile()">No Pile</button>
                 <button class="action-btn" onclick="exportCurrentMonsterJSON()">Export JSON</button>
@@ -1099,7 +1110,10 @@
                             <h3>Combat Profile</h3>
                             <p class="sheet-field full-width"><strong>Threat</strong><input id="sheet-threat" type="range" min="1" max="100"><span id="sheet-threat-label" class="sheet-value"></span></p>
                             <p class="sheet-field"><strong>Natural Armour</strong><input id="sheet-armour" type="number" min="0"></p>
-                            <div class="combat-steppers"><div class="combat-stepper">ATK <button type="button" onclick="adjustCombatOverride('attack', -1)">-</button><strong id="m-atk-override-display" title="">Auto</strong><button type="button" onclick="adjustCombatOverride('attack', 1)">+</button></div></div>
+                            <div class="combat-steppers">
+                                <div class="combat-stepper">ATK <button type="button" onclick="adjustCombatOverride('attack', -1)">-</button><strong id="m-atk-override-display" title="">Auto</strong><button type="button" onclick="adjustCombatOverride('attack', 1)">+</button></div>
+                                <div class="combat-stepper">DB <button type="button" onclick="adjustCombatOverride('defence', -1)">-</button><strong id="m-def-override-display" title="">Auto</strong><button type="button" onclick="adjustCombatOverride('defence', 1)">+</button></div>
+                            </div>
                             <p class="sheet-field full-width"><strong>Vulnerability</strong><select id="out-vulnerability" class="vulnerability-bar" onchange="setVulnerability(this.value)"><option value="normal">Normal Beast Vulnerability</option><option value="mortal_immunity">Mortal Immunity Vulnerability</option><option value="epic_invulnerability">Epic Invulnerability Vulnerability</option></select></p>
                             <p class="sheet-field full-width"><strong>Wound State</strong><select id="sheet-wound" class="wound-select" onchange="setWoundState(this.value)"><option value="healthy">Healthy</option><option value="wounded">Wounded</option><option value="bloodied">Bloodied</option><option value="dying">Dying</option><option value="dead">Dead</option></select></p>
                         </div>
@@ -1314,8 +1328,8 @@
             <div id="ai-mode-controls">
             <label>Generation Mode</label>
             <select id="ai-preset">
-                <option value="myth">🏛️ Mythological Creature (Research myths & scale to rules)</option>
-                <option value="custom">🧠 Custom Concept (Follow description exactly)</option>
+                <option value="myth">🏛️ Existing Myth (use real mythology)</option>
+                <option value="custom">🧠 New Custom Creature (invented from my concept)</option>
             </select>
             
             <label>Monster Name or Description</label>
@@ -1333,6 +1347,48 @@
                         <button class="btn btn-danger" onclick="finishAIDecision('no-pile')">Add to No Pile</button>
                         <button class="btn" onclick="finishAIDecision('cancel')">Keep Editing</button>
                     </div>
+                </div>
+
+                <div id="monster-fixer-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="monster-fixer-title" onclick="if(event.target === this) closeMonsterFixer()">
+                    <section class="monster-fixer-panel">
+                        <h2 id="monster-fixer-title" style="margin-top:0; color:var(--highlight-gold);">🛠 Monster Rules Fixer</h2>
+                        <p class="monster-fixer-warning">AI suggestions can be wrong. Review both versions carefully. “Use Current” and “Use Fixed” load that version into the editor; save it with “Save to Bestiary” when ready. “Keep Both” saves both versions to this browser’s Bestiary immediately.</p>
+                        <label for="monster-fixer-api-key">Gemini API Key</label>
+                        <input type="password" id="monster-fixer-api-key" placeholder="AIzaSy...">
+                        <div class="monster-fixer-actions" style="margin-top:10px;">
+                            <button class="btn gold" id="monster-fixer-run" type="button" onclick="runMonsterFixer()">Analyze &amp; Propose Fix</button>
+                            <span id="monster-fixer-status" role="status" style="color:var(--text-muted);"></span>
+                        </div>
+                        <div class="monster-fixer-columns">
+                            <div class="monster-fixer-pane">
+                                <label for="monster-fixer-original">Current Monster (editable JSON)</label>
+                                <textarea id="monster-fixer-original" spellcheck="false"></textarea>
+                            </div>
+                            <div class="monster-fixer-pane">
+                                <label for="monster-fixer-revised">AI-Proposed Fix (editable JSON)</label>
+                                <textarea id="monster-fixer-revised" spellcheck="false" placeholder="The proposed version appears here after analysis."></textarea>
+                            </div>
+                        </div>
+                        <div class="monster-fixer-actions">
+                            <label for="monster-fixer-transfer-field" style="margin:0;">Transfer field</label>
+                            <select id="monster-fixer-transfer-field" aria-label="Field to transfer between versions">
+                                <option value="name">Name</option><option value="desc">Description</option><option value="scale">Scale</option><option value="align">Alignment</option>
+                                <option value="origin">Origin</option><option value="environment">Environment</option><option value="threat">Threat</option>
+                                <option value="natArmor">Natural Armour</option><option value="movements">Movement</option><option value="stats">Ability Scores</option>
+                                <option value="resRule">Damage Rule</option><option value="weakness">Fatal Weakness</option><option value="woundState">Wound State</option>
+                                <option value="notes">Sheet Notes</option><option value="attackAdjustment">Attack Adjustment</option><option value="defenceAdjustment">Defence Adjustment</option><option value="actions">Actions</option>
+                            </select>
+                            <button class="btn" type="button" onclick="transferMonsterFixField('original-to-revised')">Current → Fixed</button>
+                            <button class="btn" type="button" onclick="transferMonsterFixField('revised-to-original')">Fixed → Current</button>
+                        </div>
+                        <div class="monster-fixer-actions" style="margin-top:14px;">
+                            <button class="btn" type="button" onclick="chooseMonsterFixVersion('original')">Use Current in Editor</button>
+                            <button class="btn gold" type="button" onclick="chooseMonsterFixVersion('revised')">Use Fixed in Editor</button>
+                            <input type="text" id="monster-fixer-both-name" placeholder="New name required to keep both" aria-label="New name for the fixed monster" style="max-width:260px;">
+                            <button class="btn gold" type="button" onclick="chooseMonsterFixVersion('both')">Keep Both</button>
+                            <button class="btn" type="button" onclick="closeMonsterFixer()">Cancel</button>
+                        </div>
+                    </section>
                 </div>
             </div>
             
@@ -1359,8 +1415,58 @@
         let selectedBestiaryIds = new Set();
         let bestiaryFolderMode = true;
         let bestiaryViewMode = 'pantheon';
+        const MONSTER_SYSTEM_RULES = `You are a monster designer for the Demigods tabletop system. Follow ONLY these rules; do not import D&D, hit points, damage dice, spell slots, or mechanics from another game.
+
+CORE STAT RULES
+- Scale must be one of Scale 0 (Tiny), Scale 1 (Mortal), Scale 2 (Large), Scale 3 (Giant), Scale 4 (Titanic), or Scale 5 (Divine). Threat is an integer from 1 to 100.
+- The only ability scores are Power, Speed, Endurance, Knowledge, Instinct, and Influence. Their modifiers are floor((score - 10) / 2).
+- Proficiency is calculated by the app: for Threat below 60, max(1, floor(1 + 3 x (Threat / 60)^1.7)); for Threat 60 or higher, min(12, 4 + round(8 x ((Threat - 60) / 40)^1.35)).
+- Attack bonus = max(Power modifier, Speed modifier) + proficiency. Defence Bonus (DB) = Knowledge modifier + floor(Speed / 2) + proficiency + Natural Armour.
+- Natural Armour must be between 0 and round(2 + Threat / 18 + Scale / 2), capped at 12. Do not set absolute attack/defence values. attackAdjustment and defenceAdjustment are small signed modifiers ADDED to the formulas; normally use "0".
+- Choose stats, Threat, Scale, and armour coherently for the creature. Threat is not a request to maximize every stat. Prefer the least extreme values that make the described creature credible and playable.
+
+COMBAT, WOUNDS, AND EFFECTS
+- A turn normally has one Move, one Major Action, and one Minor Action. An Attack Roll is the full exchange, not a series of weapon swings. Do not grant extra attacks unless a specific ability says so.
+- Combat harm is tracked in Wounds, not hit points or numeric damage. The attack Damage Table margin over Defence is: 1-4 = 1 Wound; 5-9 = 1 Wound plus Trip, Grapple, or Disarm; 10-14 = 2 Wounds; 15-19 = 2 Wounds plus Incapacitate; 20-21 = 3 Wounds; 22+ = the 4th Wound and death. Wounds progress through Bruised, Bloodied, Broken, then Dead. Use this framework; never write damage dice, hit points, damage points, or "deals X damage".
+- For an attack, describe an Attack Roll using {ATK} against the target's DB, then any distinct effect. {ATK} is this creature's attack bonus; write the placeholder without a preceding plus because the preview supplies its sign. {DEF} is THIS creature's own DB and is only appropriate when describing its defence; it is not the target's DB. The app replaces these exact placeholders with numeric bonuses.
+- Use conditions and effects only when their result and duration are clear. A save/check should name the relevant attribute and a reasonable DC only when the system supports it; do not invent a new subsystem. Avoid unavoidable permanent transformations or instant death without a clear defense, counterplay, or the creature's fatal weakness.
+- resRule must be exactly "normal", "mortal_immunity", or "epic_invulnerability". Normal uses ordinary Wound rules. Mortal Immunity blocks non-divine/non-mythic harm. Epic Invulnerability can only be overcome through its stated Fatal Weakness. Use the least extreme rule that fits; make any weakness concrete and usable in play.
+
+ACTIONS
+- Every action has exactly one tag: "Minor", "Major", "Reaction", or "Legendary". The list may contain no actions, only Major actions, only Minor actions, four Legendary actions and no others, or any other meaningful uneven mix. There is NO required count or distribution; never add one of each, filler, or an arbitrary maximum. Include only distinct, useful abilities supported by the creature.
+- A Reaction must state its trigger. A Legendary action must state when it can be used and any necessary limit; do not assume a universal legendary-action rule. Simple creatures may have few, straightforward actions; complex creatures may have several distinct mechanics.
+- Use concise, complete rules text. Tie actions and traits to the concept/myth; include range/targets, roll or defense, outcome, and duration where relevant. Do not put citations, research commentary, uncertainty, or instructions in notes. Leave notes empty for new monsters; when fixing an existing monster, preserve its user-authored notes exactly.
+
+Return every field in the requested JSON schema. Use strings for numeric values and adjustments; use booleans for movement flags.`;
+        const MONSTER_JSON_SCHEMA = `{
+  "name": "String",
+  "desc": "String",
+  "scale": "Scale 0 (Tiny) through Scale 5 (Divine)",
+  "align": "String",
+  "origin": "Available pantheon/region or Misc",
+  "environment": "Ocean, Skies, Sand, Swamp, Snow, Forest, Mountain, Ruins, Caverns, Plains, Volcanic, Tundra, City, Underground, or Misc",
+  "threat": "String number from 1 to 100",
+  "natArmor": "String number within the natural armour cap",
+  "movements": {
+    "walk": {"c": true, "s": "String number"},
+    "fly": {"c": false, "s": "String number"},
+    "swim": {"c": false, "s": "String number"},
+    "climb": {"c": false, "s": "String number"},
+    "burrow": {"c": false, "s": "String number"},
+    "hover": {"c": false, "s": "String number"},
+    "custom": "String"
+  },
+  "stats": {"power": "String number", "speed": "String number", "endurance": "String number", "knowledge": "String number", "instinct": "String number", "influence": "String number"},
+  "resRule": "normal, mortal_immunity, or epic_invulnerability",
+  "weakness": "String",
+  "notes": "Empty for new generation; preserve existing notes when fixing",
+  "woundState": "healthy, wounded, bloodied, dying, or dead",
+  "attackAdjustment": "String signed modifier, normally 0",
+  "defenceAdjustment": "String signed modifier, normally 0",
+  "actions": [{"name": "String", "tag": "Minor, Major, Reaction, or Legendary", "desc": "Complete system-legal effect; may use {ATK} or {DEF}"}]
+}`;
         const defaultActions = [
-            { id: 1, name: 'Void Claws', tag: 'Major', desc: 'Melee Attack Roll vs DB (+{ATK}). On a margin of 5+, the target suffers Bleed: at the end of each turn, it makes a DC 8 Endurance Saving Throw. Failure causes one Bruised Wound; success ends the bleeding. Bleed effects do not stack.' },
+            { id: 1, name: 'Void Claws', tag: 'Major', desc: 'Melee Attack Roll vs DB ({ATK}). On a margin of 5+, the target suffers Bleed: at the end of each turn, it makes a DC 8 Endurance Saving Throw. Failure causes one Bruised Wound; success ends the bleeding. Bleed effects do not stack.' },
             { id: 2, name: 'Phase Step', tag: 'Minor', desc: 'Teleports up to 15m to an unoccupied space in dim light.' }
         ];
 
@@ -1430,17 +1536,16 @@
                         title: 'Threat & Proficiency',
                         body: [
                             'Monster proficiency is derived directly from Threat Level. Threat runs from 1% to 100%.',
-                            'Threat 1-10 maps to early proficiency, 11-85 scales through the main progression, and 86-100 represents epic or divine threats.',
+                            'The implemented proficiency formula is Threat < 60: max(1, floor(1 + 3 x (Threat / 60)^1.7)); Threat >= 60: min(12, 4 + round(8 x ((Threat - 60) / 40)^1.35)).',
                             'Use the displayed proficiency beside the Threat slider as the source of truth when checking attack and defence math.'
                         ]
                     },
                     {
                         title: 'Attack & Defence Bonuses',
                         body: [
-                            'Proficiency: Threat 1-10 = 1 + round(Threat / 10). Threat 11-85 = 2 + round(7 x ((Threat - 10) / 75)^1.5). Threat 86-100 = 9 + round(3 x ((Threat - 85) / 15)^1.2).',
                             'Attack bonus: take the higher of the Power modifier or Speed modifier, then add proficiency. Attack bonus = max(Power modifier, Speed modifier) + proficiency.',
                             'Defence Bonus (DB): add the Knowledge modifier, half the Speed score rounded down, proficiency, and Natural Armour. DB = Knowledge modifier + floor(Speed / 2) + proficiency + Natural Armour. Natural Armour is capped at round(2 + Threat/18 + Scale/2), maximum 12, to keep ordinary creatures playable.',
-                            'Ability descriptions can use {ATK} and {DEF}; the preview replaces them with the calculated attack bonus and Defence Bonus.'
+                            'The +/- combat controls apply adjustments to the calculated bonuses; they do not replace the calculated values. Ability descriptions can use {ATK} and {DEF}; the preview replaces {ATK} with this monster’s Attack bonus and {DEF} with its Defence Bonus.'
                         ]
                     }
                 ]
@@ -1709,42 +1814,51 @@
         }
 
         function syncCombatOverrideDisplay() {
+            const calculatedBonuses = getCalculatedCombatBonuses();
             ['attack', 'defence'].forEach(type => {
                 const field = document.getElementById(`m-${type === 'attack' ? 'atk' : 'def'}-override`);
                 const display = document.getElementById(`m-${type === 'attack' ? 'atk' : 'def'}-override-display`);
-                if (field && display) display.innerText = field.value === '' ? 'Auto' : field.value;
+                if (field && display) {
+                    const adjustment = Number(field.value) || 0;
+                    const total = calculatedBonuses[type] + adjustment;
+                    display.innerText = adjustment === 0 ? 'Auto' : `${total >= 0 ? '+' : ''}${total}`;
+                }
             });
+            updateCombatOverrideTooltips();
         }
 
         function adjustCombatOverride(type, amount) {
             const field = document.getElementById(`m-${type === 'attack' ? 'atk' : 'def'}-override`);
-            const base = getCalculatedCombatBonuses()[type];
-            const currentValue = field.value === '' ? base : parseInt(field.value);
-            const nextValue = currentValue + amount;
-            field.value = String(nextValue);
+            const nextAdjustment = (Number(field.value) || 0) + amount;
+            field.value = nextAdjustment === 0 ? '' : String(nextAdjustment);
             syncCombatOverrideDisplay();
             updatePreview();
         }
 
-    function setupOverrideHoverText() {
+        function updateCombatOverrideTooltips() {
             const attackField = document.getElementById('m-atk-override');
             const defenceField = document.getElementById('m-def-override');
-            const update = () => {
-                const calc = getCalculatedCombatBonuses();
-                const threat = parseInt(document.getElementById('m-threat-num').value) || 50;
-                const prof = calculateProficiency(threat);
-                const power = parseInt(document.getElementById('m-power').value) || 10;
-                const speed = parseInt(document.getElementById('m-speed').value) || 10;
-                const knowledge = parseInt(document.getElementById('m-knowledge').value) || 10;
-                const nat = boundedNaturalArmor(threat, document.getElementById('m-scale').value, document.getElementById('m-nat-armour').value);
-                const attackText = `Attack: max(Power ${getMod(power)}, Speed ${getMod(speed)}) + proficiency ${prof} = ${calc.attack}.\nManual override: ${attackField.value === '' ? 'Auto' : attackField.value}`;
-                const defenceText = `Defence: Knowledge mod ${getMod(knowledge)} + floor(Speed/2) ${Math.floor(speed/2)} + proficiency ${prof} + natural armour ${nat} = ${calc.defence}.\nManual override: ${defenceField.value === '' ? 'Auto' : defenceField.value}`;
-                const attackDisplay = document.getElementById('m-atk-override-display');
-                if (attackDisplay) attackDisplay.title = attackText;
-            };
-            attackField?.addEventListener('input', update);
-            defenceField?.addEventListener('input', update);
-            update();
+            const calc = getCalculatedCombatBonuses();
+            const threat = parseInt(document.getElementById('m-threat-num').value) || 50;
+            const prof = calculateProficiency(threat);
+            const power = parseInt(document.getElementById('m-power').value) || 10;
+            const speed = parseInt(document.getElementById('m-speed').value) || 10;
+            const knowledge = parseInt(document.getElementById('m-knowledge').value) || 10;
+            const nat = boundedNaturalArmor(threat, document.getElementById('m-scale').value, document.getElementById('m-nat-armour').value);
+            const attackAdjustment = Number(attackField.value) || 0;
+            const defenceAdjustment = Number(defenceField.value) || 0;
+            const attackText = `Attack: max(Power ${getMod(power)}, Speed ${getMod(speed)}) + proficiency ${prof} = ${calc.attack}.\nAdjustment: ${attackAdjustment >= 0 ? '+' : ''}${attackAdjustment}; effective bonus: ${calc.attack + attackAdjustment}.`;
+            const defenceText = `Defence: Knowledge mod ${getMod(knowledge)} + floor(Speed/2) ${Math.floor(speed/2)} + proficiency ${prof} + natural armour ${nat} = ${calc.defence}.\nAdjustment: ${defenceAdjustment >= 0 ? '+' : ''}${defenceAdjustment}; effective bonus: ${calc.defence + defenceAdjustment}.`;
+            const attackDisplay = document.getElementById('m-atk-override-display');
+            const defenceDisplay = document.getElementById('m-def-override-display');
+            if (attackDisplay) attackDisplay.title = attackText;
+            if (defenceDisplay) defenceDisplay.title = defenceText;
+        }
+
+        function setupOverrideHoverText() {
+            document.getElementById('m-atk-override')?.addEventListener('input', updateCombatOverrideTooltips);
+            document.getElementById('m-def-override')?.addEventListener('input', updateCombatOverrideTooltips);
+            updateCombatOverrideTooltips();
         }
 
         // --- Active Actions ---
@@ -1830,7 +1944,9 @@
 
         // --- Preview Logic ---
         function parseVariables(text, atk, def) {
-            return text.replace(/{ATK}/g, `+${atk}`).replace(/{DEF}/g, `${def}`);
+            const attackBonus = Number(atk);
+            const formattedAttack = attackBonus >= 0 ? `+${attackBonus}` : String(attackBonus);
+            return text.replace(/\+\{ATK\}/g, '{ATK}').replace(/{ATK}/g, formattedAttack).replace(/{DEF}/g, `${def}`);
         }
 
         function setWound(idx) {
@@ -1896,15 +2012,16 @@
             const natArmor = boundedNaturalArmor(threat, scale, document.getElementById('m-nat-armour').value);
             const calculatedAttack = Math.max(getMod(scores.power), getMod(scores.speed)) + prof;
             const calculatedDefence = getMod(scores.knowledge) + Math.floor(scores.speed / 2) + prof + natArmor;
-            const attackOverride = document.getElementById('m-atk-override').value;
-            const defenceOverride = document.getElementById('m-def-override').value;
-            const atkBonus = attackOverride === '' ? calculatedAttack : parseInt(attackOverride);
-            const dbBonus = defenceOverride === '' ? calculatedDefence : parseInt(defenceOverride);
+            const attackAdjustment = Number(document.getElementById('m-atk-override').value) || 0;
+            const defenceAdjustment = Number(document.getElementById('m-def-override').value) || 0;
+            const atkBonus = calculatedAttack + attackAdjustment;
+            const dbBonus = calculatedDefence + defenceAdjustment;
             
             document.getElementById('out-atk-bonus').innerText = `+${atkBonus}`;
             document.getElementById('out-db').innerText = dbBonus;
             document.getElementById('sheet-attack').value = atkBonus;
             document.getElementById('sheet-defence').value = dbBonus;
+            syncCombatOverrideDisplay();
             document.getElementById('sheet-threat').value = threat;
             document.getElementById('sheet-threat-label').innerText = `${threat}% · Prof +${prof}`;
             document.getElementById('sheet-armour').value = natArmor;
@@ -1987,8 +2104,8 @@
                 woundState: document.getElementById('sheet-wound').value,
                 weakness: document.getElementById('m-weakness').value,
                 notes: document.getElementById('m-notes').value,
-                attackOverride: document.getElementById('m-atk-override').value,
-                defenceOverride: document.getElementById('m-def-override').value,
+                attackAdjustment: document.getElementById('m-atk-override').value || '0',
+                defenceAdjustment: document.getElementById('m-def-override').value || '0',
                 actions: actionsList
             };
         }
@@ -2050,8 +2167,19 @@
             
             document.getElementById('m-weakness').value = data.weakness || '';
             document.getElementById('m-notes').value = data.notes || '';
-            document.getElementById('m-atk-override').value = data.attackOverride || '';
-            document.getElementById('m-def-override').value = data.defenceOverride || '';
+            const calculatedBonuses = getCalculatedCombatBonuses();
+            const attackAdjustment = Object.prototype.hasOwnProperty.call(data, 'attackAdjustment')
+                ? Number(data.attackAdjustment)
+                : data.attackOverride === '' || data.attackOverride == null
+                    ? 0
+                    : Number(data.attackOverride) - calculatedBonuses.attack;
+            const defenceAdjustment = Object.prototype.hasOwnProperty.call(data, 'defenceAdjustment')
+                ? Number(data.defenceAdjustment)
+                : data.defenceOverride === '' || data.defenceOverride == null
+                    ? 0
+                    : Number(data.defenceOverride) - calculatedBonuses.defence;
+            document.getElementById('m-atk-override').value = Number.isFinite(attackAdjustment) && attackAdjustment !== 0 ? String(attackAdjustment) : '';
+            document.getElementById('m-def-override').value = Number.isFinite(defenceAdjustment) && defenceAdjustment !== 0 ? String(defenceAdjustment) : '';
             document.getElementById('sheet-wound').value = data.woundState || 'healthy';
             setWoundState(document.getElementById('sheet-wound').value);
             syncCombatOverrideDisplay();
@@ -2560,6 +2688,141 @@ function importMonsterJSON(event) {
         }
 
         // --- AI Generation Logic ---
+        function openMonsterFixer() {
+            const current = getCurrentData();
+            if (!current.name.trim() || current.name.trim() === 'Unnamed') return alert('Give the monster a name before asking the fixer to review it.');
+            document.getElementById('monster-fixer-original').value = JSON.stringify(current, null, 2);
+            document.getElementById('monster-fixer-revised').value = '';
+            document.getElementById('monster-fixer-api-key').value = localStorage.getItem('demigods_api_key') || '';
+            document.getElementById('monster-fixer-status').innerText = 'Review the current version, then request a proposed fix.';
+            document.getElementById('monster-fixer-run').disabled = false;
+            document.getElementById('monster-fixer-modal').classList.remove('hidden');
+        }
+
+        function closeMonsterFixer() {
+            document.getElementById('monster-fixer-modal').classList.add('hidden');
+        }
+
+        function parseMonsterFixVersion(side) {
+            const element = document.getElementById(`monster-fixer-${side}`);
+            let monster;
+            try {
+                monster = JSON.parse(element.value);
+            } catch {
+                throw new Error(`${side === 'original' ? 'Current' : 'Fixed'} version is not valid JSON.`);
+            }
+            return validateMonsterRecord(monster);
+        }
+
+        function transferMonsterFixField(direction) {
+            const [sourceSide, targetSide] = direction === 'original-to-revised'
+                ? ['original', 'revised']
+                : ['revised', 'original'];
+            const source = document.getElementById(`monster-fixer-${sourceSide}`);
+            const target = document.getElementById(`monster-fixer-${targetSide}`);
+            const field = document.getElementById('monster-fixer-transfer-field').value;
+            try {
+                const sourceData = JSON.parse(source.value);
+                const targetData = JSON.parse(target.value || '{}');
+                if (!sourceData || typeof sourceData !== 'object' || Array.isArray(sourceData)
+                    || !targetData || typeof targetData !== 'object' || Array.isArray(targetData)) {
+                    throw new Error('Both editors must contain JSON objects.');
+                }
+                if (!Object.prototype.hasOwnProperty.call(sourceData, field)) throw new Error(`The source version has no "${field}" field.`);
+                targetData[field] = JSON.parse(JSON.stringify(sourceData[field]));
+                target.value = JSON.stringify(targetData, null, 2);
+                document.getElementById('monster-fixer-status').innerText = `${field} copied from ${sourceSide === 'original' ? 'current' : 'fixed'} to ${targetSide === 'original' ? 'current' : 'fixed'}.`;
+            } catch (error) {
+                document.getElementById('monster-fixer-status').innerText = error.message;
+            }
+        }
+
+        async function runMonsterFixer() {
+            const key = document.getElementById('monster-fixer-api-key').value.trim();
+            if (!key) return alert('Please enter your Gemini API Key.');
+            let current;
+            try {
+                current = parseMonsterFixVersion('original');
+            } catch (error) {
+                document.getElementById('monster-fixer-status').innerText = error.message;
+                return;
+            }
+            localStorage.setItem('demigods_api_key', key);
+            const button = document.getElementById('monster-fixer-run');
+            button.disabled = true;
+            document.getElementById('monster-fixer-status').innerText = 'Checking the monster against the Demigods rules...';
+            try {
+                const prompt = `${MONSTER_SYSTEM_RULES}
+
+TASK:
+Review and repair the following existing monster. Keep its name and recognizable identity, established lore, user-authored notes, and any already-valid unique abilities. Preserve notes exactly; do not replace them with generated commentary. Correct stats, Threat, Scale, Natural Armour, attack/defence adjustments, wound/effect language, action mechanics, invalid tags, and any other data that conflicts with the rules above. Preserve the existing action variety and number where possible; do not force a standard set or remove a valid ability just to simplify the list. Do not invent mythological claims for a custom creature. Fill missing required data with conservative, system-legal values. Keep its name exactly "${current.name.replace(/"/g, '\\"')}". Return only the repaired monster record, no report or explanation.
+
+CURRENT MONSTER:
+${JSON.stringify(current)}
+
+OUTPUT FORMAT:
+Return ONLY valid JSON matching this schema:
+${MONSTER_JSON_SCHEMA}`;
+                const fixed = await requestGeminiMonster(key, prompt);
+                if (fixed.name.trim().toLowerCase() !== current.name.trim().toLowerCase()) {
+                    throw new Error('The fixer changed the monster name. Please run it again or correct the name in the proposed JSON.');
+                }
+                if (current.id) fixed.id = current.id;
+                document.getElementById('monster-fixer-revised').value = JSON.stringify(fixed, null, 2);
+                document.getElementById('monster-fixer-both-name').value = '';
+                document.getElementById('monster-fixer-status').innerText = 'Proposed fix ready. Compare, edit, or transfer fields before choosing a version.';
+            } catch (error) {
+                document.getElementById('monster-fixer-status').innerText = `Fix failed: ${error.message}`;
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function chooseMonsterFixVersion(choice) {
+            try {
+                if (choice === 'original') {
+                    populateForm(parseMonsterFixVersion('original'));
+                    updatePreview();
+                    closeMonsterFixer();
+                    return;
+                }
+                const fixed = parseMonsterFixVersion('revised');
+                if (choice === 'revised') {
+                    populateForm(fixed);
+                    updatePreview();
+                    closeMonsterFixer();
+                    return;
+                }
+                const original = parseMonsterFixVersion('original');
+                const newName = document.getElementById('monster-fixer-both-name').value.trim();
+                if (!newName) throw new Error('Enter a distinct new name before keeping both versions.');
+                if (newName.toLowerCase() === original.name.trim().toLowerCase()) throw new Error('The new version must have a different name from the current monster.');
+                const bestiary = getStoredBestiary();
+                if (bestiary.some(monster => (monster.name || '').trim().toLowerCase() === newName.toLowerCase())) {
+                    throw new Error(`"${newName}" already exists in the Bestiary. Choose another name.`);
+                }
+                const originalIndex = bestiary.findIndex(monster => (monster.name || '').trim().toLowerCase() === original.name.trim().toLowerCase());
+                if (originalIndex >= 0) {
+                    original.id = bestiary[originalIndex].id;
+                    bestiary[originalIndex] = original;
+                } else {
+                    original.id = original.id || `monster-${Date.now()}`;
+                    bestiary.push(original);
+                }
+                fixed.id = `monster-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                fixed.name = newName;
+                bestiary.push(fixed);
+                persistBestiary(bestiary);
+                renderBestiary();
+                populateForm(fixed);
+                updatePreview();
+                closeMonsterFixer();
+                alert(`Kept "${original.name}" and saved "${newName}" as a separate Bestiary entry.`);
+            } catch (error) {
+                document.getElementById('monster-fixer-status').innerText = error.message;
+            }
+        }
+
         function openAIBoxTrigger() {
             const currentName = document.getElementById('m-name').value.trim();
             // Ask to save only if there is actually data typed in
@@ -2634,6 +2897,66 @@ function importMonsterJSON(event) {
             localStorage.setItem('demigods_no_pile', JSON.stringify(names));
         }
 
+        function validateMonsterRecord(monster) {
+            if (!monster || typeof monster !== 'object' || Array.isArray(monster)) throw new Error('Monster data must be a JSON object.');
+            if (typeof monster.name !== 'string' || !monster.name.trim()) throw new Error('Monster name is required.');
+            if (typeof monster.desc !== 'string') throw new Error('Monster description must be text.');
+            const scaleMatch = typeof monster.scale === 'string' && monster.scale.match(/^Scale ([0-5])(?:\b| )/);
+            if (!scaleMatch) throw new Error('Scale must be from Scale 0 through Scale 5.');
+            const threat = Number(monster.threat);
+            if (!Number.isInteger(threat) || threat < 1 || threat > 100) throw new Error('Threat must be a whole number from 1 to 100.');
+            const armour = Number(monster.natArmor);
+            const armourCap = Math.min(12, Math.round(2 + threat / 18 + Number(scaleMatch[1]) / 2));
+            if (!Number.isInteger(armour) || armour < 0 || armour > armourCap) throw new Error(`Natural Armour must be a whole number from 0 to ${armourCap} for this Threat and Scale.`);
+            if (!['normal', 'mortal_immunity', 'epic_invulnerability'].includes(monster.resRule)) throw new Error('Damage Rule must be normal, mortal_immunity, or epic_invulnerability.');
+            if (!['healthy', 'wounded', 'bloodied', 'dying', 'dead'].includes(monster.woundState)) throw new Error('Wound State is invalid.');
+            const stats = ['power', 'speed', 'endurance', 'knowledge', 'instinct', 'influence'];
+            if (!monster.stats || stats.some(stat => !Number.isFinite(Number(monster.stats[stat])))) throw new Error('All six ability scores must be numeric.');
+            ['attackAdjustment', 'defenceAdjustment'].forEach(field => {
+                if (monster[field] != null && !Number.isFinite(Number(monster[field]))) throw new Error(`${field} must be a signed numeric adjustment.`);
+            });
+            const movementTypes = ['walk', 'fly', 'swim', 'climb', 'burrow', 'hover'];
+            if (!monster.movements || movementTypes.some(type =>
+                !monster.movements[type] || typeof monster.movements[type].c !== 'boolean' || !Number.isFinite(Number(monster.movements[type].s))
+            )) throw new Error('Movement must include a boolean and numeric speed for each movement type.');
+            if (!Array.isArray(monster.actions)) throw new Error('Actions must be a list.');
+            const validTags = ['Minor', 'Major', 'Reaction', 'Legendary'];
+            monster.actions.forEach((action, index) => {
+                if (!action || typeof action.name !== 'string' || !action.name.trim() || typeof action.desc !== 'string' || !action.desc.trim()) {
+                    throw new Error(`Action ${index + 1} needs a name and complete description.`);
+                }
+                if (!validTags.includes(action.tag)) throw new Error(`Action ${index + 1} has an invalid tag.`);
+            });
+            return monster;
+        }
+
+        async function requestGeminiMonster(apiKey, prompt) {
+            const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=" + encodeURIComponent(apiKey), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                if (response.status === 429) {
+                    throw new Error("High Usage / Quota Exceeded. Wait for the API rate limit to clear or check Google Cloud Billing.");
+                }
+                throw new Error(data.error?.message || `Gemini API request failed (${response.status}).`);
+            }
+            const output = data.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
+            if (!output) throw new Error('Gemini returned no monster JSON. Check the API response or try again.');
+            let monster;
+            try {
+                monster = JSON.parse(output);
+            } catch {
+                throw new Error('Gemini did not return valid JSON. Try again or simplify the request.');
+            }
+            return validateMonsterRecord(monster);
+        }
+
         function addCurrentMonsterToNoPile() {
             const name = document.getElementById('m-name').value.trim();
             if (!name || name === 'Unnamed') return alert('Give the monster a name before adding it to the no pile.');
@@ -2688,88 +3011,21 @@ function importMonsterJSON(event) {
             document.getElementById('ai-status').innerText = 'Consulting the oracles...';
             
             const promptContext = window.aiRandomGeneration
-                ? `Research widely across reliable mythology references and choose ONE genuinely attested mythological creature, god, spirit, or being that is not in the excluded lists below. Return a new bestiary entry based on that real myth. Do not invent, combine, rename, reskin, use an alternate spelling of, or suggest options for an excluded creature. Exclude Bestiary names: ${getStoredBestiary().map(monster => monster.name).join(' | ') || 'none'}. Exclude no-pile names: ${getNoPileNames().join(' | ') || 'none'}.`
-                : mode === 'myth' 
-                ? `Use the real mythology of "${desc}" as the primary source. Include only powers, actions, traits, weaknesses, or stories genuinely associated with that creature or figure. Do not add generic fantasy abilities merely to fill space. If mythology is uncertain, keep the entry restrained and do not put the uncertainty in Sheet Notes.` 
-                : `Create a completely brand new, custom monster based on this description: "${desc}".`;
+                ? `Choose ONE genuinely attested mythological creature, god, spirit, or being that is not in either excluded list. Use established mythology knowledge; do not claim live research or invent a source. Do not invent, combine, rename, reskin, or use an alternate spelling of an excluded creature. Excluded Bestiary names: ${getStoredBestiary().map(monster => monster.name).join(' | ') || 'none'}. Excluded no-pile names: ${getNoPileNames().join(' | ') || 'none'}.`
+                : mode === 'myth'
+                    ? `Create an entry for the real mythological creature or figure named/described here: "${desc}". Preserve its actual myth identity and include only powers, actions, traits, and stories genuinely associated with it. Do not add generic fantasy abilities to fill action categories. If unsure about a detail, omit it rather than inventing lore.`
+                    : `Create a new fictional monster (not an existing mythological being) from this user-provided name/concept: "${desc}". Follow the requested concept without adding unrelated abilities.`;
 
-            const fullPrompt = `You are an expert TTRPG monster designer for the 'Demigods' system.
-            
-            SYSTEM RULES:
-            - Scale goes from "Scale 0 (Tiny)" to "Scale 5 (Divine)".
-            - Threat goes from 1 to 100.
-            - Use the accepted bestiary as the balance baseline: ordinary monsters usually have stats 8-20 and natural armour 0-6. Do not use 22-24 stats or natural armour above 8 below Threat 86 unless the creature is explicitly an exceptional high-tier threat.
-            - Threat is a non-linear difficulty guide, not permission to max every stat. A Threat 40-60 monster should usually have attack bonuses around +4 to +9 and Defence around 12-22 after the displayed formulas.
-            - Natural armour guideline: keep it at or below the frontend cap of round(2 + Threat/18 + Scale/2), maximum 12. High natural armour must be justified by the creature concept.
-            - The six ability scores are Power, Speed, Endurance, Knowledge, Instinct, and Influence. Map the creature's physical, mental, sensory, and social qualities to those fields; do not invent extra score keys.
-            - Every action/ability must have exactly one valid type: "Minor", "Major", "Reaction", or "Legendary". Choose a genuinely myth-faithful, irregular array: the creature may have several Major actions, several Minor actions, multiple Reactions, Legendary actions, or any combination. Never default to one Major, one Minor, and one Reaction. Do not add filler abilities or force balanced categories.
-            - Abilities are effects, not just attack names. This system tracks Wounds rather than conventional hit-point damage: never write damage dice, damage points, damage bonuses, "deals X damage", or similar conventional damage language. Attacks should describe an Attack Roll vs {DEF} and what Wound, condition, displacement, restraint, transformation, or other consequence occurs on a hit. Use "{ATK}" and "{DEF}" exact placeholders only where the frontend's calculated Attack or Defence should be inserted.
-            - Damage rules are distinct: "normal" uses ordinary vulnerability; "mortal_immunity" means mundane/non-divine damage cannot harm the creature but divine or mythic sources can; "epic_invulnerability" means only the explicitly described Fatal Weakness can truly harm or kill it. Choose the least extreme rule that fits and make the Fatal Weakness a concrete gameplay puzzle.
-            - A creature may have no special damage rule, no actions, one action, or any number of meaningful actions from 1-6. There is no fixed ability layout.
-            - Map every returned field to the editor: identity, scale/alignment/origin/environment, threat, natural armour, movement flags and speeds, six stats, damage rule, fatal weakness, optional attack/defence overrides, wound state, and actions.
-            - The "notes" field must always be an empty string. Never write research commentary, uncertainty, citations, or custom instructions into Sheet Notes.
-            - Add an origin using the closest matching region from the available pantheons, or Misc if none fits.
-            - Add an environment tag using a likely habitat: choose from Ocean, Skies, Sand, Swamp, Snow, Forest, Mountain, Ruins, Caverns, Plains, Volcanic, Tundra, City, Underground, or Misc.
-            - Return the number of actions the myth actually supports, from 1-6. Preserve strange or uneven arrangements; do not normalize the result to one Major, one Minor, and one Reaction. Prefer every distinct myth-attested ability over generic combat completeness.
-            - Prefer unusual, specific abilities over common filler. Every action must be meaningfully different and tied to the creature's myth or concept.
-            - Follow the user's description and constraints before adding any general system assumptions.
-            
-            TASK:
-            ${promptContext}
-            
-            OUTPUT FORMAT:
-            Return ONLY raw, valid JSON. No markdown wrappers. Use this exact structure:
-            {
-              "name": "String",
-              "desc": "String",
-              "scale": "String like 'Scale 2 (Large)'",
-              "align": "String",
-              "origin": "One available pantheon/region or Misc",
-              "environment": "One likely habitat from the allowed list or Misc",
-              "threat": "String (number 1-100)",
-              "natArmor": "String",
-              "movements": {
-                "walk": {"c": boolean, "s": "String number"},
-                "fly": {"c": boolean, "s": "String number"},
-                "swim": {"c": boolean, "s": "String number"},
-                "climb": {"c": boolean, "s": "String number"},
-                "burrow": {"c": boolean, "s": "String number"},
-                "hover": {"c": boolean, "s": "String number"},
-                "custom": "String"
-              },
-              "stats": { "power": "String", "speed": "String", "endurance": "String", "knowledge": "String", "instinct": "String", "influence": "String" },
-              "resRule": "normal, mortal_immunity, or epic_invulnerability",
-              "weakness": "String describing a fatal weakness puzzle",
-              "notes": "Always empty string",
-              "woundState": "healthy",
-              "attackOverride": "String number or empty string",
-              "defenceOverride": "String number or empty string",
-              "actions": [
-                { "name": "String", "tag": "Exactly one of: Minor, Major, Reaction, Legendary", "desc": "String describing the complete effect; may use {ATK} or {DEF}" }
-              ]
-            }`;
+            const fullPrompt = `${MONSTER_SYSTEM_RULES}
 
+TASK:
+${promptContext}
+
+OUTPUT FORMAT:
+Return ONLY valid JSON, with no markdown or commentary, matching this schema:
+${MONSTER_JSON_SCHEMA}`;
             try {
-                // Updated Endpoint to the current default robust model: gemini-3.5-flash-lite
-                const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=" + apiKey, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: fullPrompt }] }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    if (response.status === 429) {
-                        throw new Error("High Usage / Quota Exceeded. You have hit the API rate limit. Please wait a moment for your quota to clear or check your Google Cloud Billing.");
-                    }
-                    throw new Error(data.error?.message || "Unknown API Error");
-                }
-                
-                const monsterData = JSON.parse(data.candidates[0].content.parts[0].text);
+                const monsterData = await requestGeminiMonster(apiKey, fullPrompt);
 
                 if (window.aiRandomGeneration) {
                     const generatedName = (monsterData.name || '').trim().toLowerCase();
@@ -2779,58 +3035,8 @@ function importMonsterJSON(event) {
                         throw new Error(duplicate ? 'The oracle returned a creature already excluded. Retrying automatically.' : 'The oracle returned a creature without a name. Retrying automatically.');
                     }
                 }
-                
-                document.getElementById('m-name').value = monsterData.name || 'Unknown Entity';
-                document.getElementById('m-desc').value = monsterData.desc || '';
-
-                const originSelect = document.getElementById('m-origin');
-                originSelect.value = Array.from(originSelect.options).some(o => o.value === monsterData.origin) ? monsterData.origin : 'Misc';
-
-                const environmentSelect = document.getElementById('m-environment');
-                const chosenEnvironment = (monsterData.environment || 'Misc');
-                environmentSelect.value = Array.from(environmentSelect.options).some(o => o.value === chosenEnvironment) ? chosenEnvironment : 'Misc';
-                document.getElementById('m-notes').value = '';
-                
-                const scaleSelect = document.getElementById('m-scale');
-                if(Array.from(scaleSelect.options).some(o => o.value === monsterData.scale)) scaleSelect.value = monsterData.scale;
-                
-                const alignSelect = document.getElementById('m-align');
-                if(Array.from(alignSelect.options).some(o => o.value === monsterData.align)) alignSelect.value = monsterData.align;
-                
-                document.getElementById('m-threat-num').value = monsterData.threat || '50';
-                syncThreatFromNum();
-                document.getElementById('m-nat-armour').value = boundedNaturalArmor(parseInt(monsterData.threat) || 50, monsterData.scale || 'Scale 1 (Mortal)', monsterData.natArmor);
-                
-                ['walk','fly','swim','climb','burrow','hover'].forEach(t => {
-                    if(monsterData.movements && monsterData.movements[t]) {
-                        document.getElementById(`mv-${t}-check`).checked = monsterData.movements[t].c;
-                        document.getElementById(`mv-${t}-spd`).value = monsterData.movements[t].s;
-                    }
-                });
-                if(monsterData.movements) document.getElementById('mv-custom').value = monsterData.movements.custom || '';
-                
-                ['power','speed','endurance','knowledge','instinct','influence'].forEach(s => {
-                    if(monsterData.stats && monsterData.stats[s]) document.getElementById(`m-${s}`).value = monsterData.stats[s];
-                });
-                
-                if(monsterData.resRule) {
-                    const rb = document.querySelector(`input[name="res-rule"][value="${monsterData.resRule}"]`);
-                    if(rb) rb.checked = true;
-                }
-                
-                document.getElementById('m-weakness').value = monsterData.weakness || '';
-                document.getElementById('m-atk-override').value = monsterData.attackOverride || '';
-                document.getElementById('m-def-override').value = monsterData.defenceOverride || '';
-                if (monsterData.woundState && document.querySelector(`#sheet-wound option[value="${monsterData.woundState}"]`)) {
-                    document.getElementById('sheet-wound').value = monsterData.woundState;
-                    setWoundState(monsterData.woundState);
-                }
-                syncCombatOverrideDisplay();
-                
-                actionsList = monsterData.actions || [];
-                actionsList.forEach(a => { if(!a.id) a.id = Date.now() + Math.random(); });
-                
-                renderActions();
+                if (!monsterData.id) monsterData.id = Date.now().toString();
+                populateForm(monsterData);
                 updatePreview();
                 if (!window.aiRandomGeneration) closeAIBox();
 

@@ -412,6 +412,14 @@ const randomNames = [
     "Orion", "Elysia", "Darius", "Nova", "Gael", 
     "Atalanta", "Sylas", "Thorne", "Vesper", "Cyrus"
 ];
+const NAME_PREFIXES = ["Aer", "Thal", "Cor", "Ely", "Mar", "Valen", "Syl", "Drak", "Fen", "Lir", "Tor", "Vor", "Kel", "Mer", "Nor", "Pal", "Qir", "Rin", "Ser", "Ul", "Wyn", "Xal", "Yar", "Zeph", "Gal", "Hael", "Iss", "Jar", "Lis", "Myr", "Nys", "Ori", "Pyr", "Quo", "Rha", "Sun", "Tal", "Uri", "Vel", "Xan", "Yel", "Zar", "Bran", "Cai", "Den", "Eon"];
+const NAME_CORES = ["dor", "thys", "riel", "mark", "wen", "var", "neth", "mir", "hyn", "sal", "lun", "tor", "kai", "rec", "fal", "ion", "iar", "ara", "enn", "ora", "eth", "ael", "ian", "orin", "alan", "eris", "yra", "en", "on", "ir", "us", "al", "is", "ar", "os", "um", "ex", "ux", "yx", "ae", "oe", "ue", "ui", "yion", "ean"];
+const NAME_SUFFIXES = ["ion", "as", "or", "is", "an", "yr", "en", "et", "ix", "os", "um", "ar", "el", "ud", "us", "es", "al", "on", "ir", "ys", "ai", "ea", "oa"];
+const generateRandomName = () => {
+    const pick = (parts) => parts[Math.floor(Math.random() * parts.length)];
+    const name = pick(NAME_PREFIXES) + pick(NAME_CORES) + pick(NAME_SUFFIXES);
+    return name.charAt(0).toUpperCase() + name.slice(1);
+};
 
 // Simplified Wounds with individual descriptions
 const woundStates = [
@@ -1507,20 +1515,37 @@ abilitiesLibrary.forEach(ability => {
 
     </style>
 <style>
-@media screen and (min-width:768px) {
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] .play-layout { grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; gap:10px; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] .play-layout > section { display:contents; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel] { min-width:0; padding:12px; align-self:start; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="identity"] { order:1; grid-column:1; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="vitals"] { order:2; grid-column:2; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="power"] { order:3; grid-column:3; grid-row:1 / span 2; gap:12px; max-height:52vh; overflow-y:auto; scrollbar-width:thin; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="attributes"] { order:4; grid-column:1; max-height:20vh; overflow-y:auto; scrollbar-width:thin; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="armour"] { order:5; grid-column:2; gap:12px; max-height:20vh; overflow-y:auto; scrollbar-width:thin; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="gifts"] { order:6; grid-column:1 / -1; }
+    html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="power"] .flex.items-center.gap-3.w-full > div { flex-wrap:wrap; }
+    html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-quick-cast] { display:none; }
+    @media screen and (min-width:1280px) {
+      #theme-wrapper[data-theme="relic"] > .max-w-7xl { width:100%; max-width:none; padding-inline:clamp(16px,2vw,32px); }
+    }
+    @media screen and (min-width:768px) {
+      html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] .play-layout { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:12px; }
+    }
+@media screen and (min-width:768px) and (max-width:959px) {
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="identity"] { flex-direction:column; }
+}
+@media screen and (min-width:768px) and (max-width:1279px) {
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="attributes"] .grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media screen and (min-width:1280px) {
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] .play-layout { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:12px; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] .play-layout > section { display:flex; flex-direction:column; gap:12px; min-width:0; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] .play-layout > section:first-child { grid-column:1; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] .play-layout > section:last-child { grid-column:2; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel] { width:100%; min-width:0; max-height:none; overflow:visible; align-self:stretch; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="armour"] { max-height:46vh; overflow-y:auto; scrollbar-width:thin; padding:12px; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="vitals"] { order:1; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="armour"] { order:2; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="identity"] { order:3; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="power"] { order:1; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="gifts"] { order:2; flex:initial; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="attributes"] { order:3; }
   html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="skills"] { display:none; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="gifts"] > .grid.max-h-\[500px\] { max-height:25vh; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="gifts"] > .grid.max-h-\[500px\] { max-height:45vh; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
   html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="gifts"] > .grid.max-h-\[500px\] > [id^="ability-"] { padding:10px; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="power"] .max-h-\[350px\] { max-height:26vh; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="power"] .max-h-\[350px\] { max-height:40vh; }
   html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="attributes"] .grid { gap:8px; }
 }
 @media screen and (max-width:767px) {
@@ -1531,7 +1556,12 @@ abilitiesLibrary.forEach(ability => {
   html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="attributes"],
   html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="armour"],
   html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="gifts"] { grid-column:1; grid-row:auto; }
-  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="gifts"] > .grid.max-h-\[500px\] { max-height:38vh; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="gifts"] > .grid.max-h-\[500px\] { max-height:38vh; grid-template-columns:minmax(0,1fr); }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="identity"] .grid.grid-cols-2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="identity"] .grid.grid-cols-3 { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="identity"] .tooltip-box { left:auto !important; right:0; width:min(250px,calc(100vw - 32px)); max-width:calc(100vw - 32px); }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="vitals"] { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="vitals"] > div { min-width:0; }
   html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="power"],
   html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="attributes"],
   html[data-play-layout="battle"] [data-theme="relic"][data-mode="play"] [data-play-panel="armour"] { max-height:none; overflow:visible; }
@@ -1610,7 +1640,7 @@ abilitiesLibrary.forEach(ability => {
                                         <div>
                                             <label class="text-[10px] uppercase tracking-widest font-bold text-[#8b6d43] block">Pantheon</label>
                                             <select v-if="currentMode === 'edit'" :value="char.pantheon" @change="changePantheon" class="w-full border-b border-[#6b5233]/60 text-sm font-bold uppercase text-[#cba871] py-1 cursor-pointer no-print">
-                                                <option v-for="(p, name) in pantheons" :key="name" :value="name">{{ name }}</option>
+                                                <option v-for="name in pantheonNames" :key="name" :value="name">{{ name }}</option>
                                             </select>
                                             <span v-else class="block w-full border-b border-[#6b5233]/60 text-sm font-bold uppercase text-[#cba871] py-1 truncate no-print">{{ char.pantheon }}</span>
                                             <span class="print-only block w-full border-b border-gray-400 text-sm font-bold uppercase text-black py-1 truncate">{{ char.pantheon }}</span>
@@ -1658,19 +1688,19 @@ abilitiesLibrary.forEach(ability => {
                                             <label class="text-[10px] uppercase tracking-widest font-bold text-[#8b6d43] block">Alignment</label>
                                             <select v-model="char.alignment" :disabled="currentMode === 'play'" class="w-full border-b border-[#6b5233]/50 text-sm text-[#d6c6ad] py-1 cursor-pointer no-print">
                                                 <option value="">Select...</option>
-                                                <option>Lawful Good</option>
-                                                <option>Neutral Good</option>
+                                                <option>Absolute Law</option>
+                                                <option>Chaotic Evil</option>
                                                 <option>Chaotic Good</option>
-                                                <option>Lawful Neutral</option>
-                                                <option>True Neutral</option>
                                                 <option>Chaotic Neutral</option>
                                                 <option>Lawful Evil</option>
-                                                <option>Neutral Evil</option>
-                                                <option>Chaotic Evil</option>
-                                                <option>Absolute Law</option>
-                                                <option>Pure Chaos</option>
-                                                <option>Mythic Good</option>
+                                                <option>Lawful Good</option>
+                                                <option>Lawful Neutral</option>
                                                 <option>Mythic Evil</option>
+                                                <option>Mythic Good</option>
+                                                <option>Neutral Evil</option>
+                                                <option>Neutral Good</option>
+                                                <option>Pure Chaos</option>
+                                                <option>True Neutral</option>
                                                 <option>Unaligned</option>
                                             </select>
                                             <span class="print-only block w-full border-b border-gray-400 text-sm text-black py-1 truncate">{{ char.alignment || 'None' }}</span>
@@ -1739,7 +1769,7 @@ abilitiesLibrary.forEach(ability => {
                                 <div class="group relative hover:z-[60]">
                                     <label class="text-xs uppercase font-bold tracking-widest text-[#8b6d43] block mb-1">Armour Class</label>
                                     <select v-model="char.equippedArmour" class="w-full bg-black/20 border-b-2 border-[#6b5233]/60 p-2 text-sm font-bold text-[#ebd9b9] hover:bg-black/30 transition-colors cursor-pointer no-print">
-                                        <option v-for="a in armourRegistry" :key="a.tier" :value="a.tier">
+                                        <option v-for="a in sortedArmourRegistry" :key="a.tier" :value="a.tier">
                                             {{ a.tier }} [DB: +{{ a.bonus }}, Pen: {{ a.penalty }}]
                                         </option>
                                     </select>
@@ -1752,7 +1782,7 @@ abilitiesLibrary.forEach(ability => {
                                         <label class="text-[10px] uppercase font-bold tracking-widest text-indigo-200 block mb-1">Primary Proficiency</label>
                                         <select v-if="currentMode === 'edit' && char.canChooseMagic" :value="char.magicProficiency || ''" @change="setMagicProficiency($event.target.value)" class="w-full bg-black/30 border-b border-indigo-800/50 p-1.5 text-sm font-bold text-[#ebd9b9] cursor-pointer no-print">
                                             <option value="">Weapon Master</option>
-                                            <option v-for="magic in magicProficiencies" :key="magic.type" :value="magic.type">{{ magic.type }}</option>
+                                            <option v-for="magic in sortedMagicProficiencies" :key="magic.type" :value="magic.type">{{ magic.type }}</option>
                                         </select>
                                         <div v-else class="text-sm font-bold text-[#ebd9b9] py-1">{{ magicSelection ? magicSelection.type : 'Weapon Master' }}</div>
                                         <p class="text-[10px] text-[#a3947c] mt-1">{{ char.canChooseMagic ? 'Choose or change this preset in Edit Mode. Magic sacrifices the primary hand.' : 'This legacy character is locked to Weapon Master.' }}</p>
@@ -1933,8 +1963,8 @@ abilitiesLibrary.forEach(ability => {
                                 <div class="flex gap-2 no-print">
                                     <input type="text" v-model="newSkillName" placeholder="Skill/Save" class="w-full text-xs p-2 border border-[#6b5233]/50 rounded bg-black/30 focus:border-[#cba871] transition-colors">
                                     <select v-model="newSkillStat" class="text-xs p-2 border border-[#6b5233]/50 rounded bg-black/30 text-[#ebd9b9]">
-                                        <option value="power">Power</option> <option value="speed">Speed</option> <option value="endurance">Endurance</option>
-                                        <option value="knowledge">Knowledge</option> <option value="instinct">Instinct</option> <option value="influence">Influence</option>
+                                        <option value="endurance">Endurance</option> <option value="influence">Influence</option> <option value="instinct">Instinct</option>
+                                        <option value="knowledge">Knowledge</option> <option value="power">Power</option> <option value="speed">Speed</option>
                                     </select>
                                     <button @click="addSkill" class="bg-[#241c14] border border-[#6b5233] text-[#cba871] px-3 py-1 text-sm rounded hover:bg-[#382b1f] hover:text-white font-bold transition-colors shadow-sm">+</button>
                                 </div>
@@ -1970,7 +2000,7 @@ abilitiesLibrary.forEach(ability => {
                                             <button @click="increaseActivePotd" class="no-print text-2xl text-[#8b6d43] hover:text-indigo-400 px-2 font-black transition-colors">+</button>
                                         </div>
 
-                                        <div class="w-full mt-4 relative no-print" :class="quickCastOpen ? 'z-[100]' : 'z-10'" v-click-outside="() => quickCastOpen = false">
+                                        <div data-quick-cast class="w-full mt-4 relative no-print" :class="quickCastOpen ? 'z-[100]' : 'z-10'" v-click-outside="() => quickCastOpen = false">
                                             <button @click="quickCastOpen = !quickCastOpen" class="w-full py-2.5 px-4 bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-900/30 text-indigo-200 rounded flex justify-between items-center text-xs font-bold uppercase tracking-widest transition-all shadow-sm">
                                                 <span><i class="fa-solid fa-bolt mr-2"></i>Quick-Cast Abilities</span>
                                                 <i :class="quickCastOpen ? 'fa-solid fa-chevron-up text-[#ebd9b9]' : 'fa-solid fa-chevron-down text-[#8b6d43]'"></i>
@@ -2102,7 +2132,6 @@ abilitiesLibrary.forEach(ability => {
                                         </div>
                                     </div>
                                 </div>
-                                
                                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     <div v-for="(score, stat) in char.stats" :key="stat" class="flex flex-col bg-black/20 p-3 rounded border border-[#6b5233]/30 hover:border-[#8b6d43]/60 transition-colors">
                                         <div class="flex justify-between items-center mb-1">
@@ -2140,18 +2169,23 @@ abilitiesLibrary.forEach(ability => {
 
                                 <div v-if="hasLearnedMagic" class="mb-5 rounded border border-indigo-800/40 bg-black/20 p-3 space-y-2">
                                     <div class="flex items-center justify-between border-b border-indigo-800/40 pb-2">
-                                        <h4 class="text-[10px] uppercase tracking-widest font-bold text-indigo-200">Prepared Spells</h4>
+                                        <h4 class="text-[10px] uppercase tracking-widest font-bold text-indigo-200">Prepared Spells & Passive Gifts</h4>
                                         <span class="text-[10px] text-indigo-200">{{ preparedMagicSpent }}/{{ preparedMagicBudget }} AP</span>
                                     </div>
                                     <div v-for="ab in preparedMagicList" :key="'prepared-' + ab.name" class="rounded bg-indigo-950/30 px-3 py-2">
                                         <div class="flex items-center justify-between gap-3">
                                             <span class="text-xs text-[#ebd9b9]">
-                                                <button @click.stop="expandedAbilityId = expandedAbilityId === ab.name ? null : ab.name" class="text-left hover:text-white" :aria-expanded="expandedAbilityId === ab.name" :aria-controls="'prepared-spell-' + ab.name.replace(/\s+/g, '-')">{{ ab.name }}</button>
-                                                <span class="text-[10px] text-indigo-200">T{{ ab.tier }}</span>
+                                                <button @click.stop="expandedAbilityId = expandedAbilityId === ab.name ? null : ab.name" class="text-left hover:text-white" :title="ab.name" :aria-expanded="expandedAbilityId === ab.name" :aria-controls="'prepared-spell-' + ab.name.replace(/\s+/g, '-')">{{ ab.name }}</button>
+                                                <span class="ml-1 text-[10px] text-indigo-200">T{{ ab.tier }}</span>
+                                            </span>
+                                            <span class="flex flex-wrap items-center justify-end gap-1.5">
+                                                <span class="text-[9px] bg-[#241c14] border border-[#4a3a2a] text-[#a3947c] px-1.5 py-0.5 rounded"><i class="fa-solid fa-clock mr-1"></i>{{ ab.action }}</span>
+                                                <span class="text-[9px] bg-indigo-900/30 text-indigo-300 border border-indigo-700/40 px-1.5 py-0.5 rounded"><i class="fa-solid fa-bolt mr-1"></i>{{ ab.cost }}</span>
                                             </span>
                                             <span class="flex items-center gap-2">
                                                 <button v-if="currentMode === 'play'" @click.stop="useAbilityInPlay(ab)" class="text-[9px] px-2 py-1 rounded border border-indigo-500/70 text-indigo-100 font-bold uppercase hover:bg-indigo-800/60">Use</button>
-                                                <button @click.stop="togglePreparedMagic(ab)" class="text-[9px] px-2 py-1 rounded border border-indigo-500/70 text-indigo-100 font-bold uppercase hover:bg-indigo-800/60">Unprepare</button>
+                                                <span v-if="isPassiveAbility(ab)" class="text-[9px] text-indigo-200 font-bold uppercase">Always Prepared</span>
+                                                <button v-else @click.stop="togglePreparedMagic(ab)" class="text-[9px] px-2 py-1 rounded border border-indigo-500/70 text-indigo-100 font-bold uppercase hover:bg-indigo-800/60">Unprepare</button>
                                                 <button v-if="currentMode === 'edit'" @click.stop="refundAbility(ab)" class="text-red-400 hover:text-red-300" title="Remove learned spell"><i class="fa-solid fa-xmark"></i></button>
                                             </span>
                                         </div>
@@ -2168,8 +2202,12 @@ abilitiesLibrary.forEach(ability => {
                                     <div v-for="ab in unpreparedMagicList" :key="'unprepared-' + ab.name" class="rounded bg-black/30 px-3 py-2">
                                         <div class="flex items-center justify-between gap-3">
                                             <span class="text-xs text-[#ebd9b9]">
-                                                <button @click.stop="expandedAbilityId = expandedAbilityId === ab.name ? null : ab.name" class="text-left hover:text-white" :aria-expanded="expandedAbilityId === ab.name" :aria-controls="'unprepared-spell-' + ab.name.replace(/\s+/g, '-')">{{ ab.name }}</button>
-                                                <span class="text-[10px] text-indigo-200">T{{ ab.tier }}</span>
+                                                <button @click.stop="expandedAbilityId = expandedAbilityId === ab.name ? null : ab.name" class="text-left hover:text-white" :title="ab.name" :aria-expanded="expandedAbilityId === ab.name" :aria-controls="'unprepared-spell-' + ab.name.replace(/\s+/g, '-')">{{ ab.name }}</button>
+                                                <span class="ml-1 text-[10px] text-indigo-200">T{{ ab.tier }}</span>
+                                            </span>
+                                            <span class="flex flex-wrap items-center justify-end gap-1.5">
+                                                <span class="text-[9px] bg-[#241c14] border border-[#4a3a2a] text-[#a3947c] px-1.5 py-0.5 rounded"><i class="fa-solid fa-clock mr-1"></i>{{ ab.action }}</span>
+                                                <span class="text-[9px] bg-indigo-900/30 text-indigo-300 border border-indigo-700/40 px-1.5 py-0.5 rounded"><i class="fa-solid fa-bolt mr-1"></i>{{ ab.cost }}</span>
                                             </span>
                                             <span class="flex items-center gap-2">
                                                 <button @click.stop="togglePreparedMagic(ab)" class="text-[9px] px-2 py-1 rounded border border-[#6b5233] text-[#cba871] font-bold uppercase hover:bg-[#2a2118]">Prepare</button>
@@ -2233,13 +2271,14 @@ abilitiesLibrary.forEach(ability => {
 
                                 <div v-if="hasLearnedMagic" class="mb-6 rounded border border-indigo-800/40 bg-black/20 p-3 space-y-2">
                                     <div class="flex items-center justify-between border-b border-indigo-800/40 pb-2">
-                                        <h4 class="text-[10px] uppercase tracking-widest font-bold text-indigo-200">Prepared Spells</h4>
+                                        <h4 class="text-[10px] uppercase tracking-widest font-bold text-indigo-200">Prepared Spells & Passive Gifts</h4>
                                         <span class="text-[10px] text-indigo-200">{{ preparedMagicSpent }}/{{ preparedMagicBudget }} AP</span>
                                     </div>
                                     <div v-for="ab in preparedMagicList" :key="'prepared-' + ab.name" class="flex items-center justify-between gap-3 rounded bg-indigo-950/30 px-3 py-2">
-                                        <span class="text-xs text-[#ebd9b9]">{{ ab.name }} <span class="text-[10px] text-indigo-200">T{{ ab.tier }}</span></span>
+                                        <span class="text-xs text-[#ebd9b9]" :title="ab.name">{{ ab.name }} <span class="text-[10px] text-indigo-200">T{{ ab.tier }}</span></span>
                                         <span class="flex items-center gap-2">
-                                            <button @click.stop="togglePreparedMagic(ab)" class="text-[9px] px-2 py-1 rounded border border-indigo-500/70 text-indigo-100 font-bold uppercase hover:bg-indigo-800/60">Unprepare</button>
+                                            <span v-if="isPassiveAbility(ab)" class="text-[9px] text-indigo-200 font-bold uppercase">Always Prepared</span>
+                                            <button v-else @click.stop="togglePreparedMagic(ab)" class="text-[9px] px-2 py-1 rounded border border-indigo-500/70 text-indigo-100 font-bold uppercase hover:bg-indigo-800/60">Unprepare</button>
                                             <button @click.stop="refundAbility(ab)" class="text-red-400 hover:text-red-300" title="Remove learned spell"><i class="fa-solid fa-xmark"></i></button>
                                         </span>
                                     </div>
@@ -2249,7 +2288,7 @@ abilitiesLibrary.forEach(ability => {
                                         <span class="text-[10px] text-[#cba871]">{{ learnedMagicSpent }}/{{ learnedMagicBudget }} AP + MP</span>
                                     </div>
                                     <div v-for="ab in unpreparedMagicList" :key="'unprepared-' + ab.name" class="flex items-center justify-between gap-3 rounded bg-black/30 px-3 py-2">
-                                        <span class="text-xs text-[#ebd9b9]">{{ ab.name }} <span class="text-[10px] text-indigo-200">T{{ ab.tier }}</span></span>
+                                        <span class="text-xs text-[#ebd9b9]" :title="ab.name">{{ ab.name }} <span class="text-[10px] text-indigo-200">T{{ ab.tier }}</span></span>
                                         <span class="flex items-center gap-2">
                                             <button @click.stop="togglePreparedMagic(ab)" class="text-[9px] px-2 py-1 rounded border border-[#6b5233] text-[#cba871] font-bold uppercase hover:bg-[#2a2118]">Prepare</button>
                                             <button @click.stop="refundAbility(ab)" class="text-red-400 hover:text-red-300" title="Remove learned spell"><i class="fa-solid fa-xmark"></i></button>
@@ -2276,7 +2315,7 @@ abilitiesLibrary.forEach(ability => {
                                                  class="p-4 border-l-4 rounded shadow-sm hover:bg-black/50 transition-all cursor-pointer flex flex-col group print:border-gray-400 print:mb-2 print:border"
                                                  :class="isMagicAbility(ab) ? 'bg-indigo-950/30 border-indigo-500' : 'bg-black/30 border-[#8b6d43]'">
                                                 <div class="flex justify-between items-center w-full gap-2">
-                                                    <h4 class="font-black text-sm md:text-base text-[#ebd9b9] uppercase tracking-wide truncate flex-1 print:text-black">{{ ab.name }}</h4>
+                                                    <h4 class="font-black text-sm md:text-base text-[#ebd9b9] uppercase tracking-wide truncate flex-1 print:text-black" :title="ab.name">{{ ab.name }}</h4>
                                                     <div class="flex flex-wrap items-center gap-1.5 shrink-0">
                                                         <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-teal-900/30 text-teal-500 border border-teal-700/40 uppercase print:text-black print:border-gray-400">T{{ ab.tier }}</span>
                                                         <span class="text-[9px] bg-[#241c14] border border-[#4a3a2a] text-[#a3947c] px-1.5 py-0.5 rounded print:text-black print:border-gray-400"><i class="fa-solid fa-clock mr-1"></i>{{ ab.action }}</span>
@@ -2296,13 +2335,13 @@ abilitiesLibrary.forEach(ability => {
                                 </div>
 
                                 <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div v-for="ab in char.learnedAbilities.filter(a => Number(a.tier) === Number(chosenFilterTier) && (!hasLearnedMagic || !isMagicAbility(a)))" :key="ab.name" 
+                                    <div v-for="ab in sortedLearnedAbilities.filter(a => Number(a.tier) === Number(chosenFilterTier) && (!hasLearnedMagic || !isMagicAbility(a)))" :key="ab.name" 
                                          :id="'ability-' + ab.name.replace(/\s+/g, '-')" 
                                          @click.stop="expandedAbilityId = expandedAbilityId === ab.name ? null : ab.name"
                                          class="p-4 border-l-4 rounded shadow-sm hover:bg-black/50 transition-all cursor-pointer flex flex-col group print:border-gray-400 print:mb-2 print:border"
                                          :class="isMagicAbility(ab) ? 'bg-indigo-950/30 border-indigo-500' : 'bg-black/30 border-[#8b6d43]'">
                                         <div class="flex justify-between items-center w-full gap-2">
-                                            <h4 class="font-black text-sm md:text-base text-[#ebd9b9] uppercase tracking-wide truncate flex-1 print:text-black">{{ ab.name }}</h4>
+                                            <h4 class="font-black text-sm md:text-base text-[#ebd9b9] uppercase tracking-wide truncate flex-1 print:text-black" :title="ab.name">{{ ab.name }}</h4>
                                             <div class="flex flex-wrap items-center gap-1.5 shrink-0">
                                                 <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-teal-900/30 text-teal-500 border border-teal-700/40 uppercase print:text-black print:border-gray-400">T{{ ab.tier }}</span>
                                                 <span class="text-[9px] bg-[#241c14] border border-[#4a3a2a] text-[#a3947c] px-1.5 py-0.5 rounded print:text-black print:border-gray-400"><i class="fa-solid fa-clock mr-1"></i>{{ ab.action }}</span>
@@ -2466,12 +2505,12 @@ abilitiesLibrary.forEach(ability => {
                                                 <input v-model="quest.skill" @input="currentMode === 'edit' && syncQuestProficiency(quest)" placeholder="Skill" class="w-24 text-[9px] p-1 border border-slate-600 rounded bg-black/30 text-slate-100">
                                                 <select v-model="quest.stat" @change="currentMode === 'edit' && syncQuestProficiency(quest)" class="w-24 text-[9px] p-1 border border-slate-600 rounded bg-black/30 text-slate-100">
                                                     <option value="">Stat</option>
+                                                    <option value="endurance">Endurance</option>
+                                                    <option value="influence">Influence</option>
+                                                    <option value="instinct">Instinct</option>
+                                                    <option value="knowledge">Knowledge</option>
                                                     <option value="power">Power</option>
                                                     <option value="speed">Speed</option>
-                                                    <option value="endurance">Endurance</option>
-                                                    <option value="knowledge">Knowledge</option>
-                                                    <option value="instinct">Instinct</option>
-                                                    <option value="influence">Influence</option>
                                                 </select>
                                                 <button v-if="currentMode === 'play' && !quest.proficiencyAdded" @click="syncQuestProficiency(quest)" :disabled="!quest.skill || !quest.stat" class="text-[9px] uppercase font-bold text-yellow-200 border border-yellow-700/70 px-2 py-1 rounded hover:bg-yellow-900/40 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">Add</button>
                                             </template>
@@ -2606,8 +2645,8 @@ abilitiesLibrary.forEach(ability => {
                                 <select v-model="currentTheme" class="bg-transparent border-b border-[#6b5233]/50 text-xs font-bold text-[#cba871] uppercase cursor-pointer py-1">
                                     <option value="mythic">Mythic Dark</option>
                                     <option value="light">Parchment Light</option>
-                                    <option value="cyber">Silver & Black</option>
                                     <option value="relic">Relic / Azure Stone</option>
+                                    <option value="cyber">Silver & Black</option>
                                 </select>
                             </div>
                         </div>
@@ -2696,7 +2735,7 @@ abilitiesLibrary.forEach(ability => {
             <h3 class="serif-title text-xl font-bold uppercase text-indigo-200">Make room for {{ pendingPreparedMagic.name }}</h3>
             <p class="text-sm text-[#cbb99c] mt-2">Choose prepared spells to unprepare. The new spell costs {{ pendingPreparedMagic.tier }} AP; the prepared limit is {{ preparedMagicBudget }} AP.</p>
             <div class="space-y-2 mt-4 max-h-64 overflow-y-auto">
-                <button v-for="ab in preparedMagicAbilities.filter(isMagicPrepared)" :key="ab.name" @click="selectedMagicReplacements.includes(ab.name) ? selectedMagicReplacements = selectedMagicReplacements.filter(name => name !== ab.name) : selectedMagicReplacements.push(ab.name)" class="w-full flex justify-between items-center p-3 rounded border text-left" :class="selectedMagicReplacements.includes(ab.name) ? 'bg-indigo-900/60 border-indigo-400' : 'bg-black/30 border-[#4a3a2a]'">
+                <button v-for="ab in preparedMagicAbilities.filter(ab => isMagicPrepared(ab) && !isPassiveAbility(ab))" :key="ab.name" @click="selectedMagicReplacements.includes(ab.name) ? selectedMagicReplacements = selectedMagicReplacements.filter(name => name !== ab.name) : selectedMagicReplacements.push(ab.name)" class="w-full flex justify-between items-center p-3 rounded border text-left" :class="selectedMagicReplacements.includes(ab.name) ? 'bg-indigo-900/60 border-indigo-400' : 'bg-black/30 border-[#4a3a2a]'">
                     <span>{{ ab.name }}</span><span class="text-xs">Tier {{ ab.tier }} {{ selectedMagicReplacements.includes(ab.name) ? '· Remove' : '' }}</span>
                 </button>
             </div>
@@ -2766,7 +2805,7 @@ abilitiesLibrary.forEach(ability => {
                     No abilities chosen yet.
                 </div>
                 <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[38vh] overflow-y-auto pr-2 custom-scrollbar">
-                    <div v-for="ab in char.learnedAbilities" :key="ab.name" class="modal-section bg-black/30 p-4 rounded border border-[#4a3a2a] shadow-sm flex flex-col gap-3">
+                    <div v-for="ab in sortedLearnedAbilities" :key="ab.name" class="modal-section bg-black/30 p-4 rounded border border-[#4a3a2a] shadow-sm flex flex-col gap-3">
                         <div class="flex justify-between items-start gap-3 border-b border-[#6b5233]/30 pb-2">
                             <h4 class="font-black text-base text-[#ebd9b9] uppercase tracking-wide">{{ ab.name }}</h4>
                             <span class="text-[10px] font-bold px-2 py-1 rounded bg-teal-900/80 text-teal-200 shadow-sm border border-teal-500/30 shrink-0">
@@ -2996,11 +3035,15 @@ localStorage.setItem('myth_active_char_id', newVal.id);
         });
         const learnedMagicSpent = computed(() => magicAbilityApSpent.value);
         const preparedMagicBudget = computed(() => hasLearnedMagic.value ? Math.max(0, Number(char.value.startingAp) || 0) : 0);
-        const preparedMagicSpent = computed(() => (char.value.learnedAbilities || []).filter(ab => (char.value.preparedMagicAbilities || []).includes(ab.name) && isMagicAbility(ab)).reduce((sum, ab) => sum + (Number(ab.tier) || 0), 0));
-        const preparedMagicAbilities = computed(() => (char.value.learnedAbilities || []).filter(isMagicAbility));
+        const preparedMagicSpent = computed(() => (char.value.learnedAbilities || []).filter(ab => isMagicPrepared(ab) && !isPassiveAbility(ab)).reduce((sum, ab) => sum + (Number(ab.tier) || 0), 0));
+        const sortAbilitiesByTierAndName = (abilities) => [...abilities].sort((a, b) =>
+            Number(a.tier) - Number(b.tier) || a.name.localeCompare(b.name)
+        );
+        const preparedMagicAbilities = computed(() => sortAbilitiesByTierAndName((char.value.learnedAbilities || []).filter(isMagicAbility)));
         const unpreparedMagicAbilities = computed(() => preparedMagicAbilities.value.filter(ab => !isMagicPrepared(ab)));
         const preparedMagicList = computed(() => preparedMagicAbilities.value.filter(ab => isMagicPrepared(ab) && (chosenFilterTier.value === 'All' || Number(ab.tier) === Number(chosenFilterTier.value))));
         const unpreparedMagicList = computed(() => unpreparedMagicAbilities.value.filter(ab => chosenFilterTier.value === 'All' || Number(ab.tier) === Number(chosenFilterTier.value)));
+        const sortedLearnedAbilities = computed(() => sortAbilitiesByTierAndName(char.value.learnedAbilities || []));
         const preparedMagicOverLimit = computed(() => preparedMagicSpent.value > preparedMagicBudget.value);
         const abilityApOverLimit = computed(() => spentAp.value > Number(char.value.startingAp || 0));
         const potdCapacity = computed(() => 6 + (magicSelection.value?.type === 'Influential Magic' ? Math.max(0, influenceModifier.value) : 0));
@@ -3012,9 +3055,14 @@ localStorage.setItem('myth_active_char_id', newVal.id);
         };
         watch(potdCapacity, (capacity, previous) => resizePotd(capacity, previous), { immediate: true });
 
-        const availableGods = computed(() => {
-            return typeof pantheons !== 'undefined' ? (pantheons[char.value.pantheon] || []) : [];
-        });
+        const pantheonNames = computed(() => typeof pantheons !== 'undefined'
+            ? Object.keys(pantheons).sort((a, b) => a.localeCompare(b))
+            : []);
+        const sortedArmourRegistry = computed(() => [...armourRegistry].sort((a, b) => a.tier.localeCompare(b.tier)));
+        const sortedMagicProficiencies = computed(() => [...magicProficiencies].sort((a, b) => a.type.localeCompare(b.type)));
+        const availableGods = computed(() => typeof pantheons !== 'undefined'
+            ? [...(pantheons[char.value.pantheon] || [])].sort((a, b) => a.name.localeCompare(b.name))
+            : []);
 
         const activeWeapons = computed(() => {
             if (typeof weaponArsenal === 'undefined') return [null, null];
@@ -3039,14 +3087,15 @@ localStorage.setItem('myth_active_char_id', newVal.id);
         const weaponIsProficient = (weaponType) => weaponTrainingFor(weaponType).ticks >= 3;
         const weaponProficiencyValue = (weaponType) => weaponIsProficient(weaponType) ? calculatedProficiency.value * ((char.value.weaponMastery || []).includes(weaponType) && !hasMagic.value ? 2 : 1) : 0;
         const isMagicAbility = (ability) => !!ability && (hasLearnedMagic.value || String(ability.domains || '').split(',').some(domain => domain.trim().toLowerCase() === 'magic'));
+        const isPassiveAbility = (ability) => String(ability?.action || '').trim().toLowerCase() === 'passive';
         const isMagicPrepared = (ability) => hasLearnedMagic.value
             && isMagicAbility(ability)
             && (char.value.learnedAbilities || []).some(learned => learned.name === ability.name && isMagicAbility(learned))
-            && (char.value.preparedMagicAbilities || []).includes(ability.name);
+            && (isPassiveAbility(ability) || (char.value.preparedMagicAbilities || []).includes(ability.name));
         const pendingPreparedMagic = ref(null);
         const selectedMagicReplacements = ref([]);
         const togglePreparedMagic = (ability) => {
-            if (!isMagicAbility(ability) || !hasLearnedMagic.value || !(char.value.learnedAbilities || []).some(learned => learned.name === ability.name && isMagicAbility(learned))) return;
+            if (!isMagicAbility(ability) || isPassiveAbility(ability) || !hasLearnedMagic.value || !(char.value.learnedAbilities || []).some(learned => learned.name === ability.name && isMagicAbility(learned))) return;
             if (isMagicPrepared(ability)) char.value.preparedMagicAbilities = char.value.preparedMagicAbilities.filter(name => name !== ability.name);
             else if (preparedMagicSpent.value + (Number(ability.tier) || 0) <= preparedMagicBudget.value) char.value.preparedMagicAbilities.push(ability.name);
             else {
@@ -3055,15 +3104,15 @@ localStorage.setItem('myth_active_char_id', newVal.id);
             }
         };
         const finishMagicPreparation = () => {
-            if (!pendingPreparedMagic.value) return;
-            const removedCost = (char.value.learnedAbilities || []).filter(ab => selectedMagicReplacements.value.includes(ab.name) && isMagicPrepared(ab)).reduce((sum, ab) => sum + (Number(ab.tier) || 0), 0);
+            if (!pendingPreparedMagic.value || isPassiveAbility(pendingPreparedMagic.value)) return;
+            const removedCost = (char.value.learnedAbilities || []).filter(ab => selectedMagicReplacements.value.includes(ab.name) && isMagicPrepared(ab) && !isPassiveAbility(ab)).reduce((sum, ab) => sum + (Number(ab.tier) || 0), 0);
             if (preparedMagicSpent.value - removedCost + (Number(pendingPreparedMagic.value.tier) || 0) > preparedMagicBudget.value) return;
             char.value.preparedMagicAbilities = (char.value.preparedMagicAbilities || []).filter(name => !selectedMagicReplacements.value.includes(name));
             char.value.preparedMagicAbilities.push(pendingPreparedMagic.value.name);
             pendingPreparedMagic.value = null;
             selectedMagicReplacements.value = [];
         };
-        const selectedMagicReplacementCost = computed(() => (char.value.learnedAbilities || []).filter(ab => selectedMagicReplacements.value.includes(ab.name) && isMagicPrepared(ab)).reduce((sum, ab) => sum + (Number(ab.tier) || 0), 0));
+        const selectedMagicReplacementCost = computed(() => (char.value.learnedAbilities || []).filter(ab => selectedMagicReplacements.value.includes(ab.name) && isMagicPrepared(ab) && !isPassiveAbility(ab)).reduce((sum, ab) => sum + (Number(ab.tier) || 0), 0));
         const canFinishMagicPreparation = computed(() => !!pendingPreparedMagic.value && selectedMagicReplacementCost.value > 0 && preparedMagicSpent.value - selectedMagicReplacementCost.value + (Number(pendingPreparedMagic.value.tier) || 0) <= preparedMagicBudget.value);
         const toggleWeaponMastery = (weaponType) => {
             if (hasMagic.value || !weaponIsProficient(weaponType)) return;
@@ -3151,10 +3200,10 @@ localStorage.setItem('myth_active_char_id', newVal.id);
             const parentGod = availableGods.value.find(g => g.name === char.value.parent);
             if (!parentGod || typeof abilitiesLibrary === 'undefined') return [];
             const domains = [parentGod.primary, parentGod.secondary, ...(parentGod.tertiary || [])].filter(Boolean).map(d => d.trim().toLowerCase());
-            return abilitiesLibrary.filter(ab => {
+            return sortAbilitiesByTierAndName(abilitiesLibrary.filter(ab => {
                 const abDomains = ab.domains.split(',').map(d => d.trim().toLowerCase());
                 return abDomains.some(d => domains.includes(d));
-            });
+            }));
         });
 
         const randomizableVaultAbilities = computed(() => eligibleVaultAbilities.value.filter(ab => {
@@ -3165,12 +3214,12 @@ localStorage.setItem('myth_active_char_id', newVal.id);
         const filteredShopAbilities = computed(() => {
             const query = vaultSearch.value.trim().toLowerCase();
             
-            return eligibleVaultAbilities.value.filter(ab => {
+            return sortAbilitiesByTierAndName(eligibleVaultAbilities.value.filter(ab => {
                 const alreadyLearned = char.value.learnedAbilities.some(learned => learned.name === ab.name);
                 if (alreadyLearned) return false;
                 const matchesSearch = !query || `${ab.name} ${ab.rules}`.toLowerCase().includes(query);
                 return matchesSearch;
-            });
+            }));
         });
 
         const highlightText = (text, query) => {
@@ -3200,7 +3249,7 @@ localStorage.setItem('myth_active_char_id', newVal.id);
             if (typeof abilitiesLibrary === 'undefined') return [];
             const nameQuery = codexNameSearch.value.trim().toLowerCase();
             const descriptionQuery = codexDescriptionSearch.value.trim().toLowerCase();
-            return abilitiesLibrary.filter(ab => {
+            return sortAbilitiesByTierAndName(abilitiesLibrary.filter(ab => {
                 const matchesName = !nameQuery || ab.name.toLowerCase().includes(nameQuery);
                 const matchesDescription = !descriptionQuery || ab.rules.toLowerCase().includes(descriptionQuery);
                 const matchesDomain = codexDomainFilter.value === 'All' || ab.domains.split(',').some(domain => domain.trim() === codexDomainFilter.value);
@@ -3208,7 +3257,7 @@ localStorage.setItem('myth_active_char_id', newVal.id);
                 const matchesCost = codexCostFilter.value === 'All' || ab.cost === codexCostFilter.value;
                 const matchesAction = codexActionFilter.value === 'All' || ab.action === codexActionFilter.value;
                 return matchesName && matchesDescription && matchesDomain && matchesTier && matchesCost && matchesAction;
-            });
+            }));
         });
 
         const activeQuests = computed(() => (char.value.quests || []).filter(quest => !quest.completed));
@@ -3268,6 +3317,7 @@ localStorage.setItem('myth_active_char_id', newVal.id);
                     grouped[ab.tier].push(ab);
                 }
             });
+            Object.values(grouped).forEach(abilities => abilities.sort((a, b) => a.name.localeCompare(b.name)));
             return grouped;
         });
         const learnedAbilitiesByTier = computed(() => {
@@ -3275,9 +3325,10 @@ localStorage.setItem('myth_active_char_id', newVal.id);
             char.value.learnedAbilities.filter(ab => !hasLearnedMagic.value || !isMagicAbility(ab)).forEach(ab => {
                 if (grouped[ab.tier]) grouped[ab.tier].push(ab);
             });
+            Object.values(grouped).forEach(abilities => abilities.sort((a, b) => a.name.localeCompare(b.name)));
             return grouped;
         });
-        const playAbilities = computed(() => char.value.learnedAbilities.filter(ab => !isMagicAbility(ab) || (hasLearnedMagic.value && isMagicPrepared(ab))));
+        const playAbilities = computed(() => sortAbilitiesByTierAndName(char.value.learnedAbilities.filter(ab => !isMagicAbility(ab) || (hasLearnedMagic.value && isMagicPrepared(ab)))));
         const playManifestAbilities = computed(() => hasLearnedMagic.value ? playAbilities.value.filter(ab => !isMagicAbility(ab)) : playAbilities.value);
 
         // --- 5. Mechanics & Helpers ---
@@ -3333,11 +3384,9 @@ const randomizeStats = () => {
                 char.value.age = Math.floor(Math.random() * 70) + 31;
             }
 
-            if (typeof randomNames !== 'undefined' && randomNames.length > 0) {
-                char.value.name = randomNames[Math.floor(Math.random() * randomNames.length)];
-            } else {
-                char.value.name = "Unknown Hero";
-            }
+            char.value.name = randomNames.length > 0 && Math.random() < 0.1
+                ? randomNames[Math.floor(Math.random() * randomNames.length)]
+                : generateRandomName();
 
             if (typeof weaponArsenal !== 'undefined' && weaponArsenal.length > 0) {
                 const w1 = weaponArsenal[Math.floor(Math.random() * weaponArsenal.length)].type;
@@ -3477,10 +3526,14 @@ const calcDivineDC = () => {
         const useAbilityInPlay = (ab) => {
             if (currentMode.value !== 'play') return;
             if (isMagicAbility(ab) && (!hasLearnedMagic.value || !isMagicPrepared(ab))) return;
-            const cost = parseInt(ab.cost) || 0;
+            const activeCount = char.value.potd.filter(p => p).length;
+            const costText = String(ab.cost || '').trim();
+            const numericCost = costText.match(/^(\d+)\s*PotD\b/i);
+            const cost = /^all remaining PotD$/i.test(costText)
+                ? activeCount
+                : numericCost ? Number(numericCost[1]) : 0;
             if (cost <= 0) return;
 
-            const activeCount = char.value.potd.filter(p => p).length;
             if (activeCount < cost) {
                 potdError.value = true;
                 setTimeout(() => { potdError.value = false; }, 2000);
@@ -3909,19 +3962,21 @@ onMounted(() => {
             char, roster, currentMode, shopOpen, codexOpen, manageModalOpen, isUnleashed, unleashRoll, unleashOutcome, finishUnleash, newSkillName, newSkillStat,
             newItemName, newQuestName, newQuestProficiencyName, newQuestProficiencyAbility, newRelationName, apPromptActive, apConfirmationMessage, saveIndicator,
             pantheons: typeof pantheons !== 'undefined' ? pantheons : {}, 
+            pantheonNames,
             woundStates: typeof woundStates !== 'undefined' ? woundStates : [], 
             fatigueStates: typeof fatigueStates !== 'undefined' ? fatigueStates : [], 
             weaponArsenal: typeof weaponArsenal !== 'undefined' ? weaponArsenal : [],
             magicProficiencies: typeof magicProficiencies !== 'undefined' ? magicProficiencies : [],
             pantheonFeatures: typeof pantheonFeatures !== 'undefined' ? pantheonFeatures : {},
             armourRegistry: typeof armourRegistry !== 'undefined' ? armourRegistry : [], 
+            sortedArmourRegistry, sortedMagicProficiencies,
             abilitiesLibrary: typeof abilitiesLibrary !== 'undefined' ? abilitiesLibrary : [],
             rulesContent: typeof rulesContent !== 'undefined' ? rulesContent : [],
             activeRulesTab,
             weaponTraits: typeof weaponTraits !== 'undefined' ? weaponTraits : {},     
             weaponEffects: typeof weaponEffects !== 'undefined' ? weaponEffects : {},   
             totalStats, effectiveDex, calculatedProficiency, currentWoundDescription, currentFatigueName, currentFatigueDescription,
-            magicSelection, hasMagic, hasLearnedMagic, knowledgeModifier, influenceModifier, magicPoints, magicPointsSpent, remainingMagicPoints, preparedMagicBudget, learnedMagicBudget, learnedMagicSpent, preparedMagicSpent, preparedMagicAbilities, unpreparedMagicAbilities, preparedMagicList, unpreparedMagicList, preparedMagicOverLimit, abilityApOverLimit, isMagicAbility, isMagicPrepared, togglePreparedMagic, pendingPreparedMagic, selectedMagicReplacements, selectedMagicReplacementCost, canFinishMagicPreparation, finishMagicPreparation, potdCapacity, activePotdCount,
+            magicSelection, hasMagic, hasLearnedMagic, knowledgeModifier, influenceModifier, magicPoints, magicPointsSpent, remainingMagicPoints, preparedMagicBudget, learnedMagicBudget, learnedMagicSpent, preparedMagicSpent, preparedMagicAbilities, unpreparedMagicAbilities, preparedMagicList, unpreparedMagicList, sortedLearnedAbilities, preparedMagicOverLimit, abilityApOverLimit, isMagicAbility, isPassiveAbility, isMagicPrepared, togglePreparedMagic, pendingPreparedMagic, selectedMagicReplacements, selectedMagicReplacementCost, canFinishMagicPreparation, finishMagicPreparation, potdCapacity, activePotdCount,
             availableGods, activeWeapons, filteredShopAbilities, eligibleVaultAbilities, randomizableVaultAbilities, playManifestAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName, 
             availableGods, activeWeapons, carriedWeaponRecords, carriedWeaponOptions, weaponTrainingFor, weaponIsProficient, learnedAbilitiesByTier, filteredShopAbilities, codexDomains, codexCosts, codexActions, filteredCodexAbilities, activeQuests, completedQuests, calcMod, formatModifier, statFullName, highlightText,
             adjustStat, randomizeStats, randomizeAll, changePantheon, changeParent, setWoundState, 
